@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{#
+  Satellites tab (/satellite): the live Meteor map (/satellite/map) framed to fill the window,
+  with the pass in progress and the next ones beside it. Tapping a pass sends it to the map
+  (postMessage 'rl1-pass'), which draws its track with AOS/LOS markers. The Passes page links
+  here with #pass=<satellite>|<aos>|<los> (Unix seconds) to show one of its passes. Between the
+  map and the list, the selected satellite's details (position, look angles, next pass, orbit)
+  come once a second from the map frame (postMessage 'rl1-sat-state').
+  Script: public/assets/js/satellite.js
+#}
+
+{% block stylesheets %}
+  <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/satellite.css') }}">
+{% endblock %}
+
+{% block body %}
+{% set sat_colours = {'METEOR-M2 3': 'm23', 'METEOR-M2 4': 'm24'} %}
+{% set now_s = 'now'|date('U') %}
+{% set today = now_s|date('Y-m-d') %}
+{% set tomorrow = (now_s + 86400)|date('Y-m-d') %}
+
+<div class="page-head">
+  <h1 class="page-title">{{ lang['sat_title']|default('Meteor live tracking') }}</h1>
+  <div class="page-meta">{{ lang['sat_hint']|default('Live positions, coverage at 15° and day/night') }}</div>
+</div>
+
+<div class="sat-layout" data-tz="{{ constant('Config\\Config::TIMEZONE') }}">
+  <div id="meteor-map" class="sat-map">
+    <iframe id="meteor-map-frame" src="/satellite/map" title="{{ lang['map_title']|default('Meteor ground tracks') }}"></iframe>
+  </div>
+
+  {# the selected satellite's details, filled in by satellite.js from the map's 'rl1-sat-state' messages #}
+  <section class="sat-info" id="sat-info" aria-live="off">
+    <div class="si-tabs" role="tablist">
+      <button type="button" class="si-tab sat-m23" data-sat="METEOR-M2 3" role="tab"><span class="sat-dot"></span>M2 3</button>
+      <button type="button" class="si-tab sat-m24" data-sat="METEOR-M2 4" role="tab"><span class="sat-dot"></span>M2 4</button>
+    </div>
+    <div class="si-body" id="si-body">
+      <div class="si-wait">{{ lang['loading_map']|default('Loading map…') }}</div>
+    </div>
+  </section>
+
+  <aside class="sat-side">
+    <div class="sat-side-head">
+      <span>{{ lang['coming_passes']|default('Coming passes') }}</span>
+      <button type="button" class="sat-clear" id="sat-clear" hidden>{{ lang['clear_track']|default('Clear track') }}</button>
+    </div>
+    {% if passes|length == 0 %}
+      <div class="no-passes">{{ lang['no_passes']|default('No passes scheduled') }}</div>
+    {% else %}
+      <ul class="sat-passes" id="sat-passes">
+      {% for p in passes %}
+        {% set colour = sat_colours[p.sat_name]|default('other') %}
+        {% set day = p.pass_start|date('Y-m-d') %}
+        {% set mins = ((p.pass_end - p.pass_start) / 60)|round %}
+        <li>
+          <button type="button" class="sat-pass sat-{{ colour }}{% if p.is_active == false %} skipped{% endif %}"
+                  data-sat="{{ p.sat_name }}" data-start="{{ p.pass_start }}" data-end="{{ p.pass_end }}"
+                  title="{{ lang['show_on_map']|default('Show this pass on the map') }}">
+            <span class="sp-top">
+              <span class="sat-dot"></span>
+              <span class="sp-sat">{{ p.sat_name|replace({'METEOR-': ''}) }}</span>
+              <span class="sp-day">
+                {% if day == today %}{{ lang['today']|default('Today') }}
+                {% elseif day == tomorrow %}{{ lang['tomorrow']|default('Tomorrow') }}
+                {% else %}{{ p.pass_start|weekday }}{% endif %}
+              </span>
+              <span class="sp-live" hidden>{{ lang['recording_now']|default('Recording now') }}</span>
+            </span>
+            <span class="sp-bottom">
+              <span class="sp-time">{{ p.pass_start|date('H:i') }}&ndash;{{ p.pass_end|date('H:i') }}</span>
+              <span class="sp-dim">{{ mins }} {{ lang['unit_min']|default('min') }}</span>
+              <span class="sp-elev">
+                <span class="elev-bar{% if p.max_elev < 30 %} low{% endif %}"><span style="width: {{ (p.max_elev / 90 * 100)|round }}%"></span></span>
+                {{ p.max_elev }}&deg;
+              </span>
+              {% if p.direction == 'Northbound' %}<i class="fas fa-arrow-up sp-dim" title="{{ lang['northbound']|default('Northbound') }}"></i>
+              {% elseif p.direction == 'Southbound' %}<i class="fas fa-arrow-down sp-dim" title="{{ lang['southbound']|default('Southbound') }}"></i>{% endif %}
+            </span>
+          </button>
+        </li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+    <div class="sat-side-foot">
+      <span><i class="far fa-clock" aria-hidden="true"></i> {{ lang['times_local']|default('Times in local time') }}</span>
+      <a href="/passes">{{ lang['all_passes']|default('All passes') }} &rsaquo;</a>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+
+{% block js_includes %}
+  <script>
+    window.RL1_SAT_TEXT = {
+      in_range: {{ (lang['in_range']|default('In range'))|json_encode|raw }},
+      below: {{ (lang['si_below']|default('Below the horizon'))|json_encode|raw }},
+      now: {{ (lang['si_now']|default('Now'))|json_encode|raw }},
+      position: {{ (lang['si_position']|default('Position'))|json_encode|raw }},
+      altitude: {{ (lang['si_altitude']|default('Altitude'))|json_encode|raw }},
+      speed: {{ (lang['si_speed']|default('Speed'))|json_encode|raw }},
+      azel: {{ (lang['si_azel']|default('Azimuth / elevation'))|json_encode|raw }},
+      range: {{ (lang['si_range']|default('Distance'))|json_encode|raw }},
+      light: {{ (lang['si_light']|default('Sunlight'))|json_encode|raw }},
+      sunlit: {{ (lang['si_sunlit']|default('In sunlight'))|json_encode|raw }},
+      shadow: {{ (lang['si_shadow']|default("In Earth's shadow"))|json_encode|raw }},
+      this_pass: {{ (lang['si_this_pass']|default('This pass'))|json_encode|raw }},
+      next_pass: {{ (lang['next_pass_title']|default('Next pass'))|json_encode|raw }},
+      los_in: {{ (lang['si_los_in']|default('LOS in'))|json_encode|raw }},
+      aos_in: {{ (lang['si_aos_in']|default('AOS in'))|json_encode|raw }},
+      max_el: {{ (lang['si_max_el']|default('Max elevation'))|json_encode|raw }},
+      window: {{ (lang['si_window']|default('AOS – LOS'))|json_encode|raw }},
+      none: {{ (lang['si_none']|default('None in the next 24 h'))|json_encode|raw }},
+      orbit: {{ (lang['si_orbit']|default('Orbit'))|json_encode|raw }},
+      orbit_no: {{ (lang['si_orbit_no']|default('Orbit number'))|json_encode|raw }},
+      period: {{ (lang['si_period']|default('Period'))|json_encode|raw }},
+      incl: {{ (lang['si_incl']|default('Inclination'))|json_encode|raw }},
+      height: {{ (lang['si_height']|default('Perigee / apogee'))|json_encode|raw }},
+      ids: {{ (lang['si_ids']|default('NORAD / COSPAR'))|json_encode|raw }},
+      downlink: {{ (lang['si_downlink']|default('Downlink'))|json_encode|raw }},
+      tle_age: {{ (lang['si_tle_age']|default('Orbit data age'))|json_encode|raw }},
+      sso: {{ (lang['si_sso']|default('sun-synchronous'))|json_encode|raw }},
+      today: {{ (lang['today']|default('Today'))|json_encode|raw }},
+      tomorrow: {{ (lang['tomorrow']|default('Tomorrow'))|json_encode|raw }}
+    };
+  </script>
+  <script src="{{ asset('/assets/js/satellite.js') }}"></script>
+{% endblock %}

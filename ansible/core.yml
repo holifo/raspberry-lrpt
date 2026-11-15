@@ -1,0 +1,13 @@
+---
+- name: install raspberry-lrpt core
+  hosts: core
+  connection: local
+  gather_facts: no
+  pre_tasks:
+    - name: OS release
+      shell: . /etc/os-release && echo "${DEBIAN_CODENAME:-$VERSION_CODENAME}"
+      register: raspbian_version
+      check_mode: no
+      changed_when: no
+  roles:
+    - role: common

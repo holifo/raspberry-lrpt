@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{#
+  Meteor-M tab (/meteor): the series this station receives. The facts (launches, status, plans,
+  sources) are in MeteorController::SERIES / SOURCES; this page lays them out: the satellites
+  working now, a timeline of every launch and plan, the coming launches, the LRPT signal and the
+  instruments. CSS: public/assets/css/meteor.css.
+#}
+
+{% block stylesheets %}
+  <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/meteor.css') }}">
+{% endblock %}
+
+{% block body %}
+{% set st = {
+  'operational': lang['mi_st_operational']|default('Operational'),
+  'retired': lang['mi_st_retired']|default('Retired'),
+  'failed': lang['mi_st_failed']|default('Launch failure'),
+  'damaged': lang['mi_st_damaged']|default('Damaged, no LRPT'),
+  'planned': lang['mi_st_planned']|default('Planned')
+} %}
+{% set notes = {
+  'mi_n_m1': lang['mi_n_m1']|default('First of the series. Most of its instruments stopped in 2014 and it was retired that October.'),
+  'mi_n_m2': lang['mi_n_m2']|default('Sent LRPT from 2014 until it failed for good on 24 December 2022.'),
+  'mi_n_m21': lang['mi_n_m21']|default('Lost at launch: it never separated from the Fregat upper stage, because of a programming error.'),
+  'mi_n_m22': lang['mi_n_m22']|default('Hit by a micrometeoroid or debris on 18 December 2019. Partly recovered, but it has no LRPT any more; HRPT only in sunlight.'),
+  'mi_n_m23': lang['mi_n_m23']|default('Working. Its LRPT antenna did not open fully, so its signal is weaker than M2 4\'s.'),
+  'mi_n_m24': lang['mi_n_m24']|default('Working. LRPT on 137.9 MHz at 72 kbit/s.'),
+  'mi_n_m25': lang['mi_n_m25']|default('Being built, with an upgraded MSU-MR imager. Launch planned for 2027–2028.'),
+  'mi_n_m26': lang['mi_n_m26']|default('Being built at VNIIEM. Launch planned for 2028.'),
+  'mi_n_m27': lang['mi_n_m27']|default('Long-term plan of the series.'),
+  'mi_n_mp': lang['mi_n_mp']|default('First of the next generation, with new instruments. Planned for about 2032; it is reported not to carry LRPT.')
+} %}
+{% set map_on = constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') is defined
+   and constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') == 'true' %}
+
+<div class="page-head">
+  <h1 class="page-title">{{ lang['mi_title']|default('The Meteor-M series') }}</h1>
+  <div class="page-meta">{{ lang['mi_checked']|default('Checked') }} {{ checked|date(constant('Config\\Config::PASSES_DATE_FORMAT')) }}</div>
+</div>
+<p class="mi-intro">{{ lang['mi_intro']|default("Russia's polar-orbiting weather satellites, built by VNIIEM for Roshydromet and Roscosmos. Each flies a sun-synchronous orbit about 820 km up and sends its MSU-MR images down on 137.9 MHz as LRPT, which this station receives.") }}</p>
+
+{# ---- working now ---- #}
+<h2 class="mi-h">{{ lang['mi_in_orbit']|default('Working now') }}</h2>
+<div class="mi-now">
+  {% for s in sats|filter(s => s.status == 'operational') %}
+    <div class="mi-card sat-{{ s.colour }}">
+      <div class="mi-card-head">
+        <span class="sat-dot {{ s.colour }}"></span>
+        <span class="mi-name">{{ s.name }}</span>
+        <span class="mi-st st-{{ s.status }}">{{ st[s.status] }}</span>
+      </div>
+      <dl class="mi-dl">
+        <dt>{{ lang['mi_launched']|default('Launched') }}</dt><dd>{{ s.ts|date(constant('Config\\Config::PASSES_DATE_FORMAT')) }} · {{ s.site }}</dd>
+        <dt>{{ lang['mi_in_orbit_for']|default('In orbit') }}</dt><dd>{{ s.years }} {{ lang['mi_years']|default('years') }}</dd>
+        <dt>NORAD / COSPAR</dt><dd>{{ s.norad }} / {{ s.cospar }}</dd>
+        <dt>LRPT</dt><dd>137.9 MHz</dd>
+      </dl>
+      <p class="mi-note">{{ notes[s.note] }}</p>
+      {% if map_on %}<a class="mi-link" href="/satellite"><i class="fas fa-globe-europe"></i> {{ lang['mi_show_map']|default('Where is it now?') }} &rsaquo;</a>{% endif %}
+    </div>
+  {% endfor %}
+</div>
+<p class="mi-note mi-cospas"><i class="fas fa-life-ring"></i> {{ lang['mi_n_cospas']|default('In November 2025 both passed the Cospas-Sarsat commission tests and joined the international search and rescue system.') }}</p>
+
+{# ---- timeline 2009 … 2034 ---- #}
+<h2 class="mi-h">{{ lang['mi_timeline']|default('All launches and plans') }}</h2>
+<div class="mi-tl" aria-hidden="true">
+  <div class="mi-tl-axis"></div>
+  {% for y in [2009, 2014, 2019, 2024, 2029, 2034] %}
+    <span class="mi-tl-year" style="left: {{ (y - 2009) / 25 * 100 }}%">{{ y }}</span>
+  {% endfor %}
+  <span class="mi-tl-now" style="left: {{ now_pos }}%"><span>{{ lang['today']|default('Today') }}</span></span>
+  {% for s in sats %}
+    <span class="mi-tl-dot st-{{ s.status }} {{ loop.index is odd ? 'up' : 'down' }}" style="left: {{ s.pos }}%">
+      <i></i><b>{{ s.name|replace({'Meteor-M No. ': 'M', 'Meteor-MP No. ': 'MP '}) }}</b>
+    </span>
+  {% endfor %}
+</div>
+<div class="mi-legend">
+  {% for k in ['operational', 'retired', 'damaged', 'failed', 'planned'] %}
+    <span class="mi-st st-{{ k }}">{{ st[k] }}</span>
+  {% endfor %}
+</div>
+
+<ol class="mi-list">
+  {% for s in sats %}
+    <li class="st-{{ s.status }}">
+      <span class="mi-when">{{ s.flown ? s.ts|date(constant('Config\\Config::PASSES_DATE_FORMAT')) : s.launch }}</span>
+      <span class="mi-what">
+        <span class="mi-name">{{ s.name }}</span>
+        <span class="mi-st st-{{ s.status }}">{{ st[s.status] }}</span>
+        <span class="mi-note">{{ notes[s.note] }}</span>
+      </span>
+    </li>
+  {% endfor %}
+</ol>
+<p class="mi-note"><i class="fas fa-info-circle"></i> {{ lang['mi_coming_note']|default('Planned dates are estimates: Meteor-M launches have slipped by years before.') }}</p>
+
+{# ---- the signal and the instruments ---- #}
+<div class="mi-two">
+  <section>
+    <h2 class="mi-h">{{ lang['mi_signal']|default('The LRPT signal') }}</h2>
+    <dl class="mi-dl mi-box">
+      <dt>{{ lang['mi_sig_freq']|default('Frequency') }}</dt><dd>137.9 MHz <span class="mi-dim">({{ lang['mi_sig_freq_note']|default('at times 137.1 MHz') }})</span></dd>
+      <dt>{{ lang['mi_sig_mod']|default('Modulation') }}</dt><dd>OQPSK, 72 ksym/s <span class="mi-dim">({{ lang['mi_sig_mod_note']|default('80 k at times') }})</span></dd>
+      <dt>{{ lang['mi_sig_ch']|default('Channels') }}</dt><dd>{{ lang['mi_sig_ch_v']|default('3 of the 6 MSU-MR channels at a time') }}</dd>
+      <dt>{{ lang['mi_sig_res']|default('Resolution') }}</dt><dd>≈ 1 km</dd>
+      <dt>{{ lang['mi_sig_swath']|default('Swath') }}</dt><dd>≈ 2900 km</dd>
+      <dt>{{ lang['mi_sig_orbit']|default('Orbit') }}</dt><dd>{{ lang['mi_sig_orbit_v']|default('sun-synchronous, ≈ 820 km, 98.7°, ≈ 101 min') }}</dd>
+    </dl>
+  </section>
+  <section>
+    <h2 class="mi-h">{{ lang['mi_instruments']|default('On board') }}</h2>
+    <dl class="mi-dl mi-box mi-inst">
+      <dt>MSU-MR</dt><dd>{{ lang['mi_i_msumr']|default('Six-channel imager (visible to thermal infrared), the source of LRPT and HRPT images') }}</dd>
+      <dt>KMSS</dt><dd>{{ lang['mi_i_kmss']|default('Multispectral cameras for land and sea, 60–120 m') }}</dd>
+      <dt>MTVZA-GY</dt><dd>{{ lang['mi_i_mtvza']|default('Microwave sounder: temperature and humidity through cloud') }}</dd>
+      <dt>IKFS-2</dt><dd>{{ lang['mi_i_ikfs']|default('Infrared spectrometer: atmospheric profiles') }}</dd>
+      <dt>MeteoSAR</dt><dd>{{ lang['mi_i_sar']|default('Radar for sea ice and the sea surface, day and night') }}</dd>
+      <dt>SSPD · GGAK</dt><dd>{{ lang['mi_i_other']|default('Data collection from ground stations; space weather sensors') }}</dd>
+    </dl>
+  </section>
+</div>
+
+{# ---- sources ---- #}
+<h2 class="mi-h">{{ lang['mi_sources']|default('Sources') }}</h2>
+<ul class="mi-sources">
+  {% for src in sources %}<li><a href="{{ src[1] }}" rel="noopener" target="_blank">{{ src[0] }}</a></li>{% endfor %}
+</ul>
+{% endblock %}

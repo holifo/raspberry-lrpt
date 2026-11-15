@@ -1,0 +1,10 @@
+footer {
+  margin-top: 25px;
+  padding-bottom: 18px;
+}
+
+/* Raspberry-LRPT logo (Views/logo.html, inline SVG): text parts use currentColor */
+footer .lrpt-logo { display: block; margin: 0 auto; width: 300px; max-width: 80vw; height: auto; color: #1d2733; }
+footer .footer-credit { margin-top: 4px; font-size: 0.75rem; color: #7f8b99; }
+footer .footer-version { white-space: nowrap; }
+footer .footer-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }

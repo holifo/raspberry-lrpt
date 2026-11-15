@@ -1,0 +1,174 @@
+---
+# Packages, predict and SatDump. The first install takes a while here; the Pi isn't frozen.
+- name: System packages
+  become: yes
+  apt:
+    update_cache: yes
+    state: present
+    name:
+      - at
+      - bc
+      - build-essential
+      - certbot
+      - cmake
+      - curl
+      - ffmpeg
+      - git
+      - gmic
+      - imagemagick
+      - jq
+      - pkg-config
+      - rsync
+      - socat
+      - sox
+      - sqlite3
+      - wget
+      - wkhtmltopdf
+      - airspy
+      - airspyhf
+      - libatlas-base-dev
+      - libegl-dev
+      - libgfortran5
+      - libgles-dev
+      - libjpeg-dev
+      - libncurses5-dev
+      - libncursesw5-dev
+      - libopenblas-dev
+      - libsox-fmt-mp3
+      - libsqlite3-dev
+      - libtiff-dev
+      - libusb-1.0-0
+      - libusb-1.0-0-dev
+      - libvolk2-dev
+      - libxft-dev
+      - libxft2
+      - zlib1g-dev
+      - python3-dev
+      - python3-ephem
+      - python3-idna
+      - python3-jsonschema
+      - python3-matplotlib
+      - python3-numpy
+      - python3-pil
+      - python3-pip
+      - python3-pyproj
+      - python3-requests
+      - python3-setuptools
+      - python3-urllib3
+      - python3-yaml
+
+- name: Python packages (pip)
+  command: pip3 install envbash==1.2.0 --break-system-packages
+  register: pip_install
+  changed_when: "'Successfully installed' in pip_install.stdout"
+  when: raspbian_version.stdout == 'bookworm'
+
+- name: predict (pass prediction)
+  become: yes
+  apt:
+    deb: "{{ lrpt_home }}/software/{{ predict_debs[system_architecture] }}"
+    state: present
+  vars:
+    predict_debs:
+      amd64: predict_2.2.3-4-b2_amd64.deb
+      armhf: predict_2.2.5+dfsg.1-1_armhf.deb
+      arm64: predict_2.2.5+dfsg.1-1_arm64.deb
+
+# SatDump 1.2.3 (stable). The 2.0.0-alpha failed on this station ("A subcommand is required" for
+# 'satdump live meteor_m2-x_lrpt ...', and its plugin needs libhdf5_serial_cpp.so.103).
+- name: SatDump version check
+  command: dpkg-query -W -f=${Version} satdump
+  register: satdump_installed
+  failed_when: false
+  changed_when: false
+
+- name: SatDump 2.x alpha removed
+  become: yes
+  apt:
+    name: satdump
+    state: absent
+    purge: yes
+  when: satdump_installed.rc == 0 and satdump_installed.stdout.startswith('2.')
+
+- name: SatDump {{ satdump_version }}
+  become: yes
+  apt:
+    deb: "{{ lrpt_home }}/software/satdump_{{ satdump_version }}_{{ raspbian_version.stdout }}_{{ system_architecture }}.deb"
+    state: present
+
+# Lite images have no ~/.config; it must belong to the user, not root
+- name: ~/.config folder
+  become: yes
+  file:
+    path: /home/{{ target_user }}/.config
+    state: directory
+    owner: "{{ target_user }}"
+    group: "{{ target_user }}"
+    mode: 0700
+
+# MeteorDemod is only built when it is the Meteor decoder (meteor_decoder: 'meteordemod').
+# This station uses SatDump, so the long source build and its OpenCV/LAPACK deps are skipped.
+- name: MeteorDemod check
+  stat:
+    path: /usr/local/bin/meteordemod
+  register: meteor_demod_installed
+  when: meteor_decoder == 'meteordemod'
+
+- name: MeteorDemod build
+  when: meteor_decoder == 'meteordemod' and not meteor_demod_installed.stat.exists
+  block:
+    - name: MeteorDemod build packages
+      become: yes
+      apt:
+        state: present
+        name: [liblapacke-dev, gfortran, libopencv-dev, python3-opencv]
+
+    - name: MeteorDemod source
+      git:
+        repo: https://github.com/Digitelektro/MeteorDemod.git
+        dest: /home/{{ target_user }}/MeteorDemod
+        version: origin/master
+        depth: 1
+        recursive: yes
+
+    - name: MeteorDemod compiled and installed
+      become: yes
+      shell: |
+        set -e
+        mkdir -p build && cd build
+        cmake ../ && ldconfig
+        make -j3 && make install
+        chown -R {{ target_user }}:{{ target_user }} /home/{{ target_user }}/.config/meteordemod || true
+      args:
+        chdir: /home/{{ target_user }}/MeteorDemod
+
+    - name: MeteorDemod source removed
+      file:
+        path: /home/{{ target_user }}/MeteorDemod
+        state: absent
+
+# Only RTL-SDR and Airspy receivers are supported; the HackRF tools of older installs go
+- name: Other SDR tools removed (HackRF)
+  become: yes
+  apt:
+    name: hackrf
+    state: absent
+
+# No remote-desktop apps on this station (remote access is SSH only)
+- name: Remote-desktop apps check
+  command: dpkg-query -W -f=${Status} {{ item }}
+  loop: [anydesk, teamviewer, teamviewer-host]
+  register: remote_apps
+  changed_when: false
+  failed_when: false
+
+- name: Remote-desktop apps removed
+  become: yes
+  apt:
+    name: "{{ item.item }}"
+    state: absent
+    purge: yes
+  loop: "{{ remote_apps.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: item.rc == 0 and 'install ok installed' in item.stdout

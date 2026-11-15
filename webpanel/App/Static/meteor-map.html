@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meteor live map</title>
+<!--
+  Live dark map for METEOR-M2 3 and METEOR-M2 4.
+
+  Projection: Equal Earth (equal-area), centred on 15 E, opening on the whole world
+  plus the station's reception range.
+
+  Live layers:
+    - satellite positions, recomputed every animation frame (smooth motion)
+    - each satellite's coverage area at the station's minimum elevation
+    - ground tracks (past dashed, next orbit solid), refreshed every 10 s
+    - day/night shading with twilight bands, refreshed every minute
+
+  Orbit data, in order of preference:
+    1. window.RL1_TLE - injected by SatelliteController from the TLE file the
+       scheduler writes (same orbits used to schedule captures)
+    2. a browser cache of the last CelesTrak download (max 12 hours old)
+    3. a fresh download from CelesTrak
+-->
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0a1220;
+    font: 13px/1.4 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #dbe4ee; }
+  #map { position: absolute; inset: 0; }
+  #map svg { width: 100%; height: 100%; display: block; }
+  .ocean { fill: #07101c; }
+  .grat { fill: none; stroke: #16263b; stroke-width: 0.5; }
+  .land { fill: #24364d; stroke: #4a6382; stroke-width: 0.6; }
+  .night { fill: #000; fill-opacity: 0.14; }
+  .range { fill: #9fd3ff; fill-opacity: 0.05; stroke: #9fd3ff; stroke-opacity: 0.45;
+    stroke-width: 1; stroke-dasharray: 4 4; }
+  .foot { fill-opacity: 0.08; stroke-opacity: 0.6; stroke-width: 1; }
+  .past { fill: none; stroke-width: 1.5; stroke-opacity: 0.45; stroke-dasharray: 3 4; }
+  .future { fill: none; stroke-width: 1.8; stroke-opacity: 0.9; }
+  /* a pass picked on the Satellites page: its track while in range, with AOS / LOS markers */
+  .hl { fill: none; stroke-width: 4.5; stroke-opacity: 0.95; stroke-linecap: round; }
+  .hl-halo { fill: none; stroke-width: 11; stroke-opacity: 0.18; stroke-linecap: round; }
+  .hl-dot { stroke: #0a1220; stroke-width: 2; }
+  .hl-label { font-size: 11px; font-weight: 600; paint-order: stroke; stroke: #0a1220; stroke-width: 3px; }
+  .sat-core { stroke: #0a1220; stroke-width: 2; }
+  /* live pass progress panel next to a satellite that is in range */
+  .prog-bg { fill: rgba(10,18,32,0.88); stroke: #2a3a50; stroke-width: 1; }
+  .prog-track { fill: #22324a; }
+  .prog-text { font-size: 11px; fill: #dbe4ee; font-variant-numeric: tabular-nums; }
+  .prog-text .dim { fill: #8fa3b8; }
+  .sat-label { font-size: 12px; font-weight: 600; paint-order: stroke; stroke: #0a1220;
+    stroke-width: 3px; stroke-linejoin: round; }
+  .station { fill: #fff; stroke: #0a1220; stroke-width: 1.5; }
+  .station-ring { fill: none; stroke: #fff; stroke-opacity: 0.6; }
+  @media (prefers-reduced-motion: no-preference) {
+    .pulse { animation: pulse 2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+    @keyframes pulse { from { transform: scale(1); opacity: 0.8; } to { transform: scale(3.2); opacity: 0; } }
+  }
+  #legend { position: absolute; left: 8px; top: 8px; background: rgba(10,18,32,0.82);
+    border: 1px solid #22344d; border-radius: 8px; padding: 6px 10px; }
+  .row { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .row + .row { margin-top: 3px; }
+  .sw { width: 16px; height: 3px; border-radius: 2px; flex: none; }
+  .name { font-weight: 600; }
+  .info { color: #8fa3b8; }
+  .live { color: #0a1220; background: #5fd38a; border-radius: 8px; padding: 0 6px; font-size: 11px; font-weight: 600; }
+  #status { position: absolute; right: 8px; bottom: 6px; font-size: 11px; color: #7f93a8;
+    background: rgba(10,18,32,0.7); padding: 1px 6px; border-radius: 4px; }
+  /* zoom: lines keep their width whatever the zoom level */
+  #map svg path { vector-effect: non-scaling-stroke; }
+  #map svg { cursor: grab; touch-action: pan-y; }
+  #map svg:active { cursor: grabbing; }
+  #zoom { position: absolute; right: 8px; top: 8px; display: flex; flex-direction: column;
+    background: rgba(10,18,32,0.82); border: 1px solid #22344d; border-radius: 8px; overflow: hidden; }
+  #zoom button { width: 34px; height: 32px; border: 0; background: transparent; color: #dbe4ee;
+    font: 600 18px/1 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; cursor: pointer; padding: 0; }
+  #zoom button + button { border-top: 1px solid #22344d; }
+  #zoom button:hover { background: #16263b; }
+  #zoom button:disabled { color: #4a5a6e; cursor: default; background: transparent; }
+  #zoom button svg { width: 16px; height: 16px; vertical-align: middle; }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #5fd38a; margin-right: 4px; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="legend"></div>
+<div id="zoom" role="group" aria-label="Map zoom">
+  <button type="button" id="zoom-in" aria-label="Zoom in" title="Zoom in">+</button>
+  <button type="button" id="zoom-out" aria-label="Zoom out" title="Zoom out">&minus;</button>
+  <button type="button" id="zoom-reset" aria-label="Whole world" title="Whole world">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+      <circle cx="8" cy="8" r="5"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/>
+      <path d="M8 1v2.5M8 12.5V15M1 8h2.5M12.5 8H15"/></svg>
+  </button>
+  <button type="button" id="zoom-station" aria-label="Zoom to the station" title="Zoom to the station">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+      <path d="M8 14.5s-4.5-4.6-4.5-8a4.5 4.5 0 0 1 9 0c0 3.4-4.5 8-4.5 8z"/><circle cx="8" cy="6.5" r="1.6"/></svg>
+  </button>
+  <button type="button" id="fullscreen" aria-label="Full screen" title="Full screen" aria-pressed="false">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+      <path class="fs-open" d="M10 2h4v4M14 2l-5 5M6 14H2v-4M2 14l5-5"/>
+      <path class="fs-close" d="M9 3v4h4M9 7l5-5M7 13V9H3M7 9l-5 5" style="display:none"/></svg>
+  </button>
+</div>
+<div id="status">Loading map…</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // the web panel's language (injected by SatelliteController as window.RL1_LANG)
+  function tr(k, d) { return (window.RL1_LANG && window.RL1_LANG[k]) || d; }
+  [['zoom-in', 'zoom_in', 'Zoom in'], ['zoom-out', 'zoom_out', 'Zoom out'], ['zoom-reset', 'world_view', 'Whole world'],
+   ['zoom-station', 'zoom_station', 'Zoom to the station'],
+   ['fullscreen', 'full_screen', 'Full screen']].forEach(function (b) {
+    var el = document.getElementById(b[0]); el.title = tr(b[1], b[2]); el.setAttribute('aria-label', el.title);
+  });
+  document.getElementById('status').textContent = tr('loading_map', 'Loading map…');
+
+  var SATS = [
+    { name: 'METEOR-M2 3', short: 'M2 3', id: 57166, color: '#f2b33d' },
+    { name: 'METEOR-M2 4', short: 'M2 4', id: 59051, color: '#4fd1c5' }
+  ];
+  var OBS = Object.assign({ lat: 0, lon: 0, min_el: 15 }, window.RL1_OBSERVER || {});
+  var PAST_MIN = 30, FUTURE_MIN = 100, STEP_S = 30;   // ground-track window
+  var NEXT_PASS_SCAN_H = 24;                          // how far ahead to look for the next pass
+  var ALT_KM = 830, R_EARTH = 6371;                   // Meteor-M2 orbit height
+  var TRACK_EVERY_MS = 10000, NIGHT_EVERY_MS = 60000, LEGEND_EVERY_MS = 5000;
+  var CACHE_KEY = 'rl1-meteor-tle', CACHE_MAX_MS = 12 * 3600 * 1000;
+  var WORLD_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json';
+
+  var rad = Math.PI / 180;
+  var statusEl = document.getElementById('status');
+  var legendEl = document.getElementById('legend');
+  var mapEl = document.getElementById('map');
+  var observerGd = { latitude: OBS.lat * rad, longitude: OBS.lon * rad, height: 0 };
+  var world = null, tleSource = '', proj, path, layers = {};
+  var zoom, zoomT = d3.zoomIdentity, MAX_ZOOM = 40, fullScreen = false;
+  var lastTrack = 0, lastNight = 0, lastLegend = 0;
+
+  function setStatus(html) { statusEl.innerHTML = html; }
+
+  // ---- orbit data --------------------------------------------------------
+  function parseTle(text, id) {
+    var lines = String(text || '').split(/\r?\n/).map(function (l) { return l.trim(); });
+    for (var i = 0; i < lines.length - 1; i++) {
+      if (/^1 /.test(lines[i]) && parseInt(lines[i].substr(2, 5), 10) === id && /^2 /.test(lines[i + 1])) {
+        var rec = satellite.twoline2satrec(lines[i], lines[i + 1]);
+        if (rec) { rec.rl1Lines = [lines[i], lines[i + 1]]; }   // kept for the details panel
+        return rec;
+      }
+    }
+    return null;
+  }
+
+  function attachSatrecs(text) {
+    var ok = true;
+    SATS.forEach(function (s) { s.satrec = parseTle(text, s.id); if (!s.satrec) { ok = false; } });
+    return ok;
+  }
+
+  function readCache() {
+    try {
+      var c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      if (c && Date.now() - c.time < CACHE_MAX_MS) { return c.text; }
+    } catch (e) { /* storage unavailable */ }
+    return null;
+  }
+
+  function writeCache(text) {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), text: text })); } catch (e) { /* ignore */ }
+  }
+
+  function loadTle() {
+    if (window.RL1_TLE && attachSatrecs(window.RL1_TLE)) { tleSource = 'station'; return Promise.resolve(); }
+    var cached = readCache();
+    if (cached && attachSatrecs(cached)) { tleSource = 'CelesTrak (cached)'; return Promise.resolve(); }
+    return Promise.all(SATS.map(function (s) {
+      return fetch('https://celestrak.org/NORAD/elements/gp.php?CATNR=' + s.id + '&FORMAT=TLE')
+        .then(function (r) { if (!r.ok) { throw new Error('HTTP ' + r.status); } return r.text(); });
+    })).then(function (texts) {
+      var text = texts.join('\n');
+      if (!attachSatrecs(text)) { throw new Error('orbit data incomplete'); }
+      writeCache(text);
+      tleSource = 'CelesTrak';
+    });
+  }
+
+  // ---- orbit and sun maths -------------------------------------------------
+  function propagate(satrec, date) {
+    var pv = satellite.propagate(satrec, date);
+    if (!pv || !pv.position) { return null; }
+    var gmst = satellite.gstime(date);
+    var gd = satellite.eciToGeodetic(pv.position, gmst);
+    var look = satellite.ecfToLookAngles(observerGd, satellite.eciToEcf(pv.position, gmst));
+    return { lon: satellite.degreesLong(gd.longitude), lat: satellite.degreesLat(gd.latitude),
+             el: look.elevation / rad };
+  }
+
+  function track(satrec, from, to) {
+    var coords = [];
+    for (var t = from; t <= to; t += STEP_S * 1000) {
+      var p = propagate(satrec, new Date(t));
+      if (p) { coords.push([p.lon, p.lat]); }
+    }
+    return { type: 'LineString', coordinates: coords };
+  }
+
+  // start (AOS), end (LOS) and highest elevation of the pass in progress at `now`
+  function passWindow(satrec, now) {
+    var STEP = 5000, LIMIT = 25 * 60000, aos = now, los = now, maxEl = -90, p, t;
+    for (t = now; t > now - LIMIT; t -= STEP) {
+      p = propagate(satrec, new Date(t));
+      if (!p || p.el < OBS.min_el) { break; }
+      aos = t; maxEl = Math.max(maxEl, p.el);
+    }
+    for (t = now; t < now + LIMIT; t += STEP) {
+      p = propagate(satrec, new Date(t));
+      if (!p || p.el < OBS.min_el) { break; }
+      los = t; maxEl = Math.max(maxEl, p.el);
+    }
+    return { aos: aos, los: los, maxEl: maxEl };
+  }
+
+  function mmss(ms) {
+    var s = Math.max(0, Math.round(ms / 1000));
+    return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+  }
+
+  function nextPass(satrec, from) {
+    var end = from + NEXT_PASS_SCAN_H * 3600 * 1000, aos = null, maxEl = -90;
+    for (var t = from; t <= end; t += STEP_S * 1000) {
+      var p = propagate(satrec, new Date(t));
+      if (!p) { continue; }
+      if (p.el >= OBS.min_el) {
+        if (aos === null) { aos = t; }
+        maxEl = Math.max(maxEl, p.el);
+      } else if (aos !== null) {
+        break;
+      }
+    }
+    return aos === null ? null : { aos: new Date(aos), maxEl: maxEl };
+  }
+
+  // ---- details for the Satellites page --------------------------------------------
+  // Framed by /satellite, the map sends the page each satellite's state once a second
+  // (postMessage 'rl1-sat-state'); the page shows the selected one beside the map.
+  function orbitInfo(s) {
+    var r = s.satrec, l1 = r.rl1Lines[0], l2 = r.rl1Lines[1];
+    var period = 2 * Math.PI / r.no;                              // minutes (no is rad/min)
+    var mu = 398600.4418, n = r.no / 60;                          // rad/s
+    var a = Math.pow(mu / (n * n), 1 / 3);
+    var yr = r.epochyr < 57 ? 2000 + r.epochyr : 1900 + r.epochyr;
+    var cospar = l1.substr(9, 8).trim();
+    if (/^\d{5}/.test(cospar)) {
+      var y = parseInt(cospar.substr(0, 2), 10);
+      cospar = (y < 57 ? 2000 + y : 1900 + y) + '-' + cospar.substr(2);
+    }
+    return {
+      norad: s.id, cospar: cospar,
+      epoch: Date.UTC(yr, 0, 1) + (r.epochdays - 1) * 86400000,
+      revAtEpoch: parseInt(l2.substr(63, 5), 10) || 0,
+      period: period, incl: r.inclo / rad, ecc: r.ecco,
+      perigee: a * (1 - r.ecco) - 6378.137, apogee: a * (1 + r.ecco) - 6378.137
+    };
+  }
+
+  var stateCache = {};
+  function satState(s, now) {
+    var date = new Date(now), pv = satellite.propagate(s.satrec, date);
+    if (!pv || !pv.position) { return null; }
+    var gmst = satellite.gstime(date);
+    var gd = satellite.eciToGeodetic(pv.position, gmst);
+    var ecf = satellite.eciToEcf(pv.position, gmst);
+    var look = satellite.ecfToLookAngles(observerGd, ecf);
+    var v = pv.velocity, speed = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    // in the Earth's shadow: behind the Earth as seen from the sun (cylinder model)
+    var sun = subSolar(date), la = sun[1] * rad, lo = sun[0] * rad;
+    var u = [Math.cos(la) * Math.cos(lo), Math.cos(la) * Math.sin(lo), Math.sin(la)];
+    var dot = ecf.x * u[0] + ecf.y * u[1] + ecf.z * u[2];
+    var perp = Math.sqrt(Math.max(0, ecf.x * ecf.x + ecf.y * ecf.y + ecf.z * ecf.z - dot * dot));
+    var c = stateCache[s.id] || (stateCache[s.id] = { at: 0 });
+    var el = look.elevation / rad;
+    if (now - c.at > 30000 || (el >= OBS.min_el) !== c.inRange) {
+      c.at = now; c.inRange = el >= OBS.min_el;
+      c.pass = c.inRange ? passWindow(s.satrec, now) : null;
+      var np = nextPass(s.satrec, c.inRange ? c.pass.los + 60000 : now);
+      c.next = np ? { aos: np.aos.getTime(), maxEl: np.maxEl } : null;
+      if (c.next) {
+        var w = passWindow(s.satrec, c.next.aos + 30000);
+        c.next.los = w.los; c.next.aos = w.aos;
+      }
+      c.orbit = c.orbit || orbitInfo(s);
+    }
+    var o = c.orbit;
+    return {
+      name: s.name, short: s.short, color: s.color,
+      lat: satellite.degreesLat(gd.latitude), lon: satellite.degreesLong(gd.longitude),
+      alt: gd.height, speed: speed,
+      az: look.azimuth / rad, el: el, range: look.rangeSat,
+      sunlit: !(dot < 0 && perp < 6371),
+      inRange: c.inRange, pass: c.pass, next: c.next,
+      orbit: o, orbitNo: o.revAtEpoch + Math.floor((now - o.epoch) / 60000 / o.period),
+      minEl: OBS.min_el, tleSource: tleSource
+    };
+  }
+  var lastState = 0;
+  function sendState(now) {
+    if (window.parent === window || now - lastState < 1000) { return; }
+    lastState = now;
+    var out = [];
+    SATS.forEach(function (s) { if (s.satrec) { var st = satState(s, now); if (st) { out.push(st); } } });
+    window.parent.postMessage({ type: 'rl1-sat-state', time: now, sats: out }, window.location.origin);
+  }
+
+  // ground distance (degrees of arc) at which a satellite is at min_el
+  var RANGE_DEG = (function () {
+    var e = OBS.min_el * rad;
+    return (Math.acos(R_EARTH * Math.cos(e) / (R_EARTH + ALT_KM)) - e) / rad;
+  })();
+
+  // sub-solar point (low-precision solar position, good to ~0.1 degree)
+  function subSolar(date) {
+    var d = date.getTime() / 86400000 + 2440587.5 - 2451545.0;
+    var g = (357.529 + 0.98560028 * d) * rad;
+    var q = 280.459 + 0.98564736 * d;
+    var L = (q + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g)) * rad;
+    var e = (23.439 - 0.00000036 * d) * rad;
+    var dec = Math.asin(Math.sin(e) * Math.sin(L));
+    var ra = Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L));
+    var gmst = satellite.gstime(date);
+    var lon = (ra - gmst) / rad;
+    lon = ((lon + 540) % 360) - 180;
+    return [lon, dec / rad];
+  }
+
+  function hhmm(d) {
+    return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+
+  // ---- drawing -------------------------------------------------------------
+  function build() {
+    var w = mapEl.clientWidth, h = mapEl.clientHeight;
+    var range = d3.geoCircle().center([OBS.lon, OBS.lat]).radius(RANGE_DEG)();
+    // Equal Earth, centred on 15 E, the whole world fitted to the frame
+    proj = d3.geoEqualEarth().rotate([-15, 0]).fitExtent([[6, 6], [w - 6, h - 6]], { type: 'Sphere' });
+    path = d3.geoPath(proj);
+
+    var svg = d3.select(mapEl).selectAll('svg').data([0]).join('svg').attr('viewBox', [0, 0, w, h]);
+    svg.selectAll('*').remove();
+
+    // everything geographic zooms together; markers and labels sit on top at a fixed size
+    layers.zoom = svg.append('g');
+    layers.zoom.append('path').attr('class', 'ocean').attr('d', path({ type: 'Sphere' }));
+    layers.zoom.append('path').attr('class', 'grat').attr('d', path(d3.geoGraticule10()));
+    layers.zoom.append('path').attr('class', 'land').attr('d', path(world));
+    layers.night = layers.zoom.append('g');
+    layers.zoom.append('path').attr('class', 'range').attr('d', path(range));
+    layers.tracks = layers.zoom.append('g');
+    layers.hl = layers.zoom.append('g');
+    layers.foot = layers.zoom.append('g');
+    layers.marks = svg.append('g');
+    layers.hlMarks = layers.marks.append('g');
+    layers.sats = layers.marks.append('g');
+
+    layers.stationRing = layers.marks.append('circle').attr('class', 'station-ring pulse').attr('r', 5);
+    layers.station = layers.marks.append('circle').attr('class', 'station').attr('r', 4);
+
+
+    SATS.forEach(function (s) {
+      s.footEl = layers.foot.append('path').attr('class', 'foot').attr('fill', s.color).attr('stroke', s.color);
+      s.ringEl = layers.sats.append('circle').attr('class', 'pulse').attr('r', 6)
+        .attr('fill', 'none').attr('stroke', s.color).attr('stroke-width', 2);
+      s.dotEl = layers.sats.append('circle').attr('class', 'sat-core').attr('r', 6).attr('fill', s.color);
+      s.labelEl = layers.sats.append('text').attr('class', 'sat-label').attr('fill', s.color).text(s.short);
+      // progress panel: background, title line, bar track and fill
+      s.progEl = layers.sats.append('g').style('display', 'none');
+      s.progEl.append('rect').attr('class', 'prog-bg').attr('width', 150).attr('height', 40).attr('rx', 7);
+      s.progText = s.progEl.append('text').attr('class', 'prog-text').attr('x', 8).attr('y', 16);
+      s.progEl.append('rect').attr('class', 'prog-track').attr('x', 8).attr('y', 25).attr('width', 134).attr('height', 6).attr('rx', 3);
+      s.progFill = s.progEl.append('rect').attr('x', 8).attr('y', 25).attr('height', 6).attr('rx', 3).attr('fill', s.color);
+      s.pass = null;
+    });
+
+    zoom = d3.zoom()
+      .scaleExtent([1, MAX_ZOOM])
+      .translateExtent([[0, 0], [w, h]])
+      .extent([[0, 0], [w, h]])
+      // mouse: drag pans, Ctrl+wheel zooms (plain wheel still scrolls the page, except in
+      // full screen, where there is no page to scroll); double-click zooms in
+      // touch: two fingers pan and pinch-zoom (one finger still scrolls the page)
+      .filter(function (event) {
+        if (event.type === 'wheel') { return event.ctrlKey || fullScreen; }
+        if (event.type === 'touchstart') { return event.touches.length > 1; }
+        return !event.button;
+      })
+      .on('zoom', function (event) { zoomT = event.transform; applyZoom(); });
+    svg.call(zoom);
+    svg.call(zoom.transform, zoomT);
+    lastTrack = lastNight = lastLegend = 0;
+    drawHighlight();
+  }
+
+  // screen position of a lon/lat at the current zoom
+  function toScreen(lonlat) {
+    var xy = proj(lonlat);
+    return xy ? zoomT.apply(xy) : null;
+  }
+
+  function applyZoom() {
+    layers.zoom.attr('transform', zoomT);
+    var st = toScreen([OBS.lon, OBS.lat]);
+    [layers.station, layers.stationRing].forEach(function (el) { el.attr('cx', st[0]).attr('cy', st[1]); });
+    placeHighlightMarks();
+    document.getElementById('zoom-in').disabled = zoomT.k >= MAX_ZOOM - 0.01;
+    document.getElementById('zoom-out').disabled = zoomT.k <= 1.01;
+    drawSats(Date.now());
+  }
+
+  // buttons zoom around the station, so it stays in view
+  function zoomBy(factor) {
+    var st = toScreen([OBS.lon, OBS.lat]);
+    d3.select(mapEl).select('svg').transition().duration(300).call(zoom.scaleBy, factor, st);
+  }
+  document.getElementById('zoom-in').addEventListener('click', function () { zoomBy(1.6); });
+  document.getElementById('zoom-out').addEventListener('click', function () { zoomBy(1 / 1.6); });
+  document.getElementById('zoom-reset').addEventListener('click', function () {
+    d3.select(mapEl).select('svg').transition().duration(400).call(zoom.transform, d3.zoomIdentity);
+  });
+  // the station's reception range (15 degrees) filling the frame
+  document.getElementById('zoom-station').addEventListener('click', function () {
+    var w = mapEl.clientWidth, h = mapEl.clientHeight;
+    var b = path.bounds(d3.geoCircle().center([OBS.lon, OBS.lat]).radius(RANGE_DEG)());
+    var k = Math.max(1, Math.min(MAX_ZOOM, 0.9 / Math.max((b[1][0] - b[0][0]) / w, (b[1][1] - b[0][1]) / h)));
+    var cx = (b[0][0] + b[1][0]) / 2, cy = (b[0][1] + b[1][1]) / 2;
+    d3.select(mapEl).select('svg').transition().duration(600)
+      .call(zoom.transform, d3.zoomIdentity.translate(w / 2 - k * cx, h / 2 - k * cy).scale(k));
+  });
+
+  // full screen: inside the Satellites page the page makes the map's frame full screen (it asks
+  // with postMessage and says back when it changed); opened on its own, the map does it itself
+  var fsBtn = document.getElementById('fullscreen');
+  function showFullscreen(on) {
+    fullScreen = on;
+    fsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    fsBtn.title = on ? tr('exit_full_screen', 'Exit full screen') : tr('full_screen', 'Full screen');
+    fsBtn.setAttribute('aria-label', fsBtn.title);
+    fsBtn.querySelector('.fs-open').style.display = on ? 'none' : '';
+    fsBtn.querySelector('.fs-close').style.display = on ? '' : 'none';
+  }
+  fsBtn.addEventListener('click', function () {
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'rl1-fullscreen' }, window.location.origin);
+    } else if (document.fullscreenElement || document.webkitFullscreenElement) {
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    } else {
+      var el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req) { req.call(el); }
+    }
+  });
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (name) {
+    document.addEventListener(name, function () {
+      showFullscreen(!!(document.fullscreenElement || document.webkitFullscreenElement));
+    });
+  });
+  if (window.parent === window && !(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)) {
+    fsBtn.style.display = 'none';   // nothing to do on its own without the Fullscreen API
+  }
+  window.addEventListener('message', function (ev) {
+    if (ev.origin === window.location.origin && ev.data && ev.data.type === 'rl1-fullscreen-state') {
+      showFullscreen(!!ev.data.on);
+    }
+  });
+
+  function drawNight(now) {
+    var anti = subSolar(new Date(now));
+    anti = [anti[0] + 180, -anti[1]];
+    // night plus civil, nautical and astronomical twilight bands, darker towards midnight
+    layers.night.selectAll('path').data([90, 96, 102, 108]).join('path')
+      .attr('class', 'night')
+      .attr('d', function (deg) { return path(d3.geoCircle().center(anti).radius(180 - deg)()); });
+  }
+
+  function drawTracks(now) {
+    var data = [];
+    SATS.forEach(function (s) {
+      if (!s.satrec) { return; }
+      data.push({ cls: 'past', color: s.color, geo: track(s.satrec, now - PAST_MIN * 60000, now) });
+      data.push({ cls: 'future', color: s.color, geo: track(s.satrec, now, now + FUTURE_MIN * 60000) });
+    });
+    layers.tracks.selectAll('path').data(data).join('path')
+      .attr('class', function (d) { return d.cls; })
+      .attr('stroke', function (d) { return d.color; })
+      .attr('d', function (d) { return path(d.geo); });
+  }
+
+  function drawLegend(now) {
+    var html = '';
+    SATS.forEach(function (s) {
+      if (!s.satrec) { return; }
+      var p = propagate(s.satrec, new Date(now)), info;
+      if (p && p.el >= OBS.min_el) {
+        info = '<span class="live">' + tr('in_range', 'In range') + ' · ' + Math.round(p.el) + '°</span>';
+      } else {
+        var np = nextPass(s.satrec, now);
+        info = np ? tr('next_pass_title', 'Next pass') + ' ' + hhmm(np.aos) + ' · ' + tr('max', 'max') + ' ' + Math.round(np.maxEl) + '°'
+                  : tr('no_pass_in', 'No pass in') + ' ' + NEXT_PASS_SCAN_H + ' ' + tr('unit_h', 'h');
+      }
+      html += '<div class="row"><span class="sw" style="background:' + s.color + '"></span>' +
+        '<span class="name">' + s.name + '</span><span class="info">' + info + '</span></div>';
+    });
+    legendEl.innerHTML = html;
+  }
+
+  function drawSats(now) {
+    var w = mapEl.clientWidth, h = mapEl.clientHeight;
+    SATS.forEach(function (s) {
+      if (!s.satrec) { return; }
+      var p = propagate(s.satrec, new Date(now));
+      if (!p) { return; }
+      s.footEl.attr('d', path(d3.geoCircle().center([p.lon, p.lat]).radius(RANGE_DEG)()));
+      var xy = toScreen([p.lon, p.lat]);
+      var show = xy && xy[0] > -30 && xy[0] < w + 30 && xy[1] > -30 && xy[1] < h + 30;
+      [s.dotEl, s.ringEl].forEach(function (el) {
+        el.attr('cx', show ? xy[0] : -99).attr('cy', show ? xy[1] : -99);
+      });
+      s.labelEl.attr('x', show ? xy[0] + 10 : -99).attr('y', show ? xy[1] + 4 : -99);
+      drawProgress(s, p, xy, show, now, w, h);
+    });
+  }
+
+  // live pass progress next to the satellite while it is above the station's minimum elevation
+  function drawProgress(s, p, xy, show, now, w, h) {
+    if (!show || p.el < OBS.min_el) {
+      s.progEl.style('display', 'none');
+      s.pass = null;
+      return;
+    }
+    if (!s.pass || now > s.pass.los + 5000 || now - s.pass.at > 30000) {
+      s.pass = passWindow(s.satrec, now);       // recomputed every 30 s during the pass
+      s.pass.at = now;
+    }
+    var span = Math.max(1, s.pass.los - s.pass.aos);
+    var frac = Math.min(1, Math.max(0, (now - s.pass.aos) / span));
+    s.progFill.attr('width', Math.max(2, 134 * frac));
+    s.progText.html(Math.round(frac * 100) + '%' +
+      '<tspan class="dim"> · </tspan>' + Math.round(p.el) + '°' +
+      '<tspan class="dim"> / ' + Math.round(s.pass.maxEl) + '° · ' + mmss(s.pass.los - now) + ' ' + tr('left', 'left') + '</tspan>');
+    // place below-right of the marker, flipping left/up near the edges
+    var x = xy[0] + 12, y = xy[1] + 10;
+    if (x + 150 > w - 4) { x = xy[0] - 162; }
+    if (y + 40 > h - 4) { y = xy[1] - 52; }
+    s.progEl.style('display', null).attr('transform', 'translate(' + x + ',' + y + ')');
+  }
+
+  // ---- highlighted pass (sent by the Satellites page with postMessage) --------------
+  var hl = null;
+  function drawHighlight() {
+    if (!layers.hl) { return; }
+    var d = hl ? [hl] : [];
+    layers.hl.selectAll('path.hl-halo').data(d).join('path').attr('class', 'hl-halo')
+      .attr('stroke', function (x) { return x.color; }).attr('d', function (x) { return path(x.geo); });
+    layers.hl.selectAll('path.hl').data(d).join('path').attr('class', 'hl')
+      .attr('stroke', function (x) { return x.color; }).attr('d', function (x) { return path(x.geo); });
+    var marks = hl ? [{ at: hl.geo.coordinates[0], fill: '#5fd38a', text: hl.aosText || hhmm(new Date(hl.aos)) },
+                      { at: hl.geo.coordinates[hl.geo.coordinates.length - 1], fill: '#ff6b6b', text: hl.losText || hhmm(new Date(hl.los)) }] : [];
+    layers.hlMarks.selectAll('circle').data(marks).join('circle').attr('class', 'hl-dot').attr('r', 5)
+      .attr('fill', function (m) { return m.fill; });
+    layers.hlMarks.selectAll('text').data(marks).join('text').attr('class', 'hl-label')
+      .attr('fill', function (m) { return m.fill; }).text(function (m) { return m.text; });
+    placeHighlightMarks();
+  }
+  function placeHighlightMarks() {
+    if (!layers.hlMarks) { return; }
+    layers.hlMarks.selectAll('circle').each(function (m) {
+      var xy = toScreen(m.at) || [-99, -99];
+      d3.select(this).attr('cx', xy[0]).attr('cy', xy[1]);
+    });
+    layers.hlMarks.selectAll('text').each(function (m) {
+      var xy = toScreen(m.at) || [-99, -99];
+      d3.select(this).attr('x', xy[0] + 8).attr('y', xy[1] - 7);
+    });
+  }
+  // a pass sent before the orbit data and the map are ready waits in pendingPass
+  var mapReady = false, pendingPass = null;
+  function showPass(d) {
+    hl = null;
+    if (!d.clear) {
+      var s = SATS.filter(function (x) { return x.name === d.sat && x.satrec; })[0];
+      if (s) {
+        var coords = [];
+        for (var t = d.aos; t <= d.los; t += 10000) {
+          var p = propagate(s.satrec, new Date(t));
+          if (p) { coords.push([p.lon, p.lat]); }
+        }
+        if (coords.length > 1) {
+          hl = { color: s.color, aos: d.aos, los: d.los, aosText: d.aosText, losText: d.losText, geo: { type: 'LineString', coordinates: coords } };
+        }
+      }
+    }
+    drawHighlight();
+  }
+  window.addEventListener('message', function (ev) {
+    if (ev.origin !== window.location.origin || !ev.data || ev.data.type !== 'rl1-pass') { return; }
+    if (mapReady) { showPass(ev.data); } else { pendingPass = ev.data; }
+  });
+
+  function frame() {
+    var now = Date.now();
+    if (now - lastNight > NIGHT_EVERY_MS) { drawNight(now); lastNight = now; }
+    if (now - lastTrack > TRACK_EVERY_MS) { drawTracks(now); lastTrack = now; }
+    if (now - lastLegend > LEGEND_EVERY_MS) { drawLegend(now); lastLegend = now; }
+    drawSats(now);
+    sendState(now);
+    requestAnimationFrame(frame);
+  }
+
+  // ---- start -----------------------------------------------------------------
+  Promise.all([
+    fetch(WORLD_URL).then(function (r) { return r.json(); }),
+    loadTle()
+  ]).then(function (res) {
+    world = topojson.feature(res[0], res[0].objects.countries);
+    build();
+    mapReady = true;
+    if (pendingPass) { showPass(pendingPass); pendingPass = null; }
+    setStatus('<span class="dot"></span>' + tr('live', 'Live') + ' · ' + tr('orbit_data', 'orbit data') + ': ' + tleSource);
+    requestAnimationFrame(frame);
+    var resizeTimer;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(build, 150);
+    });
+  }).catch(function (err) {
+    setStatus(tr('map_failed', 'Could not load map') + ': ' + err.message);
+  });
+})();
+</script>
+</body>
+</html>

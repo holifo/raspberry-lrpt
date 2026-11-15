@@ -1,0 +1,77 @@
+/* Meteor-M tab (/meteor). Shared colours are in site.css; the --pl-* values switch in dark mode,
+   the status colours below work on both themes */
+
+.mi-intro { max-width: 70ch; color: var(--pl-dim); margin: 2px 0 10px; }
+.mi-h { font-size: 1.05rem; font-weight: 700; margin: 22px 0 10px; }
+.mi-dim { color: var(--pl-dim); font-size: .85em; }
+.mi-note { color: var(--pl-dim); font-size: .86rem; margin: 6px 0 0; }
+.mi-note i { margin-inline-end: 4px; }
+.mi-cospas { margin-top: 10px; }
+
+/* status chips */
+.mi-st { display: inline-block; font-size: .72rem; font-weight: 600; padding: 1px 8px; border-radius: 999px;
+  white-space: nowrap; border: 1px solid transparent; }
+.st-operational.mi-st { background: #2fa866; color: #fff; }
+.st-retired.mi-st { background: var(--pl-track); color: var(--pl-dim); }
+.st-damaged.mi-st { background: #f6e3c4; color: #8a5a00; }
+.st-failed.mi-st { background: #f8d7d8; color: #a3262b; }
+.st-planned.mi-st { background: transparent; color: #3b82c4; border-color: #3b82c4; border-style: dashed; }
+html[data-theme="dark"] .st-damaged.mi-st { background: #4a3a1a; color: #f2c45a; }
+html[data-theme="dark"] .st-failed.mi-st { background: #4a1f22; color: #f3a1a4; }
+html[data-theme="dark"] .st-planned.mi-st { color: #7fb8ec; border-color: #7fb8ec; }
+
+/* working now */
+.mi-now { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 14px; }
+.mi-card { border: 1px solid var(--pl-line); border-radius: 12px; background: var(--pl-card); padding: 12px 14px;
+  box-shadow: inset 4px 0 0 var(--m23); }
+.mi-card.sat-m24 { box-shadow: inset 4px 0 0 var(--m24); }
+.mi-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.mi-card-head .sat-dot { margin-right: 0; }
+.mi-card-head .mi-st { margin-inline-start: auto; }
+.mi-name { font-weight: 600; }
+.mi-link { display: inline-block; margin-top: 8px; font-size: .86rem; }
+
+.mi-dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; margin: 0; font-size: .9rem; }
+.mi-dl dt { color: var(--pl-dim); font-weight: 400; }
+.mi-dl dd { margin: 0; font-variant-numeric: tabular-nums; }
+.mi-box { border: 1px solid var(--pl-line); border-radius: 12px; background: var(--pl-card); padding: 12px 14px; }
+.mi-inst dt { font-weight: 600; color: inherit; white-space: nowrap; }
+
+/* timeline: dots along 2009 … 2034, names above and below in turn */
+.mi-tl { position: relative; height: 124px; margin: 6px 28px 4px; }
+.mi-tl-axis { position: absolute; left: 0; right: 0; top: 64px; height: 2px; background: var(--pl-line); }
+.mi-tl-year { position: absolute; top: 104px; transform: translateX(-50%); font-size: .72rem; color: var(--pl-faint); }
+.mi-tl-now { position: absolute; top: 8px; height: 92px; border-left: 2px dotted var(--rec); }
+.mi-tl-now span { position: absolute; top: -6px; left: 4px; font-size: .7rem; color: var(--rec); white-space: nowrap; }
+.mi-tl-dot { position: absolute; top: 58px; transform: translateX(-50%); }
+.mi-tl-dot i { display: block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--pl-card);
+  background: var(--pl-low); box-shadow: 0 0 0 1px var(--pl-line); }
+.mi-tl-dot b { position: absolute; left: 50%; transform: translateX(-50%); font-size: .74rem; font-weight: 600;
+  white-space: nowrap; }
+.mi-tl-dot.up b { bottom: 22px; }
+.mi-tl-dot.down b { top: 20px; }
+.mi-tl-dot.st-operational i { background: #2fa866; }
+.mi-tl-dot.st-damaged i { background: #e0a526; }
+.mi-tl-dot.st-failed i { background: #d9464b; }
+.mi-tl-dot.st-planned i { background: var(--pl-card); box-shadow: 0 0 0 2px #3b82c4; }
+.mi-legend { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 4px; }
+
+/* the list under the timeline */
+.mi-list { list-style: none; margin: 12px 0 0; padding: 0; border-top: 1px solid var(--pl-line); }
+.mi-list li { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; padding: 9px 2px;
+  border-bottom: 1px solid var(--pl-line); }
+.mi-when { color: var(--pl-dim); font-variant-numeric: tabular-nums; font-size: .9rem; }
+.mi-what { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.mi-what .mi-note { flex-basis: 100%; margin: 0; }
+.mi-list li.st-planned .mi-name { color: var(--pl-dim); }
+
+.mi-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 0 18px; }
+
+.mi-sources { margin: 0 0 8px; padding-inline-start: 18px; font-size: .88rem; }
+.mi-sources li { margin: 2px 0; }
+
+/* phones: the timeline would be too cramped; the list says it all */
+@media (max-width: 767.98px) {
+  .mi-tl, .mi-legend { display: none; }
+  .mi-list li { grid-template-columns: 86px minmax(0, 1fr); gap: 8px; }
+}

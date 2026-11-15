@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block body %}
+{% set sat_colours = {'METEOR-M2 3': 'm23', 'METEOR-M2 4': 'm24'} %}
+{% set now_s = 'now'|date('U') %}
+{% set today = now_s|date('Y-m-d') %}
+{% set yesterday = (now_s - 86400)|date('Y-m-d') %}
+
+<div class="page-head">
+  <h1 class="page-title">{{ lang['captures'] }}</h1>
+  {% if page_count > 1 %}<div class="page-meta">{{ lang['page'] }} {{ cur_page }} {{ lang['of'] }} {{ page_count }}</div>{% endif %}
+</div>
+
+{% include "Captures/legend.html" %}
+
+{% if capture.list|length == 0 %}
+  <div class="cap-empty">{{ lang['no_captures']|default('No captures yet') }}</div>
+{% else %}
+
+{# the captures of this page, grouped by day (newest first) #}
+{% set groups = {} %}
+{% for c in capture.list %}
+  {% set d = 'd' ~ c.pass_start|date('Ymd') %}
+  {% set groups = groups|merge({(d): (groups[d]|default([]))|merge([c])}) %}
+{% endfor %}
+
+{# filters: satellite and day/night; days fold open and shut (assets/js/captures.js) #}
+<div class="cap-tools" id="cap-tools" hidden>
+  <div class="cap-filters" role="group">
+    <button type="button" class="cap-f is-on" data-f="all">{{ lang['all']|default('All') }}</button>
+    <button type="button" class="cap-f" data-f="m23"><span class="sat-dot m23"></span>M2 3</button>
+    <button type="button" class="cap-f" data-f="m24"><span class="sat-dot m24"></span>M2 4</button>
+    <button type="button" class="cap-f" data-f="day"><i class="fas fa-sun dn"></i> {{ lang['day']|default('day')|capitalize }}</button>
+    <button type="button" class="cap-f" data-f="night"><i class="fas fa-moon dn"></i> {{ lang['night']|default('night')|capitalize }}</button>
+  </div>
+  <button type="button" class="cap-fold-all" id="cap-fold-all"
+          data-open="{{ lang['expand_all']|default('Expand all') }}" data-close="{{ lang['collapse_all']|default('Collapse all') }}">{{ lang['expand_all']|default('Expand all') }}</button>
+</div>
+
+<div class="cap-days" id="cap-days">
+{% for key, items in groups %}
+  {% set first = items|first %}
+  {% set day = first.pass_start|date('Y-m-d') %}
+  {% set n23 = items|filter(c => c.sat_name == 'METEOR-M2 3')|length %}
+  {% set n24 = items|filter(c => c.sat_name == 'METEOR-M2 4')|length %}
+  {% set nday = items|filter(c => c.daylight_pass == 1)|length %}
+  {% set best = max(items|map(c => c.max_elev)) %}
+  {% set best_id = (items|filter(c => c.max_elev == best)|first).id %}
+  <section class="cap-day" data-day="{{ day }}">
+    <button type="button" class="day-head cap-day-head" aria-expanded="true">
+      <i class="fas fa-chevron-down cap-caret"></i>
+      <span class="day-name">
+        {% if day == today %}{{ lang['today']|default('Today') }}
+        {% elseif day == yesterday %}{{ lang['yesterday']|default('Yesterday') }}
+        {% else %}{{ first.pass_start|weekday }}{% endif %}
+      </span>
+      <span class="day-date">{{ first.pass_start|date(constant('Config\\Config::PASSES_DATE_FORMAT')) }}</span>
+      <span class="cap-sum">
+        <span class="cap-count">{{ items|length }} {{ items|length == 1 ? lang['pass_lower']|default('pass') : lang['passes_lower']|default('passes') }}</span>
+        {% if n23 %}<span class="sum-sat"><span class="sat-dot m23"></span>{{ n23 }}</span>{% endif %}
+        {% if n24 %}<span class="sum-sat"><span class="sat-dot m24"></span>{{ n24 }}</span>{% endif %}
+        <span class="sum-dn">{% if nday %}<i class="fas fa-sun dn"></i> {{ nday }}{% endif %}{% if items|length - nday %} <i class="fas fa-moon dn"></i> {{ items|length - nday }}{% endif %}</span>
+        <span class="sum-best" title="{{ lang['best_pass']|default('Best pass') }}"><i class="fas fa-star"></i> {{ best }}&deg;</span>
+      </span>
+      {# a peek at the day's thumbnails, shown while the day is folded #}
+      <span class="cap-peek" aria-hidden="true">
+        {% for c in items|slice(0, 6) %}<img src="{{ constant('Config\\Config::THUMB_PATH') ~ '/' ~ c.file_path ~ '-website-thumbnail.jpg' }}" alt="" loading="lazy">{% endfor %}
+      </span>
+    </button>
+    <div class="cap-grid">
+    {% for c in items %}
+      {% set colour = sat_colours[c.sat_name]|default('other') %}
+      {% set thumb = constant('Config\\Config::THUMB_PATH') ~ '/' ~ c.file_path ~ '-website-thumbnail.jpg' %}
+      <a class="cap-card sat-{{ colour }}{% if c.id == best_id and items|length > 1 %} is-best{% endif %}" href="/captures/listImages?pass_id={{ c.id }}"
+         data-sat="{{ colour }}" data-dn="{{ c.daylight_pass == 1 ? 'day' : 'night' }}">
+        <div class="cap-img"><img src="{{ thumb }}" alt="{{ c.sat_name }} {{ c.pass_start|date('H:i') }}" loading="lazy">
+          {% if c.id == best_id and items|length > 1 %}<span class="best-tag"><i class="fas fa-star"></i> {{ lang['best_pass']|default('Best pass') }}</span>{% endif %}
+        </div>
+        <div class="cap-body">
+          <div class="cap-top">
+            <span class="sat-chip">{{ c.sat_name|replace({'METEOR-': ''}) }}</span>
+            <span class="cap-time">{{ c.pass_start|date('H:i') }}</span>
+            <i class="fas fa-{{ c.daylight_pass == 1 ? 'sun' : 'moon' }} dn" title="{{ c.daylight_pass == 1 ? lang['day']|default('day') : lang['night']|default('night') }}"></i>
+          </div>
+          <div class="c-elev">
+            <span class="elev-bar{% if c.max_elev < 30 %} low{% endif %}"><span style="width: {{ (c.max_elev / 90 * 100)|round }}%"></span></span>
+            <span class="elev-val">{{ c.max_elev }}&deg;</span>
+          </div>
+          <div class="cap-meta">
+            {% if c.direction == 'Northbound' %}<i class="fas fa-arrow-up"></i>{% elseif c.direction == 'Southbound' %}<i class="fas fa-arrow-down"></i>{% endif %}
+            {{ c.direction == 'Northbound' ? lang['northbound']|default('Northbound') : (c.direction == 'Southbound' ? lang['southbound']|default('Southbound') : c.direction) }}{% if c.gain != '' %} · {{ lang['gain'] }} {{ c.gain == '0' ? lang['auto']|default('auto') : c.gain }}{% endif %}
+          </div>
+        </div>
+      </a>
+    {% endfor %}
+    </div>
+    <div class="cap-none" hidden>{{ lang['no_matching']|default('No passes match the filter on this day') }}</div>
+  </section>
+{% endfor %}
+</div>
+{% endif %}
+
+{% if page_count > 1 %}{% include('Captures/pagination.html') %}{% endif %}
+{% endblock %}
+
+{% block js_includes %}
+  <script src="{{ asset('/assets/js/captures.js') }}"></script>
+{% endblock %}

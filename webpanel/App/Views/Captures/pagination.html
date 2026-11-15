@@ -1,0 +1,13 @@
+<nav class="pager" aria-label="page">
+  {% if cur_page > 1 %}
+    <a href="?page_no={{ cur_page - 1 }}" aria-label="{{ lang['prev'] }}">&lsaquo; {{ lang['newer']|default('Newer') }}</a>
+  {% else %}
+    <span class="off">&lsaquo; {{ lang['newer']|default('Newer') }}</span>
+  {% endif %}
+  <span>{{ lang['page'] }} {{ cur_page }} {{ lang['of'] }} {{ page_count }}</span>
+  {% if cur_page < page_count %}
+    <a href="?page_no={{ cur_page + 1 }}" aria-label="{{ lang['next'] }}">{{ lang['older']|default('Older') }} &rsaquo;</a>
+  {% else %}
+    <span class="off">{{ lang['older']|default('Older') }} &rsaquo;</span>
+  {% endif %}
+</nav>

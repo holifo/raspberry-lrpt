@@ -1,0 +1,85 @@
+<?php
+
+namespace Config;
+
+class Config {
+  # how many captures to show per page (pagination)
+  const CAPTURES_PER_PAGE = 18;
+
+  # base directory for sqlite database
+  const DB_FILE = '{{ db_file }}';
+
+  # see files in App/Lang directory for available translations
+  const LANG = '{{ lang_setting }}';
+
+  # configure the date output format for the pass list - note that this must follow
+  # a format that conforms to https://www.php.net/manual/en/datetime.format.php
+  const PASSES_DATE_FORMAT = '{{ web_passes_date_format }}';
+
+  # configure time output format on captures web page - note this must follow
+  # a format that conforms to https://www.php.net/manual/en/datetime.format.php
+  const DATETIME_FORMAT = '{{ web_datetime_format }}';
+  const DATE_FORMAT = '{{ web_passes_date_format }}';
+
+  # the station's Linux user: it owns the 'at' capture jobs, so the web panel runs
+  # atrm as this user (sudoers rule 020_www-data-atrm-nopasswd) to unschedule a pass
+  const STATION_USER = '{{ target_user }}';
+
+  # use https://www.php.net/manual/en/timezones.php
+  const TIMEZONE = '{{ system_timezone.stdout }}';
+
+  # location of images
+  const IMAGE_PATH = '{{ images_output }}';
+
+  # location of thumbnails
+  const THUMB_PATH = '{{ images_output }}/thumb';
+
+  # decoded frames (.cadu) kept for offline re-processing, served at /recordings/
+  const RECORDING_PATH = '{{ audio_output }}/meteor';
+
+  # whether to enable satvis visualization
+  const ENABLE_SATVIS = '{{ enable_satvis|lower }}';
+
+  # [Claude AI edit] START - whether experimental webpanel features are enabled
+  # (currently gates the Meteor ground-track map in the Passes view);
+  # |default(false) keeps a Config.php rendering from an older settings.yml safe
+  const ENABLE_EXPERIMENTAL_FEATURES = '{{ experimental_features|default(false)|lower }}';
+  # [Claude AI edit] END
+
+  # whether to enable coronal mass ejetion GIFs from nasa
+  # warning: high data usage!
+  const ENABLE_CORONAL_GIF = '{{ enable_coronal|lower }}';
+
+  # whether to enable image video
+  const ENABLE_ANIMATION = '{{ enable_animation|lower }}';
+
+  # Daily map page (scripts/daily_map.sh writes IMAGE_PATH/daily)
+  const ENABLE_DAILY_MAP = '{{ daily_map|lower }}';
+
+  # Passes page: station bar title, day/night threshold (sun elevation) and the
+  # satellites' minimum elevation, as used by the scheduler
+  const STATION_TITLE = '{{ station_title }}';
+  const SUN_MIN_ELEV = '{{ meteor_m2_3_sun_min_elevation }}';
+  const SAT_MIN_ELEV = '{{ meteor_m2_3_sat_min_elevation }}';
+
+  # lat and lon coordinates of base station
+  const BASE_STATION_LAT = '{{ latitude }}';
+  const BASE_STATION_LON = '{{ longitude }}';
+
+  # how many captures to list on admin page for management
+  const ADMIN_CAPTURES_PER_PAGE = 100;
+
+  # which enhancements to display for day/night
+  const METEOR_DAY_ENHANCEMENTS = '{{ meteor_daytime_enhancements }}';
+  const METEOR_NIGHT_ENHANCEMENTS = '{{ meteor_nighttime_enhancements }}';
+
+  # raspberry-lrpt log file, shown live in Admin > Live log
+  const LOG_FILE = '{{ log_file }}';
+
+  # admin endpoint auth
+  const LOCK_ADMIN = '{{ lock_admin_page|lower }}';
+  const ADMIN_USER = '{{ admin_username }}';
+  const ADMIN_PASS = '{{ admin_password }}';
+}
+
+?>

@@ -1,0 +1,138 @@
+#!/bin/bash
+#
+# Purpose: Common code that is likely loaded in most of the scripts
+#          within this framework. Handles things such as a start date/time,
+#          logging, and other various "common" functionality.
+
+declare -A levels=([DEBUG]=0 [INFO]=1 [WARN]=2 [ERROR]=3)
+log_level=${LOG_LEVEL}
+
+# log function
+log() {
+  local log_message=$1
+  local log_priority=$2
+
+  # check if level exists and is of the right level to log
+  [[ ${levels[$log_priority]} ]] || return 1
+  (( ${levels[$log_priority]} < ${levels[$log_level]} )) && return 2
+
+  # log in place (which for at jobs end up in the linux mail)
+  echo "${log_priority} : ${log_message}"
+
+  # log output to a log file
+  echo $(date '+%d-%m-%Y %H:%M') $0 "${log_priority} : ${log_message}" >> "$LRPT_LOG"
+}
+
+# run as a normal user for any scripts within
+if [ $EUID -eq 0 ]; then
+  log "This script shouldn't be run as root." "ERROR"
+  exit 1
+fi
+
+# binary helpers
+CONVERT="/usr/bin/convert"
+FFMPEG="/usr/bin/ffmpeg"
+SOX="/usr/bin/sox"
+GMIC="/usr/bin/gmic"
+IDENTIFY="/usr/bin/identify"
+PREDICT="/usr/bin/predict"
+RTL_FM="/usr/local/bin/rtl_fm"
+SQLITE3="/usr/bin/sqlite3"
+WKHTMLTOIMG="/usr/bin/wkhtmltoimage"
+METEORDEMOD="/usr/local/bin/meteordemod"
+SATDUMP="/usr/bin/satdump"
+
+# base directories for scripts
+SCRIPTS_DIR="${LRPT_HOME}/scripts"
+AUDIO_PROC_DIR="${SCRIPTS_DIR}/audio_processors"
+IMAGE_PROC_DIR="${SCRIPTS_DIR}/image_processors"
+
+# frequency ranges for objects
+METEOR_M2_3_FREQ="137.9000"
+METEOR_M2_4_FREQ="137.9000"
+ELEKTRO_L3_FREQ="1691.0000"
+
+# the pass's start time: set once, by the script that starts the pass (receive_meteor.sh,
+# reprocess_meteor.sh); helpers that source this file later keep it
+export START_DATE=${START_DATE:-$(date '+%d-%m-%Y %H:%M')}
+
+# throttle: call right after starting a background job (cmd &); waits while PARALLEL_JOBS of this
+# shell's jobs are running, so loops use every core of the Pi without overloading it. Finish the
+# loop with a plain `wait`.
+PARALLEL_JOBS=${PARALLEL_JOBS:-$(nproc 2>/dev/null || echo 2)}
+throttle() {
+  while [ "$(jobs -rp | wc -l)" -ge "$PARALLEL_JOBS" ]; do wait -n 2>/dev/null || break; done
+}
+
+# tle_file_ok FILE: true when FILE holds TLEs for both Meteors (name line, then lines 1 and 2)
+tle_file_ok() {
+  [ -s "$1" ] && grep -A1 '^METEOR-M2 3' "$1" | grep -q '^1 57166' && grep -A1 '^METEOR-M2 4' "$1" | grep -q '^1 59051'
+}
+
+# save_daily_product DIR BASE EPOCH: keep a pass's SatDump product (product.cbor and the raw
+# channel images) in $METEOR_AUDIO_OUTPUT/products/BASE for the daily map (daily_map.sh).
+# Only passes whose decode had an orbit and sane line times (a map was drawn) are kept.
+save_daily_product() {
+  local src="$1/MSU-MR (Filled)" dst="$METEOR_AUDIO_OUTPUT/products/$2"
+  [ "${DAILY_MAP:-false}" = "true" ] || return 0
+  [ -f "$src/product.cbor" ] && ls "$src"/*map.png >/dev/null 2>&1 && satdump_times_ok "$1" "$3" || return 0
+  mkdir -p "$dst" && cp "$src/product.cbor" "$src"/MSU-MR-*.png "$dst"/ 2>/dev/null
+}
+
+# daily_map_later EPOCH: rebuild the daily map of the pass's (local) day in the background
+daily_map_later() {
+  [ "${DAILY_MAP:-false}" = "true" ] || return 0
+  # in a subshell, so it is not a job of this shell (a later `wait` or `throttle` won't wait for it)
+  ( setsid nohup nice -n 19 "$LRPT_HOME/scripts/daily_map.sh" "$(date -d "@$1" +%F)" >/dev/null 2>&1 </dev/null & )
+}
+
+# satdump_times_ok DIR EPOCH: true when the SatDump decode in DIR has line times within an
+# hour of the pass (EPOCH). The map overlay, projections and MCIR are drawn from those
+# times; corrupt frames (a weak or noisy pass) can carry nonsense ones, and then the
+# coastlines land somewhere else entirely.
+satdump_times_ok() {
+  local t
+  t=$(python3 -c 'import json,sys; print(int(json.load(open(sys.argv[1]))["timestamp"]))' "$1/dataset.json" 2>/dev/null) || return 0
+  [ $(( t > $2 ? t - $2 : $2 - t )) -lt 3600 ]
+}
+
+# work_dir NAME: make a scratch folder for one decode and print its path. With storage: sd it is
+# on the RAM disk ($RAMFS_AUDIO), which spares the SD card the ~250 MB of images a decode writes,
+# as long as the RAM disk is mounted and both it and the Pi's free memory have WORK_RAM_MB
+# (600 MB) to spare. Otherwise (storage: ssd, or no room) it is in $LRPT_HOME/tmp.
+work_dir() {
+  local base="$LRPT_HOME/tmp" need=${WORK_RAM_MB:-600} room avail
+  if [ "${STORAGE:-sd}" = "sd" ] && [ -n "$RAMFS_AUDIO" ] && mountpoint -q "$RAMFS_AUDIO" 2>/dev/null; then
+    room=$(df -Pm "$RAMFS_AUDIO" | awk 'NR == 2 { print $4 }')
+    avail=$(awk '/^MemAvailable:/ { print int($2 / 1024) }' /proc/meminfo)
+    if [ "${room:-0}" -ge "$need" ] && [ "${avail:-0}" -ge "$need" ]; then base="$RAMFS_AUDIO"; fi
+  fi
+  mkdir -p "$base" && mktemp -d "$base/$1.XXXXXX"
+}
+
+# pass_clear SECONDS: true when no pass is being recorded or processed and no scheduled pass
+# starts within SECONDS. Heavy jobs (re-processing) wait for it, so they never take the CPU
+# and memory a live decode needs.
+pass_clear() {
+  local now; now=$(date +%s)
+  pgrep -f "receive_meteor.sh" >/dev/null 2>&1 && return 1
+  [ -n "$($SQLITE3 "$DB_FILE" "SELECT 1 FROM predict_passes WHERE is_active = 1
+        AND pass_start < $((now + ${1:-900})) AND pass_end > $now LIMIT 1;" 2>/dev/null)" ] && return 1
+  return 0
+}
+
+# reproject IN OUT W N E S [extra args]: turn an equirectangular map covering W N E S into the
+# map_projection (equal_earth: image_processors/equal_earth.py); with equirectangular, or if the
+# warp fails, OUT is IN unchanged. Prints the size of OUT (WxH).
+reproject() {
+  local in=$1 out=$2 w=$3 n=$4 e=$5 s=$6; shift 6
+  if [ "${MAP_PROJECTION:-equal_earth}" = "equal_earth" ] &&
+     python3 "$LRPT_HOME/scripts/image_processors/equal_earth.py" "$in" "$out.tmp.${out##*.}" --bounds "$w" "$n" "$e" "$s" "$@" >/dev/null 2>>"$LRPT_LOG"; then
+    mv -f "$out.tmp.${out##*.}" "$out"
+  else
+    rm -f "$out.tmp.${out##*.}"
+    [ "${MAP_PROJECTION:-equal_earth}" = "equal_earth" ] && log "Equal Earth warp failed for $in - kept as equirectangular" "WARN"
+    [ "$in" = "$out" ] || cp -f "$in" "$out"
+  fi
+  $CONVERT "$out" -format '%wx%h' info: 2>/dev/null
+}

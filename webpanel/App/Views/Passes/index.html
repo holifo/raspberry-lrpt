@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/pass_list.css') }}">
+
+{% endblock %}
+
+{% block pre_body %}
+  {# station bar: replaces the big page title #}
+  <div class="station-bar">
+    <div class="station-name">
+      <strong>{{ constant('Config\\Config::STATION_TITLE') }}</strong>
+      <span class="station-sub" id="station-grid"></span>
+    </div>
+    <div class="station-state" id="station-state"><span class="state-dot"></span><span>&nbsp;</span></div>
+  </div>
+
+  {% if constant('Config\\Config::ENABLE_SATVIS') == 'true' %}
+  <div id="instruments" class="flex-container">
+    <div id="satvis" class="d-none d-sm-block flex-child">
+      <iframe name="satvis" src="https://satvis.space/?elements=Point,Label,SensorCone&layers=ArcGis&terrain=None&gs={{ constant('Config\\Config::BASE_STATION_LAT') }},{{ constant('Config\\Config::BASE_STATION_LON') }}&tags=Weather"></iframe>
+    </div>
+  </div>
+  {% endif %}
+
+  {# next pass / recording now - filled in by the script below #}
+  <div class="next-card" id="next-card" hidden>
+    <div class="next-top">
+      <span class="next-label" id="next-label">{{ lang['next_pass_title']|default('Next pass') }}</span>
+      <span class="next-daynight" id="next-daynight"></span>
+    </div>
+    <div class="next-count" id="next-count"></div>
+    <div class="next-meta">
+      <span class="sat-chip" id="next-chip"></span>
+      <span id="next-times"></span><span class="next-dim">{{ lang['local_short']|default('local') }}</span>
+      <span class="next-dim" id="next-extra"></span>
+    </div>
+    <div class="next-bar"><div class="next-bar-fill" id="next-bar"></div></div>
+  </div>
+
+  {# live decode while a pass is recorded: SatDump's spectrum, demodulator and decoder figures
+     from /passes/live (PassesController::liveAction), drawn by assets/js/live.js #}
+  <section class="live-card" id="live-card" hidden aria-live="off">
+    <div class="live-head">
+      <span class="live-dot"></span>
+      <span class="live-title">{{ lang['lv_title']|default('Live decode') }}</span>
+      <span class="sat-chip" id="live-sat"></span>
+      <span class="live-state" id="live-state">{{ lang['lv_wait']|default('Waiting for SatDump…') }}</span>
+      <span class="live-left" id="live-left"></span>
+    </div>
+    <div class="live-grid">
+      <div class="live-box live-spec">
+        <div class="live-cap"><span>{{ lang['lv_spectrum']|default('Spectrum and waterfall') }}</span><span class="live-dim" id="live-span"></span></div>
+        <canvas id="live-fft" width="640" height="150"></canvas>
+        <canvas id="live-wf" width="640" height="150"></canvas>
+      </div>
+      <div class="live-box live-const">
+        <div class="live-cap"><span>{{ lang['lv_const']|default('Constellation') }}</span><span class="live-dim">QPSK</span></div>
+        <canvas id="live-iq" width="300" height="300"></canvas>
+        <div class="live-note">{{ lang['lv_const_note']|default('Estimated from the SNR: SatDump 1.2.3 does not share the real one.') }}</div>
+      </div>
+      <div class="live-box live-stats">
+        <div class="live-snr">
+          <div class="live-cap"><span>SNR</span><span class="live-dim" id="live-peak"></span></div>
+          <div class="live-big" id="live-snr">–</div>
+          <div class="live-bar"><span id="live-snr-bar"></span></div>
+        </div>
+        <dl class="live-dl">
+          <dt>{{ lang['lv_viterbi']|default('Viterbi') }}</dt><dd><span class="live-lamp" id="live-vit"></span><span id="live-vit-t"></span></dd>
+          <dt>{{ lang['lv_sync']|default('Frame sync') }}</dt><dd><span class="live-lamp" id="live-sync"></span><span id="live-sync-t"></span></dd>
+          <dt>{{ lang['lv_ber']|default('Viterbi BER') }}</dt><dd id="live-ber">–</dd>
+          <dt>{{ lang['lv_rs']|default('RS corrections') }}</dt><dd id="live-rs">–</dd>
+          <dt>{{ lang['lv_offset']|default('Frequency offset') }}</dt><dd id="live-freq">–</dd>
+        </dl>
+        <div class="live-cap"><span>{{ lang['lv_history']|default('SNR during the pass') }}</span></div>
+        <canvas id="live-hist" width="300" height="70"></canvas>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block body %}
+{% set sat_colours = {'METEOR-M2 3': 'm23', 'METEOR-M2 4': 'm24'} %}
+{% set now_s = 'now'|date('U') %}
+{% set today = now_s|date('Y-m-d') %}
+{% set tomorrow = (now_s + 86400)|date('Y-m-d') %}
+  <div id="passes" class="pass-list"
+       data-lat="{{ constant('Config\\Config::BASE_STATION_LAT') }}"
+       data-lon="{{ constant('Config\\Config::BASE_STATION_LON') }}"
+       data-tz="{{ constant('Config\\Config::TIMEZONE') }}"
+       data-sun-min="{{ constant('Config\\Config::SUN_MIN_ELEV') }}"
+       data-sat-min="{{ constant('Config\\Config::SAT_MIN_ELEV') }}"
+       {% if constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') is defined
+           and constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') == 'true' %}data-map="/satellite"{% endif %}>
+
+    {# the times below are the station's local time; say so, with the UTC offset #}
+    <div class="times-note">
+      <i class="far fa-clock" aria-hidden="true"></i>
+      {{ lang['times_local']|default('Times in local time') }}
+      &middot; {{ constant('Config\\Config::TIMEZONE') }} (UTC{{ 'now'|date('P') }})
+    </div>
+    {% if pass.list|length <= 0 %}
+      <div class="no-passes">{{ lang['no_passes']|default('No passes scheduled') }}</div>
+    {% else %}
+      {% set last_day = '' %}
+      {% set prev_end = 0 %}
+      {% for p in pass.list %}
+        {% set day = p.pass_start|date('Y-m-d') %}
+        {% if day != last_day %}
+          {% if last_day != '' %}</div>{% endif %}
+          <div class="pass-day{% if day == today %} is-today{% endif %}" data-day="{{ day }}">
+          <div class="day-head" role="button" tabindex="0" aria-expanded="true">
+            <i class="fas fa-chevron-down day-chev" aria-hidden="true"></i>
+            <span class="day-name">
+              {% if day == today %}{{ lang['today']|default('Today') }}
+              {% elseif day == tomorrow %}{{ lang['tomorrow']|default('Tomorrow') }}
+              {% else %}{{ p.pass_start|weekday }}{% endif %}
+            </span>
+            <span class="day-date">{{ p.pass_start|date(constant('Config\\Config::PASSES_DATE_FORMAT')) }}</span>
+            <span class="day-sum"></span>
+            <button type="button" class="earlier-toggle" hidden aria-expanded="false"></button>
+          </div>
+          {% set last_day = day %}
+        {% endif %}
+
+        {% set colour = sat_colours[p.sat_name]|default('other') %}
+        {% set short = p.sat_name|replace({'METEOR-': ''}) %}
+        {% set mins = ((p.pass_end - p.pass_start) / 60)|round %}
+        {% set conflict = prev_end >= p.pass_start %}
+        {% set az = p.pass_start_azimuth %}
+        <div class="pass-row sat-{{ colour }}{% if p.is_active == false %} skipped{% endif %}{% if conflict %} conflict{% endif %}"
+             data-sat="{{ p.sat_name }}" data-start="{{ p.pass_start }}" data-end="{{ p.pass_end }}"
+             data-elev="{{ p.max_elev }}" data-dir="{{ p.direction }}"
+             {% if p.id %}data-capture="/captures/listImages?pass_id={{ p.id }}"{% endif %}
+             tabindex="0" role="button" title="{{ lang['show_on_map']|default('Show this pass on the map') }}">
+          <span class="c-status">
+            {% if p.id %}
+              <a href="/captures/listImages?pass_id={{ p.id }}" class="st-done" title="{{ lang['completed_pass'] }}"><i class="fas fa-check"></i></a>
+            {% elseif conflict %}
+              <i class="fas fa-exclamation-triangle st-conflict" title="{{ lang['conflicting_pass'] }}"></i>
+            {% elseif p.is_active == false %}
+              <i class="fas fa-ban st-skip" title="{{ lang['skipped_pass']|default('Not scheduled') }}"></i>
+            {% else %}
+              <i class="st-live"></i>
+            {% endif %}
+          </span>
+          <span class="c-sat"><span class="sat-dot"></span><span class="sat-prefix">METEOR-</span>{{ short }}</span>
+          <span class="c-time">
+            <span class="t-main">{{ p.pass_start|date('H:i') }}<span class="t-end">&ndash;{{ p.pass_end|date('H:i') }}</span></span>
+            <span class="t-dur">{{ mins }} {{ lang['unit_min']|default('min') }}</span>
+          </span>
+          <span class="c-elev">
+            <span class="elev-bar{% if p.max_elev < 30 %} low{% endif %}"><span style="width: {{ (p.max_elev / 90 * 100)|round }}%"></span></span>
+            <span class="elev-val">{{ p.max_elev }}&deg;</span>
+          </span>
+          <span class="c-dn" title=""></span>
+          <span class="c-dir">
+            {% if p.direction == 'Northbound' %}<i class="fas fa-arrow-up" title="{{ lang['northbound']|default('Northbound') }}"></i>
+            {% elseif p.direction == 'Southbound' %}<i class="fas fa-arrow-down" title="{{ lang['southbound']|default('Southbound') }}"></i>{% endif %}
+            {% if az != '' %}<span class="dir-from" data-az="{{ az }}"></span>{% endif %}
+          </span>
+        </div>
+        {% set prev_end = p.pass_end %}
+      {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="pass-legend">
+    <span><span class="sat-dot sat-m23"></span>M2 3</span>
+    <span><span class="sat-dot sat-m24"></span>M2 4</span>
+    <span><span class="elev-bar low mini"><span style="width:60%"></span></span>{{ lang['low_pass']|default('under 30°') }}</span>
+    <span><i class="fas fa-sun"></i> / <i class="fas fa-moon"></i> {{ lang['day_night']|default('day / night images') }}</span>
+    <span class="legend-tip">{{ lang['tap_pass_hint']|default('Tap a pass to show it on the map') }}</span>
+  </div>
+
+  {% if constant('Config\\Config::ENABLE_CORONAL_GIF') == 'true' %}
+  <br>
+  <center>
+  <h1>{{ lang['cme_title']|default('Coronal Mass Ejection Activity') }}</h1>
+  <br>
+  <img src="https://sohowww.nascom.nasa.gov/data/LATEST/current_c2.gif" height=300 style="margin-right=2em; margin-bottom:2em;">
+  <img src="https://sohowww.nascom.nasa.gov/data/LATEST/current_c3.gif" height=300 style="margin-right=2em; margin-bottom:2em;">
+  <img src="https://stereo.gsfc.nasa.gov/beacon/latest_512/ahead_cor2_latest.jpg" height=300 style="margin-right=2em; margin-bottom:2em;">
+  </center>
+  {% endif %}
+{% endblock %}
+
+{% block js_includes %}
+  <script>
+    window.RL1_LIVE_TEXT = {
+      wait: {{ (lang['lv_wait']|default('Waiting for SatDump…'))|json_encode|raw }},
+      done: {{ (lang['lv_done']|default('Recording finished: decoding the images'))|json_encode|raw }},
+      locked: {{ (lang['lv_locked']|default('locked'))|json_encode|raw }},
+      searching: {{ (lang['lv_searching']|default('searching'))|json_encode|raw }},
+      left: {{ (lang['lv_left']|default('left'))|json_encode|raw }},
+      decoding: {{ (lang['lv_decoding']|default('Decoding'))|json_encode|raw }},
+      no_signal: {{ (lang['lv_no_signal']|default('No lock yet'))|json_encode|raw }},
+      peak: {{ (lang['lv_peak']|default('peak'))|json_encode|raw }}
+    };
+  </script>
+  <script src="{{ asset('/assets/js/live.js') }}"></script>
+  <script>
+    window.RL1_PASS_TEXT = {
+      next: {{ (lang['next_pass_title']|default('Next pass'))|json_encode|raw }},
+      recording: {{ (lang['recording_now']|default('Recording now'))|json_encode|raw }},
+      waiting: {{ (lang['waiting']|default('Waiting for next pass'))|json_encode|raw }},
+      idle: {{ (lang['no_more_passes']|default('No more passes scheduled'))|json_encode|raw }},
+      day: {{ (lang['day']|default('day'))|json_encode|raw }},
+      night: {{ (lang['night']|default('night'))|json_encode|raw }},
+      left: {{ (lang['left']|default('left'))|json_encode|raw }},
+      earlier: {{ (lang['earlier_passes']|default('earlier'))|json_encode|raw }},
+      hide: {{ (lang['hide']|default('hide'))|json_encode|raw }},
+      north: {{ (lang['northbound']|default('Northbound'))|json_encode|raw }},
+      south: {{ (lang['southbound']|default('Southbound'))|json_encode|raw }},
+      missed: {{ (lang['no_capture_pass'])|json_encode|raw }}
+    };
+  </script>
+  <script src="{{ asset('/assets/js/passes.js') }}"></script>
+{% endblock %}

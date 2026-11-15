@@ -1,0 +1,80 @@
+{# Folded legend: MSU-MR channels and the images a capture can have.
+   Include with `have` (lower-case file names of this pass joined by '|') to mark the images present. #}
+{% set have = have|default('') %}
+{% set channels = [
+  ['1', '0.5–0.7 µm', 'lg_ch1', 'Visible red light: clouds, land and sea by day'],
+  ['2', '0.7–1.1 µm', 'lg_ch2', 'Near infrared: vegetation bright, water dark; by day'],
+  ['3', '1.6–1.8 µm', 'lg_ch3', 'Shortwave infrared: snow and ice dark, water clouds bright; by day'],
+  ['4', '3.5–4.1 µm', 'lg_ch4', 'Mid-wave infrared: clouds, fog and fires, day and night'],
+  ['5', '10.5–11.5 µm', 'lg_ch5', 'Thermal infrared: temperature of cloud tops, land and sea, day and night'],
+  ['6', '11.5–12.5 µm', 'lg_ch6', 'Thermal infrared: with channel 5, thin cirrus, dust and moisture']
+] %}
+{# name, channels, lang key, English, file-name matches #}
+{% set images = [
+  ['MSU-MR Channel 1–6', '1 … 6', 'lg_single', 'Each received channel on its own, in grey (geometry corrected)', ['msu-mr_channel']],
+  ['MSA', '1', 'lg_msa', 'Clouds from channel 1 laid over a colour map of the Earth: looks natural, by day', ['msa_']],
+  ['MCIR', '4', 'lg_mcir', 'Infrared clouds laid over a colour map of the Earth: the same look day and night', ['mcir']],
+  ['AVHRR 221 False Color', '2, 2, 1', 'lg_221', 'False colour: land yellow and brown, vegetation brighter, sea dark blue, clouds white', ['avhrr_221']],
+  ['AVHRR 3a21 False Color', '3, 2, 1', 'lg_3a21', 'False colour: snow and ice cyan, clouds white, vegetation green', ['avhrr_3a21']],
+  ['MSU-MR 124 / AVHRR 124', '1, 2, 4 / 1, 2, 5', 'lg_124', 'False colour with infrared: cold, high clouds bluish', ['msu-mr_124', 'avhrr_124']],
+  ['Natural Color', '1, 2, 3', 'lg_natural', 'Close to what the eye would see', ['natural_color']],
+  ['Day Microphysics', '1, 4, 5', 'lg_daymicro', 'Cloud types by day: water clouds and ice clouds in different colours', ['day_microphysics']],
+  ['Night Microphysics', '4, 5, 6', 'lg_nightmicro', 'Fog and low cloud at night', ['night_microphysics']],
+  ['10.8 µm Thermal IR', '5', 'lg_108', 'Thermal infrared in grey: the colder (higher) the cloud, the whiter', ['10.8um']],
+  ['3.9 µm Shortwave IR', '4', 'lg_39', 'Mid-wave infrared in grey: clouds and fog at night, hot spots such as fires stand out', ['shortwave_ir']],
+  ['3.9 µm Cloud Tops', '4', 'lg_39tops', 'Only the cloud tops, the rest transparent', ['cloud_tops']],
+  ['3.75 µm IR (Rainbow, Enhanced Rainbow, CIRA)', '4', 'lg_375', 'Temperature in colours, from the 3.75 µm channel', ['3.75um']],
+  ['Enhanced IR', '5', 'lg_enhir', 'Coldest, stormiest cloud tops highlighted in colour', ['enhanced_ir']],
+  ['Cloud Top IR', '5', 'lg_cloudtop', 'Cloud-top height from temperature, in colour', ['cloud_top_ir']],
+  ['Color general cloud IR', '5', 'lg_colorir', 'Cloud temperatures on a colour scale', ['general_cloud']],
+  ['Color convection longwave IR', '5', 'lg_convection', 'Deep convection (thunderstorms) highlighted', ['convection']],
+  ['AVHRR 543b / 3b45 IR False Color', '4, 5, 6', 'lg_irfalse', 'Infrared-only false colour: works day and night', ['avhrr_543b', 'avhrr_3b45']],
+  ['Sea Surface Temperature', '5', 'lg_sst', 'Sea surface temperature, land masked out', ['sea_surface']],
+  ['Split Window Difference', '5, 6', 'lg_split', 'Difference of the two thermal channels: thin cirrus, dust and moisture', ['split_window']]
+] %}
+{% set others = [
+  ['lg_corrected', 'Corrected: the edges of the scan unstretched, so shapes are true', ['_corrected']],
+  ['lg_projected', 'Projected (map): turned into a flat map of the area', ['_projected', '_map']],
+  ['lg_overlay', 'Yellow lines: borders and coastlines; red names: capital cities; the panel: station and pass details', []],
+  ['lg_skytrack', 'Sky track: the pass seen from the station, overhead in the centre', ['polar-direction']],
+  ['lg_elaz', "Elevation & azimuth: the satellite's height and direction during the pass", ['polar-azel']],
+  ['lg_spectro', 'Spectrogram: the received signal, its strength (SNR) and when the decoder locked', ['spectrogram']]
+] %}
+<details class="daily-about img-legend">
+  <summary><i class="fas fa-circle-info"></i> {{ lang['lg_title']|default('About the images: channels and composites') }}</summary>
+  <div class="lg-box">
+    <p class="lg-intro">{{ lang['lg_intro']|default("METEOR's MSU-MR scanner sees the Earth in six channels; LRPT sends three of them at a time (usually 1, 2 and 4). SatDump mixes the channels it receives into the images below; a pass only has the images its channels allow.") }}</p>
+
+    <h3>{{ lang['lg_channels']|default('Channels') }}</h3>
+    <table class="lg-table">
+      <thead><tr><th>#</th><th>{{ lang['lg_band']|default('Band') }}</th><th></th></tr></thead>
+      <tbody>
+      {% for c in channels %}
+        <tr><td class="lg-ch">{{ c[0] }}</td><td class="lg-nowrap">{{ c[1] }}</td><td>{{ lang[c[2]]|default(c[3]) }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    <h3>{{ lang['lg_composites']|default('Images') }}</h3>
+    <table class="lg-table">
+      <thead><tr><th></th><th>{{ lang['lg_uses']|default('Channels') }}</th><th></th></tr></thead>
+      <tbody>
+      {% for i in images %}
+        {% set here = have and i[4]|filter(m => m in have)|length > 0 %}
+        <tr{% if here %} class="lg-here"{% endif %}>
+          <td class="lg-name">{{ i[0] }}{% if here %} <span class="lg-tag">{{ lang['lg_here']|default('in this pass') }}</span>{% endif %}</td>
+          <td class="lg-nowrap">{{ i[1] }}</td>
+          <td>{{ lang[i[2]]|default(i[3]) }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    <h3>{{ lang['lg_other']|default('Other parts of a capture') }}</h3>
+    <ul class="lg-list">
+      {% for o in others %}
+        <li{% if have and o[2]|filter(m => m in have)|length > 0 %} class="lg-here"{% endif %}>{{ lang[o[0]]|default(o[1]) }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</details>

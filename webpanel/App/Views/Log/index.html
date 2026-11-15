@@ -1,0 +1,482 @@
+{% extends "base.html" %}
+
+{#
+  Live log (/log, public): live system dashboard plus the raspberry-lrpt log.
+
+  Data comes from LogController:
+    /log/stats           - CPU, temperature, memory, disk, load, uptime, SDR, schedule (every 3 s)
+    /log/tail?offset=N   - new log text since byte N (every 2 s)
+#}
+
+{% block stylesheets %}
+<style>
+  :root {
+    --sl-card: var(--pl-card); --sl-border: var(--pl-line); --sl-text: #1f2a36; --sl-muted: var(--pl-dim);
+    --sl-track: var(--pl-track); --sl-accent: #2f80ed; --sl-good: #2e9e5b; --sl-warn: #d9822b; --sl-bad: #d64545;
+  }
+  html[data-theme="dark"] {
+    --sl-card: var(--pl-card); --sl-border: var(--pl-line); --sl-text: #dbe4ee; --sl-muted: var(--pl-dim);
+    --sl-track: var(--pl-track); --sl-accent: #5aa9ff; --sl-good: #5fd38a; --sl-warn: #f2b33d; --sl-bad: #ff6b6b;
+  }
+  .sl-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: .25rem 1rem; margin: 1rem 0 .75rem; }
+  .sl-head h1 { font-size: 1.15rem; margin: 0; font-weight: 600; }
+  .sl-head .sl-host { color: var(--sl-muted); font-size: .85rem; }
+  .sl-live { display: inline-flex; align-items: center; gap: .4rem; font-size: .8rem; color: var(--sl-muted); }
+  .sl-live i { width: 8px; height: 8px; border-radius: 50%; background: var(--sl-good); display: inline-block; }
+  .sl-live.paused i { background: var(--sl-muted); }
+  @media (prefers-reduced-motion: no-preference) {
+    .sl-live:not(.paused) i { animation: sl-blink 1.6s ease-in-out infinite; }
+    @keyframes sl-blink { 50% { opacity: .25; } }
+  }
+
+  .sl-grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: .75rem; }
+  .sl-card { background: var(--sl-card); border: 1px solid var(--sl-border); border-radius: 8px; padding: .75rem .9rem; color: var(--sl-text); min-width: 0; }
+  .sl-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--sl-muted); display: flex; justify-content: space-between; gap: .5rem; }
+  .sl-value { font-size: 1.6rem; font-weight: 600; line-height: 1.2; margin-top: .15rem; font-variant-numeric: tabular-nums; }
+  .sl-value small { font-size: .8rem; font-weight: 500; color: var(--sl-muted); margin-left: .2rem; }
+  .sl-sub { font-size: .78rem; color: var(--sl-muted); margin-top: .1rem; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sl-bar { height: 6px; border-radius: 3px; background: var(--sl-track); margin-top: .5rem; overflow: hidden; }
+  .sl-bar span { display: block; height: 100%; width: 0; border-radius: 3px; background: var(--sl-accent); transition: width .6s ease, background-color .6s; }
+  .sl-spark { display: block; width: 100%; height: 34px; margin-top: .35rem; }
+  .sl-spark path.line { fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+  .sl-spark path.area { opacity: .15; }
+  .sl-pill { display: inline-block; font-size: .72rem; font-weight: 600; padding: .05rem .5rem; border-radius: 999px; background: var(--sl-track); color: var(--sl-muted); }
+  .sl-pill.good { background: rgba(46,158,91,.15); color: var(--sl-good); }
+  .sl-pill.warn { background: rgba(217,130,43,.15); color: var(--sl-warn); }
+  .sl-pill.bad  { background: rgba(214,69,69,.15); color: var(--sl-bad); }
+  .sl-small .sl-value { font-size: 1.15rem; }
+  .sl-grid.sl-five { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+
+  /* log console: always dark, like a terminal */
+  .sl-console { background: #0b111b; border: 1px solid #22344d; border-radius: 8px; overflow: hidden; margin-bottom: 1rem; }
+  .sl-tools { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; padding: .5rem .6rem; border-bottom: 1px solid #1c2a3d; background: #0f1724; }
+  .sl-tools .sl-title { color: #dbe4ee; font-weight: 600; font-size: .85rem; margin-right: .4rem; }
+  .sl-chip { border: 1px solid #2a3a50; background: transparent; color: #8fa3b8; border-radius: 999px; font-size: .72rem; font-weight: 600; padding: .15rem .6rem; cursor: pointer; }
+  .sl-chip[aria-pressed="true"] { color: #0b111b; border-color: transparent; }
+  .sl-chip[data-level="ERROR"][aria-pressed="true"] { background: #ff6b6b; }
+  .sl-chip[data-level="WARN"][aria-pressed="true"]  { background: #f2b33d; }
+  .sl-chip[data-level="INFO"][aria-pressed="true"]  { background: #5aa9ff; }
+  .sl-chip[data-level="DEBUG"][aria-pressed="true"] { background: #8fa3b8; }
+  .sl-chip[data-level="OTHER"][aria-pressed="true"] { background: #4fd1c5; }
+  .sl-search { flex: 1 1 140px; min-width: 120px; background: #0b111b; border: 1px solid #2a3a50; color: #dbe4ee; border-radius: 6px; font-size: .8rem; padding: .2rem .5rem; }
+  .sl-btn { border: 1px solid #2a3a50; background: #16202e; color: #dbe4ee; border-radius: 6px; font-size: .78rem; padding: .2rem .55rem; cursor: pointer; }
+  .sl-btn:hover { background: #1d2b3e; }
+  .sl-btn[aria-pressed="true"] { background: #2a3a50; }
+  .sl-log { height: 60vh; min-height: 320px; overflow: auto; font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #c9d6e3; padding: .4rem 0; }
+  .sl-line { display: flex; gap: .6rem; padding: 0 .75rem; white-space: pre-wrap; word-break: break-word; }
+  .sl-line:hover { background: rgba(255,255,255,.03); }
+  .sl-line .t { color: #5f7187; flex: none; }
+  .sl-line .s { color: #4fd1c5; flex: none; }
+  .sl-line .l { flex: none; width: 3.6em; font-weight: 700; }
+  .sl-line .m { min-width: 0; }
+  .sl-line.ERROR .l, .sl-line.ERROR .m { color: #ff8a8a; }
+  .sl-line.WARN .l { color: #f2b33d; } .sl-line.WARN .m { color: #f5d38f; }
+  .sl-line.INFO .l { color: #5aa9ff; } .sl-line.INFO .m { color: #d6e6f7; }
+  .sl-line .s.satdump { color: #b48cff; }
+  .sl-line.DEBUG .l, .sl-line.DEBUG .m { color: #6f8399; }
+  .sl-line.OTHER .m { color: #9fb1c4; }
+  .sl-line.new { animation: sl-new 1.2s ease-out; }
+  @keyframes sl-new { from { background: rgba(90,169,255,.18); } to { background: transparent; } }
+  .sl-foot { display: flex; justify-content: space-between; gap: .5rem; padding: .3rem .75rem; border-top: 1px solid #1c2a3d; color: #5f7187; font-size: .72rem; background: #0f1724; }
+  .sl-empty { color: #5f7187; padding: 1rem .75rem; }
+  @media (max-width: 575.98px) {
+    .sl-grid, .sl-grid.sl-five { grid-template-columns: 1fr 1fr; gap: .5rem; }
+    .sl-card { padding: .6rem .7rem; }
+    .sl-value { font-size: 1.25rem; }
+    .sl-small .sl-value { font-size: 1rem; }
+    .sl-line { flex-wrap: wrap; gap: 0 .5rem; }
+    .sl-line .m { flex-basis: 100%; }
+    .sl-log { height: 55vh; }
+  }
+  /* full screen console: the log fills whatever space the toolbar and footer leave */
+  .sl-console:fullscreen, .sl-console.fs-on { display: flex; flex-direction: column; margin: 0; border-radius: 0; border: 0; }
+  .sl-console:fullscreen .sl-log, .sl-console.fs-on .sl-log { flex: 1; height: auto !important; min-height: 0; }
+  .sl-fs { margin-left: auto; }
+</style>
+{% endblock %}
+
+{% block body %}
+
+  <div class="sl-head">
+    <div>
+      <h1>{{ lang['live_log']|default('Live log') }}</h1>
+      <div class="sl-host" id="sl-host">&nbsp;</div>
+    </div>
+    <span class="sl-live" id="sl-live"><i></i><span>{{ lang['live']|default('Live') }}</span></span>
+  </div>
+
+  <div class="sl-grid">
+    <div class="sl-card">
+      <div class="sl-label"><span>CPU</span><span id="sl-cores"></span></div>
+      <div class="sl-value" id="sl-cpu">–<small>%</small></div>
+      <svg class="sl-spark" id="sp-cpu" viewBox="0 0 100 34" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="sl-card">
+      <div class="sl-label"><span>{{ lang['temperature']|default('Temperature') }}</span><span id="sl-temp-state"></span></div>
+      <div class="sl-value" id="sl-temp">–<small>°C</small></div>
+      <svg class="sl-spark" id="sp-temp" viewBox="0 0 100 34" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="sl-card">
+      <div class="sl-label"><span>{{ lang['memory']|default('Memory') }}</span><span id="sl-mem-pct"></span></div>
+      <div class="sl-value" id="sl-mem">–</div>
+      <svg class="sl-spark" id="sp-mem" viewBox="0 0 100 34" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="sl-card">
+      <div class="sl-label"><span>SDR</span><span id="sl-sdr-pill"></span></div>
+      <div class="sl-value sl-small" id="sl-sdr">–</div>
+      <div class="sl-sub" id="sl-sdr-sub">&nbsp;</div>
+    </div>
+  </div>
+
+  <div class="sl-grid sl-five">
+    <div class="sl-card sl-small">
+      <div class="sl-label"><span>{{ lang['storage']|default('Storage /srv') }}</span><span id="sl-disk-pct"></span></div>
+      <div class="sl-value" id="sl-disk">–</div>
+      <div class="sl-bar"><span id="sl-disk-bar"></span></div>
+    </div>
+    <div class="sl-card sl-small" id="sl-ramfs-card">
+      <div class="sl-label"><span>{{ lang['ram_disk']|default('RAM disk') }}</span><span id="sl-ramfs-pct"></span></div>
+      <div class="sl-value" id="sl-ramfs">–</div>
+      <div class="sl-bar"><span id="sl-ramfs-bar"></span></div>
+    </div>
+    <div class="sl-card sl-small">
+      <div class="sl-label"><span>{{ lang['load']|default('Load') }}</span><span>1 / 5 / 15 {{ lang['unit_min']|default('min') }}</span></div>
+      <div class="sl-value" id="sl-load">–</div>
+      <div class="sl-sub" id="sl-uptime">&nbsp;</div>
+    </div>
+    <div class="sl-card sl-small">
+      <div class="sl-label"><span>{{ lang['next_pass_title']|default('Next pass') }}</span><span id="sl-next-in"></span></div>
+      <div class="sl-value" id="sl-next">–</div>
+      <div class="sl-sub" id="sl-next-sub">&nbsp;</div>
+    </div>
+    <div class="sl-card sl-small">
+      <div class="sl-label"><span>{{ lang['last_capture']|default('Last capture') }}</span></div>
+      <div class="sl-value" id="sl-last">–</div>
+      <div class="sl-sub" id="sl-last-sub">&nbsp;</div>
+    </div>
+  </div>
+
+  <div class="sl-console">
+    <div class="sl-tools">
+      <span class="sl-title">output.log</span>
+      <button type="button" class="sl-chip" data-level="ERROR" aria-pressed="true">ERROR</button>
+      <button type="button" class="sl-chip" data-level="WARN" aria-pressed="true">WARN</button>
+      <button type="button" class="sl-chip" data-level="INFO" aria-pressed="true">INFO</button>
+      <button type="button" class="sl-chip" data-level="DEBUG" aria-pressed="true">DEBUG</button>
+      <button type="button" class="sl-chip" data-level="OTHER" aria-pressed="true" title="{{ lang['log_other_hint']|default('Tool output without a level') }}">OTHER</button>
+      <input type="search" class="sl-search" id="sl-search" placeholder="{{ lang['filter']|default('Filter…') }}" aria-label="{{ lang['filter_hint']|default('Filter log lines') }}">
+      <button type="button" class="sl-btn" id="sl-pause" aria-pressed="false">{{ lang['pause']|default('Pause') }}</button>
+      <button type="button" class="sl-btn" id="sl-follow" aria-pressed="true" title="{{ lang['follow_hint']|default('Keep scrolled to the newest line') }}">{{ lang['follow']|default('Follow') }}</button>
+      <button type="button" class="sl-btn" id="sl-clear">{{ lang['clear']|default('Clear') }}</button>
+      <button type="button" class="sl-btn sl-fs" id="sl-fullscreen" aria-pressed="false" title="{{ lang['full_screen']|default('Full screen') }}" aria-label="{{ lang['full_screen']|default('Full screen') }}"><i class="fas fa-expand"></i></button>
+    </div>
+    <div class="sl-log" id="sl-log" role="log" aria-live="off"><div class="sl-empty">{{ lang['loading_log']|default('Loading log…') }}</div></div>
+    <div class="sl-foot"><span id="sl-count">0 {{ lang['lines']|default('lines') }}</span><span id="sl-size"></span></div>
+  </div>
+{% endblock %}
+
+{% block js_includes %}
+<script>
+(function () {
+  'use strict';
+  var MAX_LINES = 3000, LOG_EVERY = 2000, STATS_EVERY = 3000, HISTORY = 60;
+  var $ = function (id) { return document.getElementById(id); };
+  var logEl = $('sl-log'), offset = -1, lines = [], paused = false, follow = true;
+  // level chips: DEBUG is off until switched on; the choice is kept in this browser
+  var levels = { ERROR: true, WARN: true, INFO: true, DEBUG: false, OTHER: true }, query = '';
+  try {
+    var savedLevels = JSON.parse(localStorage.getItem('rl1-log-levels') || 'null');
+    if (savedLevels) { Object.keys(levels).forEach(function (k) { if (k in savedLevels) { levels[k] = !!savedLevels[k]; } }); }
+  } catch (e) {}
+  var shown = 0;
+  var hist = { cpu: [], temp: [], mem: [] };
+
+  // ---- helpers ---------------------------------------------------------------
+  function bytes(n) {
+    if (n == null) { return '–'; }
+    var u = ['B', 'KB', 'MB', 'GB', 'TB'], i = 0;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    return (n >= 100 || i === 0 ? n.toFixed(0) : n.toFixed(1)) + ' ' + u[i];
+  }
+  function pct(a, b) { return b ? Math.round(100 * a / b) : 0; }
+  function color(p) { return p >= 90 ? 'var(--sl-bad)' : p >= 75 ? 'var(--sl-warn)' : 'var(--sl-accent)'; }
+  function hm(ts) { var d = new Date(ts * 1000); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function dayhm(ts) {
+    var d = new Date(ts * 1000), today = new Date();
+    var same = d.toDateString() === today.toDateString();
+    return (same ? '' : ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + ' ') + hm(ts);
+  }
+  function dur(s) {
+    var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+    return (d ? d + tr('unit_d_short', 'd') + ' ' : '') + (d || h ? h + tr('unit_h_short', 'h') + ' ' : '') + m + tr('unit_m_short', 'm');
+  }
+  function spark(id, data, max, stroke) {
+    var svg = $(id); if (!svg || data.length < 2) { return; }
+    var n = data.length, pts = data.map(function (v, i) {
+      return [(i / (HISTORY - 1)) * 100 + (HISTORY - n) / (HISTORY - 1) * 100, 32 - Math.min(v / max, 1) * 30];
+    });
+    var line = 'M' + pts.map(function (p) { return p[0].toFixed(2) + ',' + p[1].toFixed(2); }).join('L');
+    svg.innerHTML = '<path class="area" fill="' + stroke + '" d="' + line + 'L100,34L' + pts[0][0].toFixed(2) + ',34Z"/>' +
+                    '<path class="line" stroke="' + stroke + '" d="' + line + '"/>';
+  }
+  function push(arr, v) { arr.push(v); if (arr.length > HISTORY) { arr.shift(); } }
+  function setBar(id, p) { var el = $(id); el.style.width = p + '%'; el.style.backgroundColor = color(p); }
+  function getJSON(url) {
+    return fetch(url, { credentials: 'same-origin', cache: 'no-store' }).then(function (r) {
+      if (!r.ok) { throw new Error('HTTP ' + r.status); }
+      return r.json();
+    });
+  }
+
+  // ---- system stats ----------------------------------------------------------
+  function renderStats(s) {
+    $('sl-host').textContent = [s.host, s.model].filter(Boolean).join(' · ');
+    if (s.cpu != null) {
+      $('sl-cpu').innerHTML = s.cpu.toFixed(0) + '<small>%</small>';
+      push(hist.cpu, s.cpu); spark('sp-cpu', hist.cpu, 100, color(s.cpu));
+    }
+    if (s.cores) { $('sl-cores').textContent = s.cores + ' ' + tr('cores', 'cores'); }
+    if (s.temp != null) {
+      $('sl-temp').innerHTML = s.temp.toFixed(1) + '<small>°C</small>';
+      var st = s.temp >= 80 ? ['bad', tr('throttling', 'Throttling')] : s.temp >= 70 ? ['warn', tr('hot', 'Hot')] : ['good', tr('ok', 'OK')];
+      $('sl-temp-state').innerHTML = '<span class="sl-pill ' + st[0] + '">' + st[1] + '</span>';
+      push(hist.temp, s.temp); spark('sp-temp', hist.temp, 90, st[0] === 'good' ? 'var(--sl-good)' : 'var(--sl-' + st[0] + ')');
+    }
+    if (s.mem_total) {
+      var mp = pct(s.mem_used, s.mem_total);
+      $('sl-mem').innerHTML = bytes(s.mem_used) + '<small>/ ' + bytes(s.mem_total) + '</small>';
+      $('sl-mem-pct').textContent = mp + '%' + (s.swap_total ? ' · ' + tr('swap', 'swap') + ' ' + bytes(s.swap_used) : '');
+      push(hist.mem, mp); spark('sp-mem', hist.mem, 100, color(mp));
+    }
+    if (s.sdr) {
+      $('sl-sdr').textContent = s.sdr;
+      $('sl-sdr-pill').innerHTML = s.capturing ? '<span class="sl-pill warn">' + tr('recording', 'Recording') + '</span>' : '<span class="sl-pill good">' + tr('connected', 'Connected') + '</span>';
+      $('sl-sdr-sub').textContent = s.capturing ? tr('sdr_capturing', 'A pass is being captured now') : tr('sdr_idle', 'Idle, waiting for the next pass');
+    } else {
+      $('sl-sdr').textContent = tr('not_found', 'Not found');
+      $('sl-sdr-pill').innerHTML = '<span class="sl-pill bad">' + tr('missing', 'Missing') + '</span>';
+      $('sl-sdr-sub').textContent = tr('no_sdr', 'No RTL-SDR on USB');
+    }
+    // no RAM disk (the Pi runs from an SSD): its card is hidden
+    $('sl-ramfs-card').hidden = !s.ramfs_total;
+    ['disk', 'ramfs'].forEach(function (k) {
+      if (s[k + '_total']) {
+        var p = pct(s[k + '_used'], s[k + '_total']);
+        $('sl-' + k).textContent = bytes(s[k + '_used']) + ' / ' + bytes(s[k + '_total']);
+        $('sl-' + k + '-pct').textContent = p + '%';
+        setBar('sl-' + k + '-bar', p);
+      }
+    });
+    if (s.load) { $('sl-load').textContent = s.load.map(function (v) { return v.toFixed(2); }).join(' · '); }
+    if (s.uptime != null) { $('sl-uptime').textContent = tr('uptime', 'Up') + ' ' + dur(s.uptime); }
+    if (s.next_pass) {
+      var np = s.next_pass, now = s.time;
+      $('sl-next').textContent = np.sat_name.replace('METEOR-', '');
+      if (np.pass_start <= now) {
+        $('sl-next-in').innerHTML = '<span class="sl-pill warn">' + tr('now', 'Now') + '</span>';
+      } else {
+        $('sl-next-in').textContent = tr('in_time', 'in') + ' ' + dur(np.pass_start - now);
+      }
+      $('sl-next-sub').textContent = dayhm(np.pass_start) + '–' + hm(np.pass_end) + ' · ' + tr('max', 'max') + ' ' + Math.round(np.max_elev) + '° · ' + (s.scheduled || 0) + ' ' + tr('scheduled', 'scheduled');
+    } else {
+      $('sl-next').textContent = tr('none', 'None');
+      $('sl-next-sub').textContent = tr('no_passes', 'No passes scheduled');
+    }
+    if (s.last_capture) {
+      var lc = s.last_capture;
+      $('sl-last').textContent = (lc.sat_name || tr('capture', 'Capture')).replace('METEOR-', '');
+      $('sl-last-sub').textContent = dayhm(lc.pass_start) + (lc.max_elev ? ' · ' + tr('max', 'max') + ' ' + Math.round(lc.max_elev) + '°' : '');
+    }
+  }
+
+  // nothing is fetched while the page is in a background tab or the phone screen is off;
+  // it catches up as soon as the page is shown again
+  function active() { return !paused && !document.hidden; }
+  var statsTimer, logTimer;
+  function pollStats() {
+    clearTimeout(statsTimer);
+    if (active()) {
+      getJSON('/log/stats').then(renderStats).catch(function () {});
+    }
+    statsTimer = setTimeout(pollStats, STATS_EVERY);
+  }
+
+  // ---- log -------------------------------------------------------------------
+  // "11-11-2026 20:41 /home/pi/raspberry-lrpt/scripts/schedule.sh INFO : message"
+  var RE = /^(\d{2}-\d{2}-\d{4} \d{2}:\d{2}) (\S+) (ERROR|WARN|INFO|DEBUG) : ?(.*)$/;
+  // SatDump: "[07:33:17 - 12/11/2026] (I) message", (T)race (D)ebug (I)nfo (W)arn (E)rror (C)ritical
+  // SatDump stamps its lines in UTC; they are shown in the station's time zone like the scripts' lines
+  var RE_SD = /^\[(\d{2}):(\d{2}):(\d{2}) - (\d{2})\/(\d{2})\/(\d{4})\] \(([TDIWEC])\) ?(.*)$/;
+  var clocks = document.getElementById('clocks');
+  var sdFmt = null;
+  try {
+    sdFmt = new Intl.DateTimeFormat('en-GB', { timeZone: (clocks && clocks.getAttribute('data-tz')) || undefined,
+      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  } catch (e) {}
+  function sdTime(m) {
+    if (!sdFmt) { return m[4] + '-' + m[5] + ' ' + m[1] + ':' + m[2]; }
+    var p = {};
+    sdFmt.formatToParts(new Date(Date.UTC(+m[6], m[5] - 1, +m[4], +m[1], +m[2], +m[3])))
+      .forEach(function (x) { p[x.type] = x.value; });
+    return p.day + '-' + p.month + ' ' + p.hour + ':' + p.minute;
+  }
+  var SD_LEVEL = { T: 'DEBUG', D: 'DEBUG', I: 'INFO', W: 'WARN', E: 'ERROR', C: 'ERROR' };
+  // terminal colour codes ("\x1b[32m ... \x1b[m") that SatDump writes into the log
+  var ANSI = /\x1b?\[[0-9;]*m/g;
+  function parse(text) {
+    text = text.replace(ANSI, '');
+    var m = RE.exec(text);
+    if (m) { return { t: m[1].slice(0, 5) + ' ' + m[1].slice(11), s: m[2].split('/').pop(), l: m[3], m: m[4] }; }
+    m = RE_SD.exec(text);
+    if (m) { return { t: sdTime(m), s: 'satdump', l: SD_LEVEL[m[7]], m: m[8] }; }
+    // other tools' output: Python tracebacks and errors, warnings
+    var l = /^(Traceback|\S*(Error|Exception):|E: |ERROR)/.test(text) ? 'ERROR' : /\bwarning\b/i.test(text) ? 'WARN' : 'OTHER';
+    return { t: '', s: '', l: l, m: text };
+  }
+  function esc(s) { return s.replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+  function visible(o) {
+    return levels[o.l] && (!query || (o.m + ' ' + o.s).toLowerCase().indexOf(query) !== -1);
+  }
+  function lineEl(o, isNew) {
+    var d = document.createElement('div');
+    d.className = 'sl-line ' + o.l + (isNew ? ' new' : '');
+    d.innerHTML = (o.t ? '<span class="t">' + esc(o.t) + '</span>' : '') +
+      (o.s ? '<span class="s' + (o.s === 'satdump' ? ' satdump' : '') + '">' + esc(o.s) + '</span>' : '') +
+      (o.l !== 'OTHER' && (o.t || o.s) ? '<span class="l">' + o.l + '</span>' : '') +
+      '<span class="m">' + esc(o.m) + '</span>';
+    o.el = d;
+    return d;
+  }
+  function showEmpty(text) { logEl.innerHTML = '<div class="sl-empty">' + esc(text) + '</div>'; }
+  // add lines' elements in one go (a fragment), so the page lays out once per poll
+  function addEls(list, isNew) {
+    var frag = document.createDocumentFragment(), n = 0;
+    list.forEach(function (o) { o.el = null; if (visible(o)) { frag.appendChild(lineEl(o, isNew)); n++; } });
+    if (n) { var empty = logEl.querySelector('.sl-empty'); if (empty) { empty.remove(); } logEl.appendChild(frag); }
+    shown += n;
+  }
+  function renderAll() {
+    logEl.textContent = '';
+    shown = 0;
+    addEls(lines, false);
+    if (!shown) { showEmpty(lines.length ? tr('no_matching_lines', 'No matching lines.') : tr('log_empty', 'The log is empty.')); }
+    updateCount();
+    if (follow) { logEl.scrollTop = logEl.scrollHeight; }
+  }
+  function updateCount() {
+    $('sl-count').textContent = shown + (shown !== lines.length ? ' ' + tr('of', 'of') + ' ' + lines.length : '') + ' ' + tr('lines', 'lines');
+  }
+  function append(newLines) {
+    if (!newLines.length) { return; }
+    // a big batch (first load, catching up) doesn't flash every line
+    addEls(newLines, newLines.length < 50);
+    lines = lines.concat(newLines);
+    if (lines.length > MAX_LINES) {           // keep the browser light: drop the oldest lines
+      lines.splice(0, lines.length - MAX_LINES).forEach(function (o) {
+        if (o.el) { o.el.remove(); o.el = null; shown--; }
+      });
+    }
+    updateCount();
+    if (follow) { logEl.scrollTop = logEl.scrollHeight; }
+  }
+
+  var partial = '';
+  function pollLog() {
+    clearTimeout(logTimer);
+    if (active()) {
+      getJSON('/log/tail?offset=' + offset).then(function (r) {
+        if (r.error) {
+          showEmpty(r.error);
+          return;
+        }
+        if (r.reset && offset !== -1) { lines = []; partial = ''; shown = 0; logEl.textContent = ''; }
+        offset = r.offset;
+        $('sl-size').textContent = bytes(r.size);
+        var text = partial + r.text;
+        var parts = text.split('\n');
+        partial = parts.pop();                  // keep an unfinished last line for next time
+        var first = lines.length === 0;
+        append(parts.filter(function (l) { return l.trim() !== ''; }).map(parse));
+        if (first && !lines.length) { showEmpty(tr('log_empty', 'The log is empty.')); }
+        else if (first && !shown) { renderAll(); }
+      }).catch(function (e) {
+        $('sl-size').textContent = tr('connection_lost', 'Connection lost, retrying…');
+      });
+    }
+    logTimer = setTimeout(pollLog, LOG_EVERY);
+  }
+
+  // ---- controls ----------------------------------------------------------------
+  Array.prototype.forEach.call(document.querySelectorAll('.sl-chip'), function (b) {
+    b.addEventListener('click', function () {
+      var on = b.getAttribute('aria-pressed') !== 'true';
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      levels[b.dataset.level] = on;
+      try { localStorage.setItem('rl1-log-levels', JSON.stringify(levels)); } catch (e) {}
+      renderAll();
+    });
+  });
+  var searchTimer;
+  $('sl-search').addEventListener('input', function (e) {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () { query = e.target.value.trim().toLowerCase(); renderAll(); }, 200);
+  });
+  $('sl-pause').addEventListener('click', function () {
+    paused = !paused;
+    this.setAttribute('aria-pressed', paused ? 'true' : 'false');
+    this.textContent = paused ? tr('resume', 'Resume') : tr('pause', 'Pause');
+    $('sl-live').classList.toggle('paused', paused);
+    $('sl-live').querySelector('span').textContent = paused ? tr('paused', 'Paused') : tr('live', 'Live');
+  });
+  $('sl-follow').addEventListener('click', function () {
+    follow = !follow;
+    this.setAttribute('aria-pressed', follow ? 'true' : 'false');
+    if (follow) { logEl.scrollTop = logEl.scrollHeight; }
+  });
+  $('sl-clear').addEventListener('click', function () { lines = []; shown = 0; logEl.textContent = ''; updateCount(); });
+  // the chips show the saved choice
+  Array.prototype.forEach.call(document.querySelectorAll('.sl-chip'), function (b) {
+    b.setAttribute('aria-pressed', levels[b.dataset.level] ? 'true' : 'false');
+  });
+  // on a desktop-sized window the console takes the rest of the window's height (so a
+  // maximised or F11 full-screen window shows more lines); phones keep the CSS height
+  var consoleEl = document.querySelector('.sl-console');
+  function fitLog() {
+    if (consoleEl.classList.contains('fs-on') || document.fullscreenElement === consoleEl) { return; }
+    if (window.innerWidth < 992) { logEl.style.height = ''; return; }
+    var top = logEl.getBoundingClientRect().top + window.scrollY;
+    var foot = consoleEl.querySelector('.sl-foot').offsetHeight;
+    logEl.style.height = Math.max(320, window.innerHeight - top - foot - 24) + 'px';
+    if (follow) { logEl.scrollTop = logEl.scrollHeight; }
+  }
+  var fitTimer;
+  window.addEventListener('resize', function () { clearTimeout(fitTimer); fitTimer = setTimeout(fitLog, 100); });
+  fitLog();
+
+  // full screen console; keeps following the newest line at the new size
+  var fsBtn = $('sl-fullscreen');
+  var toggleFs = RL1FS.bind(document.querySelector('.sl-console'), function (on) {
+    fsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    fsBtn.title = on ? tr('exit_full_screen', 'Exit full screen') : tr('full_screen', 'Full screen');
+    fsBtn.setAttribute('aria-label', fsBtn.title);
+    fsBtn.querySelector('i').className = on ? 'fas fa-compress' : 'fas fa-expand';
+    setTimeout(function () { if (!on) { fitLog(); } if (follow) { logEl.scrollTop = logEl.scrollHeight; } }, 50);
+  });
+  fsBtn.addEventListener('click', toggleFs);
+  // scrolling up stops following; scrolling back to the bottom resumes it
+  logEl.addEventListener('scroll', function () {
+    var atBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 30;
+    if (atBottom !== follow) {
+      follow = atBottom;
+      $('sl-follow').setAttribute('aria-pressed', follow ? 'true' : 'false');
+    }
+  });
+
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) { pollStats(); pollLog(); }
+  });
+  pollStats();
+  pollLog();
+})();
+</script>
+{% endblock %}

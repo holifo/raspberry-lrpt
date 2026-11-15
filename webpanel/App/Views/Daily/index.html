@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{#
+  Daily map (/daily): one map per day of all the day's daytime passes and one of the night-time
+  passes, made by scripts/daily_map.sh. A card opens the map in the image viewer (viewer.js);
+  the chips under a day's maps link to the passes' captures. Each day also shows its time-lapse
+  (scripts/animation.sh). Days fold open and shut like on the Captures page (captures.js).
+#}
+
+{% block body %}
+{% set now_s = 'now'|date('U') %}
+{% set today = now_s|date('Y-m-d') %}
+{% set yesterday = (now_s - 86400)|date('Y-m-d') %}
+
+<div class="page-head">
+  <h1 class="page-title">{{ lang['daily_map']|default('Daily map') }}</h1>
+  <div class="page-meta">{{ lang['daily_map_hint']|default('Every pass of a day on one map') }}{% if page_count > 1 %} · {{ lang['page'] }} {{ cur_page }} {{ lang['of'] }} {{ page_count }}{% endif %}</div>
+</div>
+
+{# how the maps are made, folded away #}
+<details class="daily-about">
+  <summary>{{ lang['about_maps']|default('About these maps') }}</summary>
+  <dl>
+    <dt><i class="fas fa-sun dn"></i> {{ lang['daytime_passes']|default('Daytime passes') }} · AVHRR 221</dt>
+    <dd>{{ lang['day_map_desc']|default('False colour from channels 2, 2 and 1 (0.8, 0.8 and 0.6 µm, red, green, blue): land in yellow and brown, vegetation brighter, sea dark blue, clouds, snow and ice white.') }}</dd>
+    <dt><i class="fas fa-moon dn"></i> {{ lang['night_passes']|default('Night-time passes') }} · 3.9 µm IR</dt>
+    <dd>{{ lang['night_map_desc']|default('Shortwave infrared from channel 4 (3.8 µm), inverted: cold cloud tops bright, warm land and sea dark. It sees clouds without sunlight.') }}</dd>
+    <dt><i class="fas fa-globe-europe"></i> {{ lang['map_how']|default('How they are made') }}</dt>
+    <dd>{{ lang['map_how_desc']|default("Each pass is projected with SatDump's own geometry (the satellite's orbit and line times) onto one map around the station, with borders, coastlines and the station marked. Where passes overlap, the newest is on top. The maps are redrawn after every pass of the day.") }}</dd>
+    {% set proj = (days|length and days[0].area) ? days[0].area.proj : 'equal_earth' %}
+    <dt><i class="fas fa-globe"></i> {{ lang['proj_title']|default('Map projection: Equal Earth or equirectangular') }}</dt>
+    <dd>
+      <div class="proj-cmp">
+        <div class="proj-opt{% if proj == 'equal_earth' %} is-used{% endif %}">
+          <svg viewBox="0 0 120 70" aria-hidden="true"><path d="M14 4 H106 Q116 35 106 66 H14 Q4 35 14 4 Z"/>
+            <path class="g" d="M60 4 V66 M37 4 Q31 35 37 66 M83 4 Q89 35 83 66 M10 21 H110 M7 35 H113 M10 49 H110"/></svg>
+          <b>Equal Earth</b>{% if proj == 'equal_earth' %} <span class="lg-tag">{{ lang['proj_used']|default('used here') }}</span>{% endif %}
+          <p>{{ lang['proj_eqearth_desc']|default('Every area keeps its true size, so countries have their real shape and can be compared fairly. The meridians curve gently towards the edges. The live map on the Passes page uses it too.') }}</p>
+        </div>
+        <div class="proj-opt{% if proj != 'equal_earth' %} is-used{% endif %}">
+          <svg viewBox="0 0 120 70" aria-hidden="true"><path d="M4 4 H116 V66 H4 Z"/>
+            <path class="g" d="M32 4 V66 M60 4 V66 M88 4 V66 M4 21 H116 M4 35 H116 M4 49 H116"/></svg>
+          <b>{{ lang['proj_equirect']|default('Equirectangular') }}</b>{% if proj != 'equal_earth' %} <span class="lg-tag">{{ lang['proj_used']|default('used here') }}</span>{% endif %}
+          <p>{{ lang['proj_equirect_desc']|default('A plain latitude/longitude grid, as SatDump makes it. Simple, but east–west distances are stretched more the further from the equator: about 24% at 36° N, twice as much at 60° N.') }}</p>
+        </div>
+      </div>
+    </dd>
+  </dl>
+</details>
+
+{% if days|length == 0 %}
+  <div class="cap-empty">{{ lang['no_daily_maps']|default('No daily maps yet: they are made after each pass') }}</div>
+{% else %}
+
+{# days fold open and shut; the newest is open (assets/js/captures.js) #}
+<div class="cap-tools" id="cap-tools" hidden>
+  <button type="button" class="cap-fold-all" id="cap-fold-all"
+          data-open="{{ lang['expand_all']|default('Expand all') }}" data-close="{{ lang['collapse_all']|default('Collapse all') }}">{{ lang['expand_all']|default('Expand all') }}</button>
+</div>
+
+<div class="cap-days daily-days" id="cap-days" data-store="rl1-daily-days">
+{% for d in days %}
+  {% set npass = 0 %}
+  {% for m in d.maps %}{% set npass = npass + m.passes|length %}{% endfor %}
+  <section class="cap-day daily-day" data-day="{{ d.date }}">
+    <button type="button" class="day-head cap-day-head" aria-expanded="true">
+      <i class="fas fa-chevron-down cap-caret"></i>
+      <span class="day-name">
+        {% if d.date == today %}{{ lang['today']|default('Today') }}
+        {% elseif d.date == yesterday %}{{ lang['yesterday']|default('Yesterday') }}
+        {% else %}{{ d.ts|weekday }}{% endif %}
+      </span>
+      <span class="day-date">{{ d.ts|date(constant('Config\\Config::PASSES_DATE_FORMAT')) }}</span>
+      <span class="cap-sum">
+        <span class="cap-count">{{ npass }} {{ npass == 1 ? lang['pass_lower']|default('pass') : lang['passes_lower']|default('passes') }}</span>
+        {% for m in d.maps %}
+          <span class="sum-dn"><i class="fas fa-{{ m.kind == 'day' ? 'sun' : 'moon' }} dn"></i>{{ m.passes|length }}</span>
+        {% endfor %}
+        {% if d.timelapse %}<span class="sum-dn" title="{{ lang['anim_title']|default('Time-lapse') }}"><i class="fas fa-film"></i>{{ d.timelapse.frames }}</span>{% endif %}
+      </span>
+      <span class="cap-peek" aria-hidden="true">
+        {% for m in d.maps %}<img src="{{ m.thumb }}" alt="" loading="lazy">{% endfor %}
+        {% if d.timelapse and d.timelapse.poster %}<img src="{{ d.timelapse.poster }}" alt="" loading="lazy">{% endif %}
+      </span>
+    </button>
+
+    {% if d.area %}
+    <div class="daily-area" title="{{ lang['area']|default('Area') }}">
+      <i class="fas fa-map"></i> {{ d.area.lon }} · {{ d.area.lat }}{% if d.area.size %} · {{ d.area.size }} px{% endif %} · ≈{{ d.area.km }} km/px{% if d.area.proj == 'equal_earth' %} · {{ lang['proj_equal_earth']|default('Equal Earth') }}{% endif %}
+      · {{ lang['updated']|default('Updated') }} {{ d.made|date('H:i') }}
+    </div>
+    {% endif %}
+    <div class="cap-grid daily-grid" data-viewer>
+      {% for m in d.maps %}
+        {% set title = m.kind == 'day' ? lang['daytime_passes']|default('Daytime passes') : lang['night_passes']|default('Night-time passes') %}
+        <a class="cap-card daily-card" href="{{ m.image }}">
+          <div class="cap-img daily-img"><img src="{{ m.thumb }}" alt="{{ title }}" loading="lazy"></div>
+          <div class="cap-body">
+            <div class="cap-top">
+              <i class="fas fa-{{ m.kind == 'day' ? 'sun' : 'moon' }} dn"></i>
+              <span class="cap-label">{{ title }} · {{ d.ts|date(constant('Config\\Config::PASSES_DATE_FORMAT')) }}</span>
+              <span class="daily-count">{{ m.passes|length }} {{ lang['passes_lower']|default('passes') }}</span>
+            </div>
+            <div class="daily-meta">
+              <span>{{ m.composite }}</span>
+              <span>{{ lang['channels']|default('Channels') }} {{ m.channels }}{% if m.wavelengths %} ({{ m.wavelengths }}){% endif %}</span>
+              {% if m.first %}<span>{{ m.first|date('H:i') }}{% if m.last != m.first %}–{{ m.last|date('H:i') }}{% endif %}</span>{% endif %}
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+      {% if d.timelapse %}
+        {% set t = d.timelapse %}
+        <div class="cap-card daily-card anim-card">
+          <div class="cap-img daily-img anim-box">
+            <video class="anim-video" playsinline muted loop controls preload="none"
+                   {% if t.poster %}poster="{{ t.poster }}"{% endif %}>
+              {% if t.mp4 %}<source src="{{ t.mp4 }}" type="video/mp4">{% endif %}
+              {% if t.webm %}<source src="{{ t.webm }}" type="video/webm">{% endif %}
+            </video>
+          </div>
+          <div class="cap-body">
+            <div class="cap-top">
+              <i class="fas fa-film"></i>
+              <span class="cap-label">{{ lang['anim_title']|default('Time-lapse') }} · {{ d.ts|date(constant('Config\\Config::PASSES_DATE_FORMAT')) }}</span>
+              <span class="daily-count">{{ t.frames }} {{ lang['passes_lower']|default('passes') }}</span>
+            </div>
+            <div class="daily-meta">
+              <span>3.9 µm IR · {{ lang['channels']|default('Channels') }} 4</span>
+              {% if t.first %}<span>{{ t.first|date('H:i') }}{% if t.last != t.first %}–{{ t.last|date('H:i') }}{% endif %}</span>{% endif %}
+              {% if t.area %}<span><i class="fas fa-map"></i> {{ t.area.lon }} · {{ t.area.lat }}</span>{% endif %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+    <div class="daily-passes">
+      {% for m in d.maps %}
+        <span class="daily-kind"><i class="fas fa-{{ m.kind == 'day' ? 'sun' : 'moon' }} dn"></i></span>
+        {% for p in m.passes %}
+          <a class="sat-chip sat-{{ p.colour }}" href="/captures/listImages?pass_id={{ p.id }}">{{ p.sat }} {{ p.start|date('H:i') }}</a>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </section>
+{% endfor %}
+</div>
+{% endif %}
+
+{% if page_count > 1 %}{% include('Captures/pagination.html') %}{% endif %}
+{% endblock %}
+
+{% block js_includes %}
+<script src="{{ asset('/assets/js/viewer.js') }}"></script>
+<script src="{{ asset('/assets/js/captures.js') }}"></script>
+{% endblock %}

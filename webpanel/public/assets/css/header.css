@@ -1,0 +1,75 @@
+header ul.navbar-nav li {
+  display: block;
+  font-weight: 700;
+}
+
+header ul.navbar-nav li a {
+  display: block;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  padding-bottom: 0.2rem;
+  margin-bottom: 0.3rem;
+  margin-right: 1.25rem;
+}
+
+header ul.navbar-nav li.active a {
+  border-bottom: 0.25rem solid white;
+}
+
+/* live clocks: UTC and station local time */
+header .clocks { display: flex; flex-direction: column; align-items: flex-end; margin-right: 0.9rem;
+  font-size: 0.78rem; line-height: 1.05rem; color: rgba(255,255,255,0.75); }
+header .clock { display: flex; gap: 0.4rem; }
+header .clock-label { opacity: 0.7; }
+header .clock-time { font-variant-numeric: tabular-nums; font-weight: 600; color: #fff; min-width: 4.1em; text-align: right; }
+
+/* language menu: flag and name, a list of languages with flags */
+header .lang-menu { margin-inline-end: 0.5rem; }
+header #lang-btn { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; font-weight: 600;
+  padding: 0.22rem 0.5rem; }
+.lang-menu .flag { width: 20px; height: 15px; border-radius: 2px; object-fit: cover; flex: none;
+  box-shadow: 0 0 0 1px rgba(127,127,127,0.35); }
+.lang-menu .dropdown-menu { min-width: 10rem; font-size: 0.9rem; }
+.lang-menu .dropdown-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0.9rem; }
+.lang-menu .dropdown-item.active, .lang-menu .dropdown-item:active { background: #2f80ed; color: #fff; }
+
+/* right-to-left languages (Arabic): mirror the spacing; maps, logs and numbers stay left to right */
+html[dir="rtl"] header ul.navbar-nav li a { margin-right: 0; margin-left: 1.25rem; }
+html[dir="rtl"] header .clocks { margin-right: 0; margin-left: 0.9rem; align-items: flex-start; }
+html[dir="rtl"] header #theme-toggle { margin-right: 0 !important; margin-left: 1rem !important; }
+html[dir="rtl"] #meteor-map, html[dir="rtl"] .sl-log, html[dir="rtl"] .clock-time { direction: ltr; }
+
+header .nav-short { display: none; }
+
+/* phones: keep the menu on one line (scrolls sideways if needed), drop the time zone */
+@media (max-width: 575.98px) {
+  header .navbar { padding-left: 0.75rem; padding-right: 0.75rem; }
+  header ul.navbar-nav { overflow-x: auto; scrollbar-width: none; }
+  header ul.navbar-nav::-webkit-scrollbar { display: none; }
+  header ul.navbar-nav li a { white-space: nowrap; margin-right: 0.6rem; font-size: 0.9rem; }
+  header .clocks { margin-right: 0.5rem; font-size: 0.7rem; line-height: 0.9rem; }
+  header .lang-menu { margin-inline-end: 0.4rem; }
+  header #lang-btn { padding: 0.15rem 0.35rem; }
+  header #lang-btn .lang-name { display: none; }
+  html[dir="rtl"] header ul.navbar-nav li a { margin-left: 0.6rem; }
+  html[dir="rtl"] header .clocks { margin-left: 0.5rem; }
+  html[dir="rtl"] header #theme-toggle { margin-left: 0 !important; }
+  header .nav-long { display: none; }
+  header .nav-short { display: inline; }
+  header #theme-toggle { margin-right: 0 !important; }
+}
+/* narrow phones: the clocks drop their labels (UTC on top, local below) and their seconds
+   (clipped: hh:mm shows), and the links sit closer, so the six menu items fit */
+@media (max-width: 419.98px) {
+  header .clock-label { display: none; }
+  header ul.navbar-nav li a { margin-right: 0.36rem; font-size: 0.8rem; }
+  html[dir="rtl"] header ul.navbar-nav li a { margin-left: 0.36rem; }
+  header .clock-time { min-width: 0; max-width: 4.15ch; overflow: hidden; white-space: nowrap; }
+  header .clocks { margin-right: 0.35rem; }
+}
+
+/* the top menu stays at the top of the window while the page scrolls (under the full-screen
+   views, .fs-on and the image viewer, and Bootstrap's modals) */
+header { position: sticky; top: 0; z-index: 1020; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25); }
+/* links to a spot on the page land below the menu, not under it */
+html { scroll-padding-top: 4rem; }

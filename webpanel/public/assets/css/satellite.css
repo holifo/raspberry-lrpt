@@ -1,0 +1,96 @@
+/* Satellites tab (/satellite). Shared colours and components are in site.css; the --pl-* values
+   switch in dark mode, so this file needs no dark rules of its own */
+
+/* map and pass list side by side; the map fills the rest of the window's height */
+.sat-layout { display: grid; grid-template-columns: minmax(0, 1fr) 310px 290px;
+  grid-template-areas: "map info side"; gap: 14px;
+  height: max(440px, calc(100vh - 150px)); height: max(440px, calc(100dvh - 150px)); margin-bottom: 14px; }
+div#meteor-map.sat-map { grid-area: map; width: 100%; height: 100%; min-height: 0; background: #0a1220; }
+.sat-side { grid-area: side; }
+
+/* ---- the selected satellite's details ---- */
+.sat-info { grid-area: info; display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--pl-line);
+  background: var(--pl-card); }
+.si-tabs { display: flex; border-bottom: 1px solid var(--pl-line); }
+.si-tab { flex: 1; border: 0; background: none; color: var(--pl-dim); padding: 9px 6px 8px; font-weight: 600;
+  font-size: 0.9rem; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+.si-tab .sat-dot { margin-right: 6px; }
+.si-tab:hover { color: inherit; }
+.si-tab:focus { outline: none; }
+.si-tab:focus-visible { box-shadow: inset 0 0 0 2px var(--pl-dim); }
+.si-tab.active { color: inherit; border-bottom-color: var(--m23); }
+.si-tab.sat-m24.active { border-bottom-color: var(--m24); }
+.si-body { overflow-y: auto; min-height: 0; padding: 10px 12px 12px; font-size: 0.86rem; }
+.si-wait { color: var(--pl-dim); font-style: italic; }
+.si-name { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-weight: 600; font-size: 0.98rem; }
+.si-name .sat-dot { margin-right: 0; }
+.si-badge { margin-inline-start: auto; font-size: 0.72rem; font-weight: 600; border-radius: 999px; padding: 1px 8px;
+  color: var(--pl-dim); border: 1px solid var(--pl-line); }
+.si-badge.on { color: #0a1220; background: #5fd38a; border-color: #5fd38a; }
+.sat-info dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 10px; margin: 0; }
+.si-sec { grid-column: 1 / -1; margin-top: 10px; padding-top: 7px; border-top: 1px solid var(--pl-line);
+  color: var(--pl-dim); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.sat-info dt { color: var(--pl-dim); font-weight: 400; }
+.sat-info dd { margin: 0; text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sat-info dd.si-good { color: #2fa866; font-weight: 600; }
+.sat-info dd.si-warn { color: #d08a16; }
+.sat-info dd.si-dim { color: var(--pl-dim); }
+.sat-info .dn { width: 1em; }
+div#meteor-map iframe { border: 0; width: 100%; height: 100%; display: block; }
+
+.sat-side { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--pl-line);
+  background: var(--pl-card); }
+.sat-side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 12px; border-bottom: 1px solid var(--pl-line); font-weight: 600; }
+.sat-clear { border: 1px solid var(--pl-line); background: none; color: var(--pl-dim); border-radius: 999px;
+  font-size: 0.78rem; padding: 1px 10px; font-weight: 400; }
+.sat-clear:hover { color: inherit; border-color: var(--pl-dim); }
+.sat-side .no-passes { color: var(--pl-dim); font-style: italic; padding: 18px 12px; text-align: center; }
+
+.sat-passes { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; min-height: 0; }
+.sat-pass { display: block; width: 100%; text-align: start; background: none; border: 0; color: inherit;
+  border-bottom: 1px solid var(--pl-line); padding: 9px 12px; cursor: pointer; font-size: 0.9rem; }
+.sat-pass:hover { background: var(--pl-hover); }
+.sat-pass:focus { outline: none; }
+.sat-pass:focus-visible { box-shadow: inset 0 0 0 2px var(--m23); }
+.sat-pass.selected { background: var(--pl-hover); box-shadow: inset 3px 0 0 var(--m23); }
+.sat-pass.sat-m24.selected { box-shadow: inset 3px 0 0 var(--m24); }
+.sat-pass.skipped { opacity: 0.55; }
+.sp-top, .sp-bottom { display: flex; align-items: center; gap: 8px; }
+.sp-top .sat-dot { margin-right: 0; }
+.sp-sat { font-weight: 600; }
+.sp-day { color: var(--pl-dim); margin-inline-start: auto; font-size: 0.82rem; }
+.sp-live { color: var(--rec); font-size: 0.78rem; font-weight: 600; }
+.sat-pass.live .sp-day { display: none; }
+.sat-pass.live .sp-live::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--rec); margin-inline-end: 5px; vertical-align: 1px; animation: sp-pulse 1.2s ease-in-out infinite; }
+.sp-bottom { margin-top: 3px; padding-inline-start: 17px; }
+.sp-time { font-variant-numeric: tabular-nums; }
+.sp-dim { color: var(--pl-dim); font-size: 0.82rem; }
+.sp-elev { display: flex; align-items: center; gap: 5px; margin-inline-start: auto; font-size: 0.82rem;
+  font-variant-numeric: tabular-nums; }
+.sp-elev .elev-bar { width: 38px; flex: none; }
+.sat-side-foot { display: flex; justify-content: space-between; gap: 8px; padding: 8px 12px; font-size: 0.78rem;
+  color: var(--pl-dim); border-top: 1px solid var(--pl-line); }
+.sat-side-foot a { color: inherit; }
+
+@keyframes sp-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* narrower windows: details and list go under the map, which keeps about the world's shape */
+/* medium windows: the details sit above the pass list, beside the map */
+@media (max-width: 1599.98px) {
+  .sat-layout { grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: "map info" "map side"; }
+  .sat-info .si-body { max-height: 46vh; }
+}
+@media (max-width: 1199.98px) {
+  .sat-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; height: auto;
+    grid-template-areas: "map" "info" "side"; }
+  .sat-info .si-body { max-height: none; }
+  /* two columns of details where there is room */
+  @media (min-width: 640px) {
+    .sat-info dl { grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); column-gap: 14px; }
+  }
+  div#meteor-map.sat-map { height: clamp(340px, 56vw, 70vh); }
+  .sat-passes { overflow: visible; }
+}

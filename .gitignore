@@ -1,0 +1,19 @@
+# ansible retry files
+*.retry
+
+# vim swap files
+*.swp
+*.swo
+
+# environment-specific config file
+config/settings.yml
+# answers to the setup questions and the install's merged copy (contain the admin password)
+config/settings.local.yml
+config/.settings.merged.yml
+
+__pycache__/
+*.pyc
+webpanel-test-output/
+
+# install_and_upgrade.sh output
+install.log

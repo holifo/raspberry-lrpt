@@ -1,0 +1,74 @@
+---
+# Only RTL-SDR and Airspy receivers are supported
+- name: Kernel drivers that would grab the SDRs blacklisted
+  become: yes
+  copy:
+    src: "{{ item }}"
+    dest: /etc/modprobe.d/{{ item }}
+    owner: root
+    group: root
+    mode: 0644
+  loop: [rtlsdr.conf, airspy-blacklist.conf]
+
+- name: MiriSDR blacklist of older installs removed
+  become: yes
+  file:
+    path: /etc/modprobe.d/blacklist-msi.conf
+    state: absent
+
+# Debian 12's librtlsdr doesn't support the RTL-SDR V4. Delete its .so files so SatDump and the
+# tools use the osmocom build below.
+- name: Debian librtlsdr check (RTL-SDR V4 fix)
+  find:
+    paths: "{{ '/usr/lib/aarch64-linux-gnu/' if system_architecture == 'arm64' else '/lib/arm-linux-gnueabihf/' }}"
+    patterns: "librtlsdr.so*"
+    use_regex: true
+    file_type: file
+  register: libraries_to_delete
+  when: raspbian_version.stdout == 'bookworm' and system_architecture in ['arm64', 'armhf']
+
+- name: Debian librtlsdr removed (RTL-SDR V4 fix)
+  become: yes
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ libraries_to_delete.files | default([]) }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
+  when: raspbian_version.stdout == 'bookworm' and system_architecture in ['arm64', 'armhf']
+
+- name: RTL-SDR tools check
+  stat:
+    path: /usr/local/bin/rtl_sdr
+  register: rtlsdr_bin
+
+- name: RTL-SDR tools (osmocom, built from source)
+  when: not rtlsdr_bin.stat.exists
+  block:
+    - name: RTL-SDR source
+      git:
+        repo: https://github.com/osmocom/rtl-sdr.git
+        dest: /tmp/rtl-sdr
+        update: no
+
+    - name: RTL-SDR compiled and installed
+      become: yes
+      shell: |
+        set -e
+        mkdir -p build && cd build
+        cmake ../ -DDETACH_KERNEL_DRIVER=ON
+        make
+        make install
+        ldconfig
+        install -m 0644 ../rtl-sdr.rules /etc/udev/rules.d/rtl-sdr.rules
+      args:
+        chdir: /tmp/rtl-sdr
+
+- name: Airspy udev rules
+  become: yes
+  copy:
+    src: 52-airspy.rules
+    dest: /etc/udev/rules.d/52-airspy.rules
+    owner: root
+    group: root
+    mode: 0644

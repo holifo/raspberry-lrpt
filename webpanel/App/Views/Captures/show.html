@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block body %}
+{% set info = capture.info %}
+{% set colour = {'METEOR-M2 3': 'm23', 'METEOR-M2 4': 'm24'}[info.sat_name|default('')]|default('other') %}
+{% set names = {
+  'polar-direction': lang['sky_track']|default('Sky track'),
+  'polar-azel': lang['elevation_azimuth']|default('Elevation & azimuth'),
+  'spectrogram': lang['spectrogram']|default('Spectrogram'),
+  'histogram': lang['histogram']|default('Histogram')
+} %}
+
+<div class="page-head sat-{{ colour }}">
+  <div>
+    <a class="back-link" href="/captures?page_no=1">&lsaquo; {{ lang['captures'] }}</a>
+    <h1 class="page-title">
+      {% if info.sat_name is defined %}<span class="sat-chip">{{ info.sat_name|replace({'METEOR-': ''}) }}</span>{% endif %}
+      {% if info.pass_start is defined %}
+        {{ info.pass_start|weekday }} {{ info.pass_start|date(constant('Config\\Config::PASSES_DATE_FORMAT')) }}
+        <span class="page-sub">{{ info.pass_start|date('H:i') }}{% if info.pass_end %}&ndash;{{ info.pass_end|date('H:i') }}{% endif %}</span>
+      {% endif %}
+    </h1>
+  </div>
+  <div class="page-meta">
+    {% if info.max_elev is defined and info.max_elev != '' %}<span>{{ info.max_elev }}&deg; {{ lang['max']|default('max') }}</span>{% endif %}
+    {% if info.direction is defined and info.direction %}
+      <span><i class="fas fa-arrow-{{ info.direction == 'Northbound' ? 'up' : 'down' }}"></i> {{ info.direction == 'Northbound' ? lang['northbound']|default('Northbound') : (info.direction == 'Southbound' ? lang['southbound']|default('Southbound') : info.direction) }}</span>
+    {% endif %}
+    {% if info.daylight_pass is defined %}
+      <span><i class="fas fa-{{ info.daylight_pass == 1 ? 'sun' : 'moon' }} dn"></i> {{ info.daylight_pass == 1 ? lang['day']|default('day') : lang['night']|default('night') }}</span>
+    {% endif %}
+    <span>{{ lang['gain'] }} {{ capture.gain == '0' ? lang['auto']|default('auto') : (capture.gain == '' ? '?' : capture.gain) }}</span>
+    {% if capture.recording %}
+      <a class="rec-link" href="/recordings/{{ capture.recording.name|url_encode }}" download
+         title="{{ lang['recording_hint']|default('Decoded frames for offline re-processing: satdump meteor_m2-x_lrpt cadu <file> <output folder>') }}">
+        <i class="fas fa-download"></i> {{ lang['recording']|default('Recording') }} .cadu &middot; {{ capture.recording.size }} MB
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+{% include "Captures/legend.html" with {have: capture.enhancements|join('|')|lower} %}
+
+<div class="cap-grid" data-viewer>
+  {% for enhancement in capture.enhancements %}
+    {% set key = enhancement|trim('-', side='left')|split('.')|slice(0, -1)|join('.') %}
+    {% set graph = key starts with 'polar' or key in ['spectrogram', 'histogram'] %}
+    <a class="cap-card sat-{{ colour }}" href="/images/{{ capture.image_path }}{{ enhancement }}">
+      <div class="cap-img{% if graph %} contain{% endif %}">
+        <img src="{{ constant('Config\\Config::THUMB_PATH') }}/{{ capture.image_path }}{{ enhancement }}" alt="{{ key }}" loading="lazy">
+      </div>
+      <div class="cap-body">
+        <span class="cap-label">{{ names[key]|default(key|replace({'_corrected': '', '_projected': ' (map)', '_': ' '})|replace({'.9 um ': '.9 µm ', 'um ': 'µm '})) }}</span>
+      </div>
+    </a>
+  {% else %}
+    <div class="cap-empty">{{ lang['no_images']|default('No images for this pass') }}</div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block js_includes %}
+  <script src="{{ asset('/assets/js/viewer.js') }}"></script>
+{% endblock %}

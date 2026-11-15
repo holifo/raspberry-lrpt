@@ -1,0 +1,7 @@
+---
+- name: install raspberry-lrpt web panel
+  hosts: webserver
+  connection: local
+  gather_facts: no
+  roles:
+    - role: webserver

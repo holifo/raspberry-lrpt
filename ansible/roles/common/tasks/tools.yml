@@ -1,0 +1,41 @@
+---
+- name: Cron jobs (daily scheduling, and at boot)
+  cron:
+    name: "{{ item.name }}"
+    job: "{{ item.job }}"
+    minute: "{{ item.minute | default(omit) }}"
+    hour: "{{ item.hour | default(omit) }}"
+    special_time: "{{ item.special_time | default(omit) }}"
+  loop:
+    - { name: schedule passes daily, minute: "1", hour: "0", job: "{{ lrpt_home }}/scripts/schedule.sh -t" }
+    - { name: schedule passes after reboot, special_time: reboot, job: "{{ lrpt_home }}/scripts/schedule.sh" }
+    - { name: Correct /run/user/uid perms after reboot, special_time: reboot, job: "{{ lrpt_home }}/scripts/tools/scratch_perms.sh" }
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Database
+  shell: "/usr/bin/sqlite3 {{ lrpt_home }}/db/panel.db < {{ lrpt_home }}/db_migrations/00_seed_schema.sql"
+  args:
+    executable: /bin/bash
+    creates: "{{ lrpt_home }}/db/panel.db"
+
+- name: Folders
+  become: yes
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ target_user }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ lrpt_home }}/tmp/meteor", group: "{{ target_user }}", mode: "0755" }
+    - { path: "{{ lrpt_home }}/tmp/annotation", group: "{{ target_user }}", mode: "0755" }
+    - { path: "{{ lrpt_home }}/tmp/scanner", group: "{{ target_user }}", mode: "0755" }
+    # images and videos: group www-data, so the web panel can read them
+    - { path: "{{ images_output }}", group: www-data, mode: "0775" }
+    - { path: "{{ images_output }}/thumb", group: www-data, mode: "0775" }
+    - { path: "{{ videos_output }}", group: www-data, mode: "0775" }
+    - { path: "{{ audio_output }}", group: "{{ target_user }}", mode: "0775" }
+    - { path: "{{ audio_output }}/meteor", group: "{{ target_user }}", mode: "0775" }
+  loop_control:
+    label: "{{ item.path }}"

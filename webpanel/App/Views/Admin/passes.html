@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/admin.css') }}">
+{% endblock %}
+
+{% block body %}
+  {% if status_msg is defined %}
+    {% if status_msg == 'Success' %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ lang['successful_delete_pass'] }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    {% elseif status_msg == 'SuccessBulk' %}
+      {# [Claude AI edit] START - success message for the bulk "Delete selected" action #}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ lang['successful_delete_selected']|default('Successfully deleted selected items') }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      {# [Claude AI edit] END #}
+    {% else %}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ status_msg }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    {% endif %}
+  {% endif %}
+
+  {% include('Admin/nav.html') %}
+
+  <p class="note"><i class="fas fa-exclamation-triangle"></i>{{ lang['admin_pass_delete_warning'] }}</p>
+
+  {% set sat_colours = {'METEOR-M2 3': 'm23', 'METEOR-M2 4': 'm24'} %}
+  {% set now_s = 'now'|date('U') %}
+  {% set today = now_s|date('Y-m-d') %}
+  {% set tomorrow = (now_s + 86400)|date('Y-m-d') %}
+
+  {# bulk selection form: the row checkboxes submit to /admin/deleteSelectedPasses #}
+  <form method="post" action="/admin/deleteSelectedPasses"
+        onsubmit="return confirm('{{ lang['admin_bulk_delete_confirm']|default('Are you sure you want to delete all selected items? This action is irreversible!')|e('js') }}');">
+    <div class="admin-toolbar">
+      <label class="select-all"><input type="checkbox" id="bulk-select-all"> {{ lang['select_all']|default('Select all') }}</label>
+      <button type="submit" id="bulk-delete-btn" class="btn btn-sm btn-outline-danger" disabled>
+        <i class="fa fa-trash"></i> {{ lang['delete_selected']|default('Delete selected') }}
+      </button>
+    </div>
+
+    <div class="admin-list" id="admin-pass-list">
+    {% if pass.list|length <= 0 %}
+      <div class="cap-empty">{{ lang['no_passes']|default('No passes scheduled') }}</div>
+    {% else %}
+      {% set last_day = '' %}
+      {% set prev_end = 0 %}
+      {% for pass in pass.list %}
+        {% set day = pass.pass_start|date('Y-m-d') %}
+        {% if day != last_day %}
+          <div class="day-head">
+            <span class="day-name">
+              {% if day == today %}{{ lang['today']|default('Today') }}
+              {% elseif day == tomorrow %}{{ lang['tomorrow']|default('Tomorrow') }}
+              {% else %}{{ pass.pass_start|weekday }}{% endif %}
+            </span>
+            <span class="day-date">{{ pass.pass_start|date(constant('Config\\Config::PASSES_DATE_FORMAT')) }}</span>
+          </div>
+          {% set last_day = day %}
+        {% endif %}
+        {% set conflict = prev_end >= pass.pass_start %}
+        <div class="admin-row sat-{{ sat_colours[pass.sat_name]|default('other') }}{% if pass.is_active == false or pass.pass_end < now_s %} inactive{% endif %}">
+          <input type="checkbox" class="bulk-select-item" name="pass_start_ids[]" value="{{ pass.pass_start }}" aria-label="{{ lang['select']|default('Select') }}">
+          <button type="button" class="btn-icon delete-capture" data-toggle="modal"
+                  data-pass-start-id="{{ pass.pass_start }}"
+                  data-sat-name="{{ pass.sat_name }}"
+                  data-pass-start="{{ pass.pass_start|date(constant('Config\\Config::DATETIME_FORMAT')) }}"
+                  data-pass-end="{{ pass.pass_end|date(constant('Config\\Config::DATETIME_FORMAT')) }}"
+                  data-target="#confirmDeletePass" title="{{ lang['delete']|default('Delete') }}"><i class="fa fa-trash"></i></button>
+          <span class="a-sat"><span class="sat-dot"></span>{{ pass.sat_name|replace({'METEOR-': ''}) }}
+            {% if conflict %}<i class="fas fa-exclamation-triangle st-conflict" title="{{ lang['conflicting_pass'] }}"></i>{% endif %}</span>
+          <span class="a-time">{{ pass.pass_start|date('H:i') }}<span class="t-end">&ndash;{{ pass.pass_end|date('H:i') }}</span></span>
+          <span class="c-elev"><span class="elev-bar{% if pass.max_elev < 30 %} low{% endif %}"><span style="width: {{ (pass.max_elev / 90 * 100)|round }}%"></span></span><span class="elev-val">{{ pass.max_elev }}&deg;</span></span>
+          <span class="a-dir">{% if pass.direction == 'Northbound' %}<i class="fas fa-arrow-up"></i>{% elseif pass.direction == 'Southbound' %}<i class="fas fa-arrow-down"></i>{% endif %}</span>
+        </div>
+        {% set prev_end = pass.pass_end %}
+      {% endfor %}
+    {% endif %}
+    </div>
+  </form>
+
+  <div class="modal fade" id="confirmDeletePass" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmDeleteLabel">{{ lang['admin_delete_confirm_header'] }}</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p id="contents">
+            <strong>{{ lang.satellite }}: </strong><span id="satellite-name"></span><br>
+            <strong>{{ lang.pass_start }}: </strong><span id="pass-start"></span><br>
+            <strong>{{ lang.pass_end }}: </strong><span id="pass-end"></span><br>
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ lang['cancel'] }}</button>
+          <a href="" id="confirmDeletion" type="button" class="btn btn-danger">{{ lang['confirm'] }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block js_includes %}
+  <script src="{{ asset('/assets/js/admin.js') }}"></script>
+{% endblock %}

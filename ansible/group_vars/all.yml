@@ -1,0 +1,36 @@
+---
+# available languages for webpanel (see "Lang" directory files)
+available_langs: [ ar, bg, cn, de, en, es, fr, lt, nl, pt, sr, ru, it, hu, kr ]
+
+# root git clone directory (where functionality exists)
+lrpt_home: "/home/{{ target_user }}/raspberry-lrpt"
+
+# database file
+db_file: "{{ lrpt_home }}/db/panel.db"
+
+# website content directory
+web_home: "/var/www/wx-new"
+
+# output root directories for images, audio, and video
+output_root: /srv
+images_output: "{{ output_root }}/images"
+audio_output: "{{ output_root }}/audio"
+videos_output: "{{ output_root }}/videos"
+
+# file used for the rolling animation
+animation_output: "{{ videos_output }}/RollingAnimation.webm"
+
+# ramfs location
+ramfs_path: "/var/ramfs"
+
+# SatDump package bundled in software/ (satdump_<version>_<codename>_<arch>.deb)
+satdump_version: "1.2.3-0b654b4ec"
+
+# log output file
+log_file: "/var/log/raspberry-lrpt/output.log"
+
+# TLS self-signed certs
+tls_cert: /etc/letsencrypt/live/{{ web_server_name }}/fullchain.pem
+tls_cert_key: /etc/letsencrypt/live/{{ web_server_name }}/privkey.pem
+tls_trusted_certificate: /etc/letsencrypt/live/{{ web_server_name }}/chain.pem
+...

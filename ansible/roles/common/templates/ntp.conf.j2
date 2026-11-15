@@ -1,0 +1,32 @@
+####### MANAGED BY ANSIBLE! ##########
+# Please do not make changes by hand #
+######################################
+
+# /etc/ntpsec/ntp.conf for ntpsec (Bookworm's ntpd); see ntp.conf(5)
+
+driftfile /var/lib/ntpsec/ntp.drift
+leapfile /usr/share/zoneinfo/leap-seconds.list
+
+# statistics, written to /var/log/ntpsec
+statsdir /var/log/ntpsec/
+statistics loopstats peerstats clockstats
+filegen loopstats file loopstats type day enable
+filegen peerstats file peerstats type day enable
+filegen clockstats file clockstats type day enable
+
+# the server from settings.yml (ntp_server) first, then the Debian pool as backup
+{% if ntp_server != "" %}
+{{ "pool" if "pool.ntp.org" in ntp_server else "server" }} {{ ntp_server }} iburst
+{% endif %}
+pool 0.debian.pool.ntp.org iburst
+pool 1.debian.pool.ntp.org iburst
+pool 2.debian.pool.ntp.org iburst
+pool 3.debian.pool.ntp.org iburst
+
+# serve time to no one, but let this machine query its own daemon.
+# "nopeer" in the default line also stops pool servers from being added, so the
+# servers that the pool lines find get their own "restrict source" line without it.
+restrict default kod nomodify nopeer noquery limited
+restrict source nomodify noquery
+restrict 127.0.0.1
+restrict ::1

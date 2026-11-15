@@ -1,0 +1,237 @@
+/* Shared look for every page: colours, page heads, satellite chips, elevation bars,
+   cards, pager and admin tabs. Dark values are in dark.css. */
+:root {
+  --m23: #e09a12;        /* METEOR-M2 3, amber (map: #f2b33d) */
+  --m23-bg: #fdf0d5;
+  --m23-text: #7a4f00;
+  --m24: #22a99c;        /* METEOR-M2 4, teal (map: #4fd1c5) */
+  --m24-bg: #d9f5f2;
+  --m24-text: #0f6b62;
+  --pl-line: #e3e7ec;
+  --pl-dim: #6b7785;
+  --pl-faint: #9aa5b1;
+  --pl-track: #e9edf1;
+  --pl-low: #b3bcc6;
+  --pl-hover: #f3f6f9;
+  --pl-card: #ffffff;
+  --pl-img: #0a1220;     /* backdrop behind satellite images */
+  --rec: #e5484d;
+}
+
+/* ---- page head (same as the Passes station bar) ---- */
+.page-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 6px 12px; padding: 2px 2px 12px; }
+.page-title { font-size: 1.15rem; font-weight: 600; margin: 0; }
+.page-sub { color: var(--pl-dim); font-size: 0.95rem; margin-left: 6px; font-weight: 400; }
+.page-meta { color: var(--pl-dim); font-size: 0.85rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.back-link { color: var(--pl-dim); font-size: 0.9rem; }
+.rec-link { color: inherit; border: 1px solid var(--pl-line); border-radius: 999px; padding: 2px 10px;
+  white-space: nowrap; }
+.rec-link:hover { color: inherit; text-decoration: none; border-color: var(--pl-dim); }
+.back-link:hover { color: inherit; text-decoration: none; }
+
+/* day / section heads */
+.day-head { display: flex; align-items: baseline; gap: 8px; padding: 14px 4px 6px;
+  border-bottom: 1px solid var(--pl-line); }
+.day-name { font-weight: 600; }
+.day-date { color: var(--pl-dim); font-size: 0.85rem; }
+
+/* ---- satellite colour pieces ---- */
+.sat-chip { border-radius: 4px; padding: 1px 8px; font-size: 0.85rem; font-weight: 600; white-space: nowrap;
+  background: var(--m23-bg); color: var(--m23-text); }
+.sat-m24 .sat-chip, .sat-chip.sat-m24 { background: var(--m24-bg); color: var(--m24-text); }
+.sat-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px;
+  background: var(--m23); vertical-align: 0; }
+.sat-m24 .sat-dot, .sat-dot.sat-m24 { background: var(--m24); }
+
+.c-elev { display: flex; align-items: center; gap: 8px; }
+.elev-bar { flex: 1; height: 6px; border-radius: 3px; background: var(--pl-track); overflow: hidden; display: inline-block; }
+.elev-bar span { display: block; height: 100%; border-radius: 3px; background: var(--m23); }
+.sat-m24 .elev-bar span { background: var(--m24); }
+.elev-bar.low span, .sat-m24 .elev-bar.low span { background: var(--pl-low); }
+.elev-val { width: 32px; text-align: right; font-variant-numeric: tabular-nums; }
+.fa-sun.dn { color: #e0a412; }
+.fa-moon.dn { color: var(--pl-dim); }
+
+/* ---- capture cards (Captures list and one capture's images) ---- */
+.cap-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); padding: 12px 0 4px; }
+.cap-card { display: flex; flex-direction: column; border: 1px solid var(--pl-line); border-radius: 8px; overflow: hidden;
+  background: var(--pl-card); color: inherit; transition: border-color 0.15s, transform 0.15s; }
+a.cap-card:hover { color: inherit; text-decoration: none; border-color: var(--m23); transform: translateY(-1px); }
+a.cap-card.sat-m24:hover { border-color: var(--m24); }
+.cap-img { background: var(--pl-img); aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.cap-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cap-img.contain img { object-fit: contain; }
+.cap-body { padding: 9px 11px 11px; display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
+.cap-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cap-time { font-weight: 600; font-variant-numeric: tabular-nums; }
+.cap-meta { color: var(--pl-dim); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cap-label { font-weight: 600; }
+.cap-empty { color: var(--pl-dim); font-style: italic; text-align: center; padding: 30px 0; }
+
+/* ---- daily map: two wide cards a day (day / night), then chips linking to the passes ---- */
+.cap-grid.daily-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.daily-img { aspect-ratio: 7 / 5; background: #0b1220; }
+.daily-count { color: var(--pl-dim); font-size: 0.82rem; white-space: nowrap; }
+.daily-card .cap-top { justify-content: flex-start; }
+.daily-card .daily-count { margin-left: auto; }
+.daily-passes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 0 14px; }
+.daily-passes .daily-kind { margin-left: 6px; }
+.daily-passes .daily-kind:first-child { margin-left: 0; }
+a.sat-chip:hover { text-decoration: none; filter: brightness(1.1); }
+.daily-area { margin-left: auto; color: var(--pl-dim); font-size: 0.8rem; text-align: right; }
+.daily-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; color: var(--pl-dim); font-size: 0.8rem; }
+.daily-about { margin: 0 0 12px; font-size: 0.9rem; }
+.daily-about summary { cursor: pointer; color: var(--pl-dim); font-weight: 600; }
+.daily-about dl { margin: 8px 0 0; padding: 10px 14px; border-radius: 10px; background: var(--pl-card); border: 1px solid var(--pl-line); }
+.daily-about dt { font-weight: 600; margin-top: 6px; }
+.daily-about dt:first-child { margin-top: 0; }
+.daily-about dd { margin: 2px 0 0; color: var(--pl-dim); }
+.day-head { flex-wrap: wrap; }
+@media (max-width: 575.98px) { .daily-area { flex-basis: 100%; text-align: left; margin-left: 0; } }
+
+/* ---- pager ---- */
+.pager { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 14px 0 6px; color: var(--pl-dim); font-size: 0.9rem; }
+.pager a, .pager span.off { border: 1px solid var(--pl-line); border-radius: 6px; padding: 4px 12px; color: inherit; }
+.pager a:hover { background: var(--pl-hover); text-decoration: none; color: inherit; }
+.pager span.off { opacity: 0.4; }
+
+/* ---- admin tabs ---- */
+.subnav { display: flex; gap: 22px; border-bottom: 1px solid var(--pl-line); margin-bottom: 14px; }
+.subnav a { color: var(--pl-dim); padding: 6px 0 8px; border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 600; }
+.subnav a:hover { color: inherit; text-decoration: none; }
+.subnav a.active { color: inherit; border-bottom-color: currentColor; }
+
+.note { color: var(--pl-dim); font-size: 0.88rem; margin: 0 2px 10px; }
+.note i { color: #e0892b; margin-right: 6px; }
+
+/* ---- phones ---- */
+@media (max-width: 575.98px) {
+  .cap-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .cap-grid.daily-grid { grid-template-columns: 1fr; }
+  .cap-body { padding: 7px 8px 9px; font-size: 0.85rem; }
+  .sat-dot { margin-right: 5px; width: 8px; height: 8px; }
+  .elev-val { width: 26px; }
+  .subnav { gap: 16px; }
+}
+
+/* ---- wide screens: pages use the width of a maximised or full-screen window ---- */
+@media (min-width: 1400px) {
+  .container { max-width: min(94vw, 2200px); }
+  .cap-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  .cap-grid.daily-grid { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
+}
+
+/* ---- full-screen panels (assets/js/fullscreen.js) ---- */
+/* the fallback where the Fullscreen API is missing: pinned over the whole window */
+.fs-on { position: fixed !important; inset: 0 !important; z-index: 2000 !important; width: auto !important;
+  height: auto !important; max-width: none !important; max-height: none !important; margin: 0 !important;
+  border-radius: 0 !important; }
+html.fs-lock, html.fs-lock body { overflow: hidden; }
+#meteor-map:fullscreen { width: 100%; height: 100%; max-height: none; background: #0a1220; }
+#meteor-map.fs-on { background: #0a1220; }
+
+/* ---- image viewer on a capture's page (assets/js/viewer.js); always dark ---- */
+.iv { position: fixed; inset: 0; z-index: 2100; background: rgba(5,10,18,0.96); color: #dbe4ee; }
+.iv[hidden] { display: none; }
+.iv-stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  overflow: hidden; touch-action: none; cursor: zoom-in; user-select: none; }
+.iv-stage.zoomed { cursor: grab; }
+.iv-stage.zoomed:active { cursor: grabbing; }
+.iv-img { display: block; max-width: none; transform-origin: center center; will-change: transform;
+  -webkit-user-drag: none; box-shadow: 0 6px 30px rgba(0,0,0,0.5); }
+.iv-btn { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 36px;
+  border: 0; background: transparent; color: #dbe4ee; font: 600 18px/1 -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  cursor: pointer; padding: 0; text-decoration: none; }
+.iv-btn:hover { background: #16263b; color: #fff; text-decoration: none; }
+.iv-btn:disabled { color: #4a5a6e; background: transparent; cursor: default; }
+.iv-btn svg { width: 16px; height: 16px; }
+.iv-top { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 10px;
+  padding: 6px 8px 6px 16px; background: linear-gradient(rgba(5,10,18,0.9), rgba(5,10,18,0)); }
+.iv-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.iv-count { color: #8fa3b8; font-size: 0.85rem; margin-right: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.iv-zoom { position: absolute; right: 12px; bottom: 12px; display: flex; align-items: center;
+  background: rgba(10,18,32,0.88); border: 1px solid #22344d; border-radius: 8px; overflow: hidden; }
+.iv-zoom .iv-btn + .iv-btn { border-left: 1px solid #22344d; }
+.iv-pct { padding: 0 10px; font-size: 0.8rem; color: #8fa3b8; min-width: 52px; text-align: center;
+  border-left: 1px solid #22344d; font-variant-numeric: tabular-nums; }
+.iv-nav { position: absolute; top: 50%; margin-top: -24px; width: 44px; height: 48px; border-radius: 8px;
+  background: rgba(10,18,32,0.6); font-size: 16px; }
+.iv-prev { left: 10px; }
+.iv-next { right: 10px; }
+.iv-nav[hidden] { display: none; }
+.iv-spin { position: absolute; width: 34px; height: 34px; border: 3px solid #22344d; border-top-color: #9fd3ff;
+  border-radius: 50%; display: none; animation: iv-spin 0.8s linear infinite; }
+.iv.loading .iv-spin { display: block; }
+@keyframes iv-spin { to { transform: rotate(360deg); } }
+@media (max-width: 575.98px) { .iv-nav { display: none; } }
+
+/* ---- image legend (Captures) ---- */
+.img-legend .lg-box { margin: 8px 0 0; padding: 10px 14px; border-radius: 10px; background: var(--pl-card); border: 1px solid var(--pl-line); }
+.img-legend .lg-intro { margin: 0 0 8px; color: var(--pl-dim); }
+.img-legend h3 { font-size: 0.95rem; font-weight: 700; margin: 12px 0 4px; }
+.img-legend .lg-table { width: 100%; border-collapse: collapse; }
+.img-legend .lg-table th { font-weight: 600; color: var(--pl-dim); font-size: 0.8rem; text-align: start; padding: 2px 8px 4px 0; }
+.img-legend .lg-table td { padding: 4px 8px 4px 0; border-top: 1px solid var(--pl-line); vertical-align: top; }
+.img-legend .lg-table td:last-child { color: var(--pl-dim); }
+.img-legend .lg-ch, .img-legend .lg-name { font-weight: 600; }
+.img-legend .lg-nowrap { white-space: nowrap; }
+.img-legend .lg-here td:first-child { box-shadow: inset 3px 0 0 var(--m24); padding-inline-start: 8px; }
+.img-legend .lg-tag { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0 6px; border-radius: 8px; background: var(--m24); color: #06221f; margin-inline-start: 4px; }
+.img-legend .lg-list { margin: 0; padding-inline-start: 18px; color: var(--pl-dim); }
+.img-legend .lg-list li.lg-here { color: inherit; }
+@media (max-width: 575.98px) { .img-legend .lg-table td { font-size: 0.82rem; } .img-legend .lg-nowrap { white-space: normal; } }
+
+/* ---- Daily map: foldable days (captures.js), each day's time-lapse card (scripts/animation.sh) ---- */
+.daily-day > .daily-area { margin: 6px 0 0; text-align: start; }
+.js-fold .cap-day.is-closed .daily-area, .js-fold .cap-day.is-closed .daily-passes { display: none; }
+.daily-tools-hint { color: var(--pl-dim); font-size: .85rem; }
+.sum-dn { display: inline-flex; align-items: center; gap: 4px; }
+.anim-box { background: #0b1220; }
+.anim-video { display: block; width: 100%; height: 100%; object-fit: contain; background: #0b1220; }
+
+/* ---- projection comparison (Daily map, About these maps) ---- */
+.proj-cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+.proj-opt { border: 1px solid var(--pl-line); border-radius: 10px; padding: 8px 10px; background: var(--pl-card); }
+.proj-opt.is-used { border-color: var(--m24); box-shadow: inset 3px 0 0 var(--m24); }
+.proj-opt svg { display: block; width: 120px; height: 70px; margin-bottom: 4px; }
+.proj-opt svg path { fill: rgba(79, 209, 197, .12); stroke: var(--m24); stroke-width: 1.5; }
+.proj-opt svg path.g { fill: none; stroke: var(--pl-dim); stroke-width: .8; }
+.proj-opt p { margin: 4px 0 0; color: var(--pl-dim); font-size: .88rem; }
+.proj-opt .lg-tag { display: inline-block; font-size: .7rem; font-weight: 600; padding: 0 6px; border-radius: 8px; background: var(--m24); color: #06221f; }
+@media (max-width: 575.98px) { .proj-cmp { grid-template-columns: 1fr; } }
+
+/* ---- Captures: filters, foldable days, best pass (assets/js/captures.js) ---- */
+.sat-dot.m23 { background: var(--m23); }
+.sat-dot.m24 { background: var(--m24); }
+.cap-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 2px; }
+.cap-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.cap-f, .cap-fold-all { border: 1px solid var(--pl-line); background: var(--pl-card); color: inherit;
+  border-radius: 999px; padding: 3px 12px; font-size: .85rem; line-height: 1.5; cursor: pointer; }
+.cap-f:hover, .cap-fold-all:hover { background: var(--pl-hover); }
+.cap-f.is-on { border-color: var(--m24); box-shadow: inset 0 0 0 1px var(--m24); font-weight: 600; }
+.cap-f .sat-dot { margin-right: 5px; }
+.cap-fold-all { margin-inline-start: auto; color: var(--pl-dim); }
+.cap-day-head { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--pl-line);
+  color: inherit; text-align: start; cursor: pointer; align-items: center; flex-wrap: wrap; }
+.cap-day-head:hover .day-name { text-decoration: underline; text-underline-offset: 3px; }
+.cap-caret { font-size: .75rem; color: var(--pl-dim); transition: transform .15s; width: 12px; }
+.cap-day.is-closed .cap-caret { transform: rotate(-90deg); }
+.cap-sum { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-inline-start: auto;
+  color: var(--pl-dim); font-size: .82rem; }
+.cap-sum .sat-dot { margin-right: 4px; }
+.sum-best .fa-star { color: #e0a526; }
+.cap-peek { display: none; width: 100%; gap: 4px; padding: 6px 0 2px 20px; overflow: hidden; }
+.cap-peek img { height: 44px; width: 60px; object-fit: cover; object-position: center 30%; border-radius: 4px; background: var(--pl-img); }
+.js-fold .cap-day.is-closed .cap-peek { display: flex; }
+.js-fold .cap-day.is-closed .cap-grid, .js-fold .cap-day.is-closed .cap-none { display: none !important; }
+.cap-day.is-filtered-out .cap-peek { opacity: .35; }
+.cap-none { color: var(--pl-dim); font-size: .88rem; padding: 10px 4px; }
+.cap-img { position: relative; }
+.best-tag { position: absolute; top: 6px; inset-inline-start: 6px; font-size: .72rem; font-weight: 600;
+  background: rgba(11, 18, 32, .78); color: #f2c45a; padding: 1px 7px; border-radius: 999px; }
+.cap-card.is-best { box-shadow: 0 0 0 1px #e0a526 inset; }
+@media (max-width: 575.98px) {
+  .cap-sum { width: 100%; margin-inline-start: 20px; gap: 10px; }
+  .cap-peek img { height: 36px; width: 48px; }
+}

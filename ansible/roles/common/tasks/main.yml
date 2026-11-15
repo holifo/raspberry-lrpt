@@ -1,0 +1,7 @@
+---
+- import_tasks: dependencies.yml
+- import_tasks: configs.yml
+- import_tasks: ntp.yml
+- import_tasks: sdr.yml
+- import_tasks: tools.yml
+- import_tasks: ramfs.yml

@@ -1,0 +1,226 @@
+---
+# base station configurations
+#   latitude: south values are negative
+#   longitude: west values are negative
+latitude: 37.98381
+longitude: 23.727539
+altitude: 100.0
+
+#Website language settings
+#   lang_setting: see the 'webpanel/App/Lang' folder for available
+#                 languages (2-letter filename - e.g. ar, bg, de, en, es, nl, sr, ru, it, hu, gr, lt, kr, ro)
+lang_setting: en
+
+# station name shown in the bar at the top of the Passes page
+station_title: 'My Meteor station'
+
+# ntp configurations
+#   ntp_server - if you have a local server (e.g. stratum1), you can use this setting
+#        to specify a hostname or ip address to communicate with the ntp server
+ntp_server: 'pool.ntp.org'
+
+# receiver settings
+#   receiver_type - the receiver type which program uses ('rtlsdr', 'airspy_mini', 'airspy_r2' or 'airspy_hf_plus_discovery'; only RTL-SDR and Airspy are supported)
+#   meteor_decoder - which receiver method to use (either 'meteordemod' or 'satdump')
+receiver_type: 'rtlsdr'
+
+meteor_decoder: 'satdump'
+
+# test settings when running test scripts
+#   test_gain - gain to use for scanner test scripts
+#   test_sdr_device_id - device ID of the SDR device to be used for scanner test scripts
+#   test_enable_bias_tee - whether to enable bias tee when running scanner test scripts
+#   test_freq_offset - receiver frequency offset (PPM)
+test_gain: 29.7
+test_sdr_device_id: 0
+test_enable_bias_tee: false
+test_freq_offset: 0
+
+# whether to schedule specific orbiting objects for capture
+#   <satellite_name>_schedule - whether to schedule captures for the satellite
+#   <satellite_name>_sdr_device_id - device ID of the SDR device to be used for recording for the satellite
+#   <satellite_name>_freq_offset - receiver frequency offset (PPM) for the satellite capture
+#   <satellite_name>_enable_bias_tee - whether to enable bias tee for the recording of the satellite
+#   <satellite_name>_gain - gain setting for specific satellite captures
+#   <satellite_name>_sun_min_elevation - threshold for sun elevation for specific satellite captures
+#   <satellite_name>_sat_min_elevation - threshold for sat elevation for specific satellite captures
+#   select_best_overlapping_passes - whether to select the best overlapping pass when multiple passes are available, or let user manually delete the passes
+#   use_device_string - whether to use the device string scheduling passes when you have multiple SDR devices connected of the same type (most users should leave it to "false")
+
+# storage - what the Pi runs from, asked by the install: 'sd' (SD card) or 'ssd' (SSD/USB disk).
+#   sd: SatDump decodes each pass on a RAM disk (/var/ramfs), so the ~250 MB of working images
+#       per pass are never written to the card (it falls back to the disk when memory is short).
+#   ssd: no RAM disk; the install removes it.
+storage: sd
+
+select_best_overlapping_passes: true
+use_device_string: false
+
+meteor_m2_3_schedule: true
+meteor_m2_3_sdr_device_id: 0
+meteor_m2_3_freq_offset: 0
+meteor_m2_3_enable_bias_tee: false
+meteor_m2_3_gain: 48
+meteor_m2_3_schedule_sun_min_elevation: -90
+meteor_m2_3_sun_min_elevation: 0
+meteor_m2_3_sat_min_elevation: 15
+meteor_m2_3_80k_interleaving: false
+
+meteor_m2_4_schedule: true
+meteor_m2_4_sdr_device_id: 0
+meteor_m2_4_freq_offset: 0
+meteor_m2_4_enable_bias_tee: false
+meteor_m2_4_gain: 48
+meteor_m2_4_schedule_sun_min_elevation: -90
+meteor_m2_4_sun_min_elevation: 0
+meteor_m2_4_sat_min_elevation: 15
+meteor_m2_4_80k_interleaving: false
+
+# how many days to schedule passes - note this MUST be an even integer,
+# and the current day counts as "1" - passes will be scheduled until midnight
+# of the `days_to_schedule_passes` final day
+#
+# NOTE: If you want to set this value LOWER than a previously configured
+#       value, you must run the schedule script manually and pass the '-x' switch
+#       after re-running the ./install_and_upgrade.sh script to align the variables:
+#           ./scripts/schedule.sh -x
+days_to_schedule_passes: 7
+
+# pruning capabilities - must be configured in cron (see documentation)
+#   delete_oldest_n - how many oldest captures to delete on each run
+#   delete_older_than_n - delete all images older than this many days
+delete_oldest_n: 0
+delete_older_than_n: 30
+
+# recordings: SatDump's decoded frames (.cadu) of the newest N passes are kept in
+# /srv/audio/meteor for offline re-processing (other composites, projections, enhancements)
+# and can be downloaded from each capture's page; older ones are deleted (0 = keep none)
+keep_recordings: 5
+
+# Daily map: every pass of a day projected onto one map of the region around the station,
+# one for daytime passes and one for night-time passes (Daily map page)
+daily_map: true
+# write the names of capital cities on the map images and the daily map
+map_capitals: true
+
+# processing settings
+#   flip_meteor_image - whether the meteor image should be flipped
+#   produce_spectrogram - whether to produce a spectrogram (waterfall) of each pass, with SNR, decoder
+#        lock and elevation, sampled from SatDump's live spectrum (scripts/image_processors/spectrogram.py)
+#   image_annotation_location - where to place the annotation in images - valid options are:
+#        NorthWest, North, NorthEast, West, Center, East, SouthWest, South, SouthEast
+#   extend_for_annotation - whether to create a black extension on the north/south location of
+#        the image to place the annotation into (vs. overlaying on the captured data)
+#        (note: this will ONLY work if the image_annotation_location is NOT one of [West|Center|East])
+#   produce_polar_az_el_graph - whether to produce a polar graph that shows the pass
+#        azimuth and elevation over the course of the pass, truncated to satellite min elevation
+#   produce_polar_direction_graph - whether to produce a polar graph that shows the pass
+#        direction over the course of the pass, including AOS and LOS
+#   ground_station_location - free-form text for indicating ground station location in image
+#        annotation (leave blank if you wish to exclude the ground station annotation)
+#   antenna_information - free-form text for indicating antenna information in image
+#        annotation (leave blank if you wish to exclude the antenna information annotation)
+#   show_sun_elevation - whether to show sun elevation in annotation
+#   show_pass_direction - show which direction the satellite is moving in the image annotation
+
+extend_for_annotation: false
+image_annotation_location: 'South'
+# annotation width as a percentage of the image width (0 = old behaviour: double the rendered size)
+annotation_width_percent: 50
+produce_polar_az_el_graph: true
+produce_polar_direction_graph: true
+ground_station_location: 'Athens, GR'
+antenna_information: 'QFH'
+show_sun_elevation: true
+show_pass_direction: true
+produce_spectrogram: true
+
+# images shown first on a capture's page, in this order: SatDump 1.2.3 file names (the composite
+# name with _ for spaces, then _corrected or _projected), space-separated. A pass only has the
+# composites whose channels the satellite sent. Images it made that aren't listed follow after.
+meteor_daytime_enhancements: 'MSA_corrected AVHRR_221_False_Color_corrected Natural_Color_corrected AVHRR_3a21_False_Color_corrected AVHRR_3a21_False_Color_projected MSU-MR_124_False_Color_corrected AVHRR_124_False_Color_corrected Day_Microphysics_corrected MCIR_corrected 10.8um_Thermal_IR_(Uncalibrated)_corrected 10.8um_Thermal_IR_(Uncalibrated)_projected Enhanced_IR_corrected Cloud_Top_IR_corrected Color_general_cloud_IR_corrected Color_convection_longwave_IR_corrected 3.9_um_Shortwave_IR_(Calibrated)_corrected 3.9_um_Cloud_Tops_(Transparent)_corrected 3.75um_IR_(Enhanced_Rainbow)_corrected 3.75um_IR_(Rainbow)_corrected 3.75um_IR_(CIRA)_corrected Night_Microphysics_corrected Sea_Surface_Temperature_corrected Split_Window_Difference_corrected'
+meteor_nighttime_enhancements: 'MCIR_corrected 10.8um_Thermal_IR_(Uncalibrated)_corrected 10.8um_Thermal_IR_(Uncalibrated)_projected Enhanced_IR_corrected Cloud_Top_IR_corrected Color_general_cloud_IR_corrected Color_convection_longwave_IR_corrected 3.9_um_Shortwave_IR_(Calibrated)_corrected 3.9_um_Cloud_Tops_(Transparent)_corrected 3.75um_IR_(Enhanced_Rainbow)_corrected 3.75um_IR_(Rainbow)_corrected 3.75um_IR_(CIRA)_corrected Night_Microphysics_corrected Sea_Surface_Temperature_corrected Split_Window_Difference_corrected AVHRR_543b_IR_False_Color_corrected AVHRR_3b45_IR_False_Color_corrected'
+# which image becomes the capture's thumbnail in the Captures list
+#   space-separated SatDump image names, tried in order - the first one produced is used
+#   (falls back to the built-in list if none of these exist)
+meteor_daytime_thumbnail: 'MSA_corrected AVHRR_221_False_Color_corrected Natural_Color_corrected MCIR_corrected'
+meteor_nighttime_thumbnail: 'MCIR_corrected 10.8um_Thermal_IR_(Uncalibrated)_corrected Enhanced_IR_corrected 3.9_um_Shortwave_IR_(Calibrated)_corrected'
+flip_meteor_image: true
+meteor_jpg_image_quality: 100
+meteor_draw_map_overlay: true
+meteor_draw_cities: true
+meteor_map_crosshair_enable: true
+meteor_map_crosshair_color: "#FFFF00"
+meteor_map_country_border_color: "#FFFF00"
+meteor_create_rain_probability_overlay: true
+meteor_create_equidistant_projection: true
+meteor_create_mercator_projection: true
+meteor_create_spreaded_images_without_overlay: true
+
+# web server configuration settings
+#   web_server_name - server name to use for the TLS certs and web endpoint - this MUST be
+#                     resolvable to the IP of this host (if you don't have DNS, simply use
+#                     the IP of the Raspberry Pi host)
+#   enable_non_tls - whether to enable a clear-text web listener (default port 80)
+#   web_port - port to run the web server clear-text (non-encrypted) endpoint on
+#   enable_tls - whether to enable the TLS-encrypted web listener (default port 443)
+#   web_tls_port - port to run the TLS listener on
+#   lock_admin_page - whether to require username/password when attempting to access the admin page
+#                     of the webpanel - WARNING: DO NOT SET THIS TO TRUE UNLESS YOU ONLY HAVE A TLS
+#                     ENABLED SITE - SETTING TO TRUE AND RUNNING A CLEARTEXT SITE IS ALMOST CERTAINLY
+#                     ASKING FOR YOUR CREDENTIALS TO BE STOLEN MID-REQUEST
+#   admin_username - username used to access the 'admin' endpoint of the webpanel (WARNING: see 'lock_admin_page' above)
+#   admin_password - password used to access the 'admin' endpoint of the webpanel (WARNING: see 'lock_admin_page' above)
+#                    NOTE: MAKE SURE YOU SET THIS TO SOMETHING REASONABLY COMPLICATED!
+#   web_passes_date_format - format to display the dates in the pass list view - note that this MUST conform to
+#                            https://www.php.net/manual/en/datetime.format.php or else bad things will happen
+#   web_datetime_format - format to display date and time in the web interface for captures - note that this MUST conform to
+#                         https://www.php.net/manual/en/datetime.format.php or else bad things will happen
+web_server_name: localhost
+enable_non_tls: true
+web_port: 80
+enable_tls: false
+web_tls_port: 443
+lock_admin_page: true
+admin_username: 'admin'
+admin_password: ''
+web_passes_date_format: 'd/m/Y'
+web_datetime_format: 'd/m/Y H:i:s'
+
+# log level for output from scripts
+log_level: DEBUG
+
+# whether to enable the satvis visualization for satellite tracking
+# in the passes view - note that this iframe-driven visualization is
+# by default disabled on "extra-small" devices such as phones due to
+# the processing and space requirements
+enable_satvis: false
+
+experimental_features: true
+
+# whether to enable the "Coronal mass ejection activity" display
+# in the passes view - note that the GIFs can be ~70 MiB and not cached
+# thus they slow down the page & can lead to quite big data usage
+enable_coronal: false
+
+# animation: a time-lapse of each day's passes (00:00-24:00 local time) over one area, shown
+# with that day's maps on the Daily map page (scripts/animation.sh, run after each pass's daily
+# map; needs daily_map: true)
+#   enable_animation - make and show it
+#   animation_area - the area as "west east south north" in degrees (default: Greece)
+enable_animation: true
+animation_area: "19 30 34 42"
+
+# map_projection - the projection of the daily maps and the time-lapse:
+#   equal_earth - every area keeps its true size (SatDump's map is re-projected with pyproj)
+#   equirectangular - a plain latitude/longitude grid, as SatDump makes it (stretched east-west)
+map_projection: equal_earth
+
+# operating system configurations
+#   disable_wifi_power_mgmt - if running wireless internet and you want to
+#       disable "sleep" mode of your wifi device (assuming it's wlan0), set
+#       this to true (note: updating this requires a reboot)
+#   disable_at_mail - if you do not want "at" to send mail after job execution
+disable_wifi_power_mgmt: false
+disable_at_mail: false
+...

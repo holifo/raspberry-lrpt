@@ -1,0 +1,21 @@
+---
+# RAM disk for SatDump's working folder, only when the Pi runs from an SD card (storage: sd).
+# tmpfs takes memory only for what is in it; receive_meteor.sh checks there is room first.
+- name: RAM disk folder
+  become: yes
+  file:
+    path: "{{ ramfs_path }}"
+    state: directory
+    owner: "{{ target_user }}"
+    group: "{{ target_user }}"
+    mode: 0775
+  when: storage == 'sd'
+
+- name: RAM disk {{ 'mounted' if storage == 'sd' else 'removed (SSD)' }}
+  become: yes
+  mount:
+    fstype: tmpfs
+    opts: "nodev,nosuid,size=1000M"
+    src: tmpfs
+    path: "{{ ramfs_path }}"
+    state: "{{ 'mounted' if storage == 'sd' else 'absent' }}"

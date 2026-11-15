@@ -1,0 +1,38 @@
+---
+# Bookworm replaced ntp with ntpsec: the config is /etc/ntpsec/ntp.conf and the service is ntpsec
+# (ntp.service is an alias). Installing it removes systemd-timesyncd.
+- name: ntpsec
+  become: yes
+  apt:
+    name: ntpsec
+    state: present
+
+- name: systemd-timesyncd check
+  command: systemctl cat systemd-timesyncd.service
+  register: timesyncd_unit
+  changed_when: false
+  failed_when: false
+
+- name: systemd-timesyncd off (ntpsec keeps the time)
+  become: yes
+  service:
+    name: systemd-timesyncd
+    state: stopped
+    enabled: no
+  when: timesyncd_unit.rc == 0
+
+- name: NTP servers
+  become: yes
+  template:
+    src: ntp.conf.j2
+    dest: /etc/ntpsec/ntp.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart ntp
+
+- name: Old ntp config removed (ntpsec ignores it)
+  become: yes
+  file:
+    path: /etc/ntp.conf
+    state: absent

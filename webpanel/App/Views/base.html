@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="{{ lang_locale }}" dir="{{ lang_dir }}">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    {# dark mode: apply the saved choice (or the device setting) before the page paints #}
+    <script>
+      (function () {
+        var theme = null;
+        try { theme = localStorage.getItem('rl1-theme'); } catch (e) {}
+        if (!theme) {
+          theme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+
+    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/header.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/footer.css') }}">
+
+    {% block stylesheets %}
+    {% endblock %}
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
+                           integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css"
+                           integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+
+    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/site.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/dark.css') }}">
+
+    <title>Raspberry-LRPT · {{ constant('Config\\Config::STATION_TITLE') }}</title>
+
+    <link rel="shortcut icon" href="/assets/web_img/favicon.ico" type="image/x-icon"/>
+  </head>
+  <body>
+    <header class="mb-3">
+      <div class="navbar navbar-expand navbar-dark bg-dark">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item {% if page == 'passes' %} active {% endif %}">
+            <a class="nav-link" href="/passes">{{ lang['passes'] }}</a>
+          </li>
+          {% if constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') is defined
+              and constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') == 'true' %}
+          <li class="nav-item {% if page == 'satellite' %} active {% endif %}">
+            <a class="nav-link" href="/satellite"><span class="nav-long">{{ lang['nav_satellites']|default('Satellites') }}</span><span class="nav-short">{{ lang['nav_satellites_short']|default('Sats') }}</span></a>
+          </li>
+          {% endif %}
+          <li class="nav-item {% if page == 'meteor' %} active {% endif %}">
+            <a class="nav-link" href="/meteor"><span class="nav-long">{{ lang['nav_meteor']|default('Meteor-M') }}</span><span class="nav-short">{{ lang['nav_meteor_short']|default('Info') }}</span></a>
+          </li>
+          <li class="nav-item {% if page == 'captures' or page == 'capture'  %} active {% endif %}">
+            <a class="nav-link" href="/captures?page_no=1">{{ lang['captures'] }}</a>
+          </li>
+          {% if constant('Config\\Config::ENABLE_DAILY_MAP') is defined and constant('Config\\Config::ENABLE_DAILY_MAP') == 'true' %}
+          <li class="nav-item {% if page == 'daily' %} active {% endif %}">
+            <a class="nav-link" href="/daily"><span class="nav-long">{{ lang['daily_map']|default('Daily map') }}</span><span class="nav-short">{{ lang['daily_map_short']|default('Map') }}</span></a>
+          </li>
+          {% endif %}
+          <li class="nav-item {% if page == 'log' %} active {% endif %}">
+            <a class="nav-link" href="/log"><span class="nav-long">{{ lang['live_log']|default('Live log') }}</span><span class="nav-short">{{ lang['live_log_short']|default('Log') }}</span></a>
+          </li>
+        </ul>
+        {# live clocks: UTC and the station's local time (Config::TIMEZONE) #}
+        <span class="navbar-text clocks" id="clocks" data-tz="{{ constant('Config\\Config::TIMEZONE') }}">
+          <span class="clock" title="UTC"><span class="clock-label">UTC</span><span class="clock-time" id="clock-utc">{{ 'now'|date('H:i:s', 'UTC') }}</span></span>
+          <span class="clock" title="{{ lang['local_time']|default('Local') }}"><span class="clock-label">{{ lang['local_time']|default('Local') }}</span><span class="clock-time" id="clock-local">{{ 'now'|date('H:i:s') }}</span></span>
+        </span>
+        {# language menu: picking one sets a cookie the server reads (Lib\\Lang), then the page
+           reloads in that language #}
+        <div class="dropdown lang-menu">
+          <button type="button" id="lang-btn" class="btn btn-sm btn-outline-light dropdown-toggle"
+                  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                  title="{{ lang['language']|default('Language') }}" aria-label="{{ lang['language']|default('Language') }}">
+            {% if lang_switch[lang_code] is defined %}
+              <img class="flag" src="/assets/img/flags/{{ lang_switch[lang_code][1] }}.svg" alt="" width="20" height="15">
+              <span class="lang-name">{{ lang_switch[lang_code][0] }}</span>
+            {% else %}
+              <i class="fas fa-globe" aria-hidden="true"></i>
+            {% endif %}
+          </button>
+          <div class="dropdown-menu dropdown-menu-right" aria-labelledby="lang-btn">
+            {% for code, l in lang_switch %}
+              <button type="button" class="dropdown-item{% if code == lang_code %} active{% endif %}" data-lang="{{ code }}"
+                      {% if code == lang_code %}aria-current="true"{% endif %}>
+                <img class="flag" src="/assets/img/flags/{{ l[1] }}.svg" alt="" width="20" height="15">
+                <span>{{ l[0] }}</span>
+              </button>
+              {% if code == 'gr' and not loop.last %}<div class="dropdown-divider"></div>{% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        <button type="button" id="theme-toggle" class="btn btn-sm btn-outline-light mr-3"
+                aria-label="{{ lang['theme_toggle']|default('Light / dark mode') }}" title="{{ lang['theme_toggle']|default('Light / dark mode') }}">
+          <i class="fas fa-moon" aria-hidden="true"></i>
+        </button>
+      </div>
+    </header>
+    {% block full_width %}
+    {% endblock %}
+
+    <div class="container">
+      {% block pre_body %}
+      {% endblock %}
+
+      {% block body %}
+      {% endblock %}
+    </div>
+
+    {% block footer %}
+    <footer class="footer text-center">
+      <div class="container">
+        {% include 'logo.html' %}
+        <div class="footer-credit">
+          {{ lang['based_on']|default('Based on') }}
+          <a href="https://github.com/jekhokie/raspberry-noaa-v2" rel="noopener">raspberry-noaa-v2</a>
+          {% if lrpt_version %}<span class="footer-version">· Raspberry-LRPT v{{ lrpt_version }}</span>{% endif %}
+        </div>
+      </div>
+    </footer>
+    {% endblock %}
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+            integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
+
+    <script>
+      (function () {
+        var btn = document.getElementById('theme-toggle');
+        var root = document.documentElement;
+        function sync() {
+          var dark = root.getAttribute('data-theme') === 'dark';
+          btn.querySelector('i').className = dark ? 'fas fa-sun' : 'fas fa-moon';
+          btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+        }
+        btn.addEventListener('click', function () {
+          var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          try { localStorage.setItem('rl1-theme', next); } catch (e) {}
+          sync();
+        });
+        sync();
+      })();
+    </script>
+
+    <script>
+      // the page's strings for scripts: tr('key', 'English default')
+      window.RL1_LANG = {{ lang|json_encode|raw }};
+      window.RL1_LOCALE = '{{ lang_locale }}';
+      window.tr = function (key, def) { return (window.RL1_LANG && window.RL1_LANG[key]) || def; };
+      (function () {
+        Array.prototype.forEach.call(document.querySelectorAll('.lang-menu [data-lang]'), function (b) {
+          b.addEventListener('click', function () {
+            document.cookie = 'rl1-lang=' + this.getAttribute('data-lang') + '; path=/; max-age=31536000; samesite=lax';
+            location.reload();
+          });
+        });
+        // clocks tick on the second
+        var box = document.getElementById('clocks'), tz = box.getAttribute('data-tz');
+        var fmt = function (zone) {
+          try { return new Intl.DateTimeFormat('en-GB', { timeZone: zone, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
+          catch (e) { return null; }
+        };
+        var fu = fmt('UTC'), fl = fmt(tz), utc = document.getElementById('clock-utc'), loc = document.getElementById('clock-local');
+        function tick() {
+          var d = new Date();
+          if (fu) { utc.textContent = fu.format(d); }
+          if (fl) { loc.textContent = fl.format(d); }
+          setTimeout(tick, 1000 - d.getMilliseconds() + 5);
+        }
+        tick();
+      })();
+    </script>
+    <script src="{{ asset('/assets/js/fullscreen.js') }}"></script>
+    {% block js_includes %}
+    {% endblock %}
+  </body>
+</html>
