@@ -58,6 +58,9 @@
   register: pip_install
   changed_when: "'Successfully installed' in pip_install.stdout"
 
+# predict: the bundled packages, except on a 64-bit PC with a release after Bookworm, where the
+# bundled amd64 package (2.2.3) needs ncurses 5, which Trixie doesn't have. There it is built from
+# its author's repository (predict 2.2.5) into a .deb.
 - name: predict (pass prediction)
   become: yes
   apt:
@@ -68,6 +71,25 @@
       amd64: predict_2.2.3-4-b2_amd64.deb
       armhf: predict_2.2.5+dfsg.1-1_armhf.deb
       arm64: predict_2.2.5+dfsg.1-1_arm64.deb
+  when: not (predict_from_source | bool)
+
+- name: predict built from source
+  when: predict_from_source | bool
+  block:
+    - name: predict check
+      command: dpkg-query -W -f=${Version} predict
+      register: predict_installed
+      changed_when: false
+      failed_when: false
+
+    - name: predict package (built from its author's repository)
+      when: predict_installed.stdout != predict_build_version
+      script: build_predict_deb.sh {{ predict_commit }} {{ predict_build_version }}
+
+    - name: predict package installed
+      become: yes
+      when: predict_installed.stdout != predict_build_version
+      shell: apt-get install -y -q --allow-downgrades /tmp/predict.deb && rm -f /tmp/predict.deb
 
 # SatDump 1.2.3 (stable). The 2.0.0-alpha failed on this station ("A subcommand is required" for
 # 'satdump live meteor_m2-x_lrpt ...', and its plugin needs libhdf5_serial_cpp.so.103).

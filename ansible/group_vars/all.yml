@@ -33,6 +33,12 @@ volk_dev_package: "{{ 'libvolk2-dev' if raspbian_version.stdout == 'bookworm' el
 rtlsdr_blog_commit: "aed0ea19f3a273370a13c9009b96313c75d54c7b"
 rtlsdr_blog_version: "1:0.7.0~rtlsdrblog1+git{{ rtlsdr_blog_commit[:7] }}"
 
+# predict: built from KD2BD's repository where the bundled package can't be used (a 64-bit PC on
+# Trixie or later: the bundled amd64 package needs ncurses 5)
+predict_commit: "517fccf421909b4974151b6ca30810586ca658a3"
+predict_build_version: "2.2.5+kd2bd.{{ predict_commit[:7] }}-1"
+predict_from_source: "{{ system_architecture == 'amd64' and raspbian_version.stdout != 'bookworm' }}"
+
 # the SatDump commit that deb was built from (the SDRplay plugin is built from its source)
 satdump_commit: "0b654b4ec091cae61f357aac3150dd06779d056c"
 

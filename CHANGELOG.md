@@ -1,5 +1,12 @@
 # Changelog
 
+## Raspberry-LRPT v1.24.1 (2026-11-15)
+
+- **Trixie on a 64-bit PC:** the bundled amd64 `predict` package needs ncurses 5, which Trixie
+  doesn't have, so there the install builds `predict` 2.2.5 from its author's repository
+  (github.com/kd2bd/predict, pinned commit) into a package. Its pass predictions match the
+  bundled packages' to the second. Raspberry Pis and Bookworm keep the bundled packages.
+
 ## Raspberry-LRPT v1.24.0 (2026-11-15)
 
 - **Raspberry Pi OS Trixie (Debian 13)**, as well as Bookworm. The install picks each release's

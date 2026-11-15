@@ -248,3 +248,4 @@ file 755 $USER $USER /home/$USER/raspberry-lrpt/scripts/tools/noaa_v2_import.py
 file 755 $USER $USER /home/$USER/raspberry-lrpt/scripts/tools/upgrade_from_noaa_v2.sh
 file 755 $USER $USER /home/$USER/raspberry-lrpt/scripts/image_processors/annotation_panel.py
 file 755 $USER $USER /home/$USER/raspberry-lrpt/scripts/tools/build_satdump_deb.sh
+file 755 $USER $USER /home/$USER/raspberry-lrpt/ansible/roles/common/files/build_predict_deb.sh

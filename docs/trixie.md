@@ -11,6 +11,7 @@ install picks the right package names for each:
 | RTL-SDR driver | RTL-SDR Blog packages | RTL-SDR Blog packages |
 | Image label | Pillow | Pillow |
 | SatDump 1.2.3 | in `software/` | built once on the Pi (below), unless `software/` has it |
+| predict | in `software/` | in `software/` on a Pi; built from source on a 64-bit PC |
 
 ## SatDump on Trixie
 
@@ -51,4 +52,6 @@ A raspberry-noaa-v2 station can use [the upgrade script's --export and --import]
 - **Tested on a real Trixie Pi:** the changes were tested on Bookworm-like systems, the web panel on
   PHP 8.4, and the SatDump build script on Ubuntu; the first Trixie install is the first full test.
 - **A 64-bit PC (amd64) on Trixie:** the bundled `predict` package for amd64 needs ncurses 5, which
-  Trixie doesn't have.
+  Trixie doesn't have, so the install builds `predict` 2.2.5 from
+  [its author's repository](https://github.com/kd2bd/predict) into a package instead (a few
+  seconds). Its pass times match the bundled packages'.
