@@ -1,6 +1,7 @@
 If you're running into issues, there are some steps you can follow to troubleshoot. Worst case, run the support
-script as `./support.sh` and paste the output into a GitHub issue against the repository, or better, visit us
-on the Discord app [here](https://discord.gg/NywJEPP5) and paste the output so we can help you!
+script as `./support.sh` and paste the output into a
+[GitHub issue](https://github.com/holifo/raspberry-lrpt/issues). The station's own guide has a
+[troubleshooting table](USER_GUIDE.md#troubleshooting) for the common cases, including Discord posts.
 
 # Log Output
 

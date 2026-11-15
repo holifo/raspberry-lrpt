@@ -22,7 +22,8 @@ Made by holifo (SV5QNF).
   elevation/azimuth graph for every pass, and keeps the decoded frames (`.cadu`) of the last 5
   passes for offline re-processing.
 - Can post each pass to a Discord channel (message, best images, sky track, link to the
-  capture), off until you give it a webhook ([how](docs/discord.md)).
+  capture), and earlier captures on request; off until you give it a webhook
+  ([how](docs/discord.md)).
 - Web panel in nine languages (English, Deutsch, Français, Italiano, Español, Ελληνικά, 中文, हिन्दी, العربية), light or dark:
   - **Passes:** next-pass countdown, passes grouped by day, and a live decode panel while a pass
     is recorded (spectrum and waterfall, SNR, Viterbi and frame-sync locks, BER).
@@ -62,9 +63,10 @@ cd raspberry-lrpt
 ```
 
 The folder must be `~/raspberry-lrpt`. A first install asks about your station: name, location
-(latitude, longitude, altitude), the text on the images, receiver, gains, bias tee, web panel port
-and admin login. Enter keeps the value shown. The answers are saved in `config/settings.local.yml`
-(not in git), which overrides `config/settings.yml`; everything else stays in `settings.yml`.
+(latitude, longitude, altitude), the text on the images, receiver, SD card or SSD, gains, bias tee,
+web panel port, admin login and an optional Discord webhook. Enter keeps the value shown. The
+answers are saved in `config/settings.local.yml` (not in git), which overrides
+`config/settings.yml`; everything else stays in `settings.yml`.
 The install then checks the system, runs Ansible, sets up the web panel and schedules the passes,
 and ends by printing the web panel's address.
 
@@ -75,7 +77,8 @@ cd ~/raspberry-lrpt && git pull && ./install_and_upgrade.sh
 ```
 
 An upgrade shows the station's settings and asks whether to keep them; answer `n` to go through
-the questions again. With `-y` it keeps them without asking.
+the questions again. Questions added in a newer version (such as the Discord webhook) are asked
+once. With `-y` it keeps them without asking.
 
 ## Re-processing a pass
 
