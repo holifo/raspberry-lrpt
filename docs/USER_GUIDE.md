@@ -202,7 +202,11 @@ flowchart LR
   thumbnail list, then the image list
 - the sky track (`discord_sky_track`)
 
-Images over Discord's 10 MB limit are sent smaller. Re-processed passes are not posted.
+Images over Discord's 10 MB limit are sent smaller. Only new passes are posted by themselves.
+
+**Post earlier captures:** `./scripts/discord_post.sh -l` lists the newest 20 with their numbers.
+Then post some with `./scripts/discord_post.sh 123 124`, the newest few with `--last 3`, or a whole
+day with `--today` or `--day 2026-11-14`. It asks before posting (`-y` doesn't).
 
 **Keep the webhook private:** anyone who has it can post in your channel. The install keeps it in
 `config/settings.local.yml` (not in git); the log never shows it. If it leaks, delete the webhook in
@@ -232,6 +236,7 @@ Run them on the Pi as your normal user (not with `sudo`).
 | Redraw every day that can be | `./scripts/daily_map.sh --all` |
 | Make the time-lapse now | `./scripts/animation.sh` for today, `./scripts/animation.sh 2026-11-14` for one day, `--all` for every day it can (add `--redo` after changing the area) |
 | Send a test post to Discord | `./scripts/push_discord.sh --test` |
+| Post earlier captures to Discord | `./scripts/discord_post.sh -l` to list them, then `./scripts/discord_post.sh 123`, `--last 3` or `--today` |
 | Follow the log | `tail -f /var/log/raspberry-lrpt/output.log` (or open `/log`) |
 | Check the orbit data | `grep -c 59051 ~/.config/satdump/satdump_tles.txt` (should be 1 or more) |
 

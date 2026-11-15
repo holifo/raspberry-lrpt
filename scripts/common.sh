@@ -136,3 +136,48 @@ reproject() {
   fi
   $CONVERT "$out" -format '%wx%h' info: 2>/dev/null
 }
+
+# discord_pass FILE_BASE DAYLIGHT SAT_NAME EPOCH_START MAX_ELEV DIRECTION SECONDS PASS_ID [--wait]
+#   Posts one pass to Discord (discord_webhook in settings): a short message, the first
+#   DISCORD_IMAGES full-size images in the order of the day or night thumbnail list, then the
+#   day or night image list, and the sky track. Detached unless --wait. Returns 1 when the pass
+#   has no images left (or Discord is off).
+discord_pass() {
+  local base=$1 day=$2 sat=$3 start=$4 elev=$5 dir=$6 secs=$7 id=$8 wait=$9
+  [ -n "${DISCORD_WEBHOOK}" ] || return 1
+  local order day_word name f
+  if [ "$day" == "1" ]; then
+    order="${METEOR_DAY_THUMBNAIL} ${METEOR_DAY_ENHANCEMENTS}"; day_word="day pass"
+  else
+    order="${METEOR_NIGHT_THUMBNAIL} ${METEOR_NIGHT_ENHANCEMENTS}"; day_word="night pass"
+  fi
+  local files=()
+  for name in $order; do
+    [ ${#files[@]} -ge "${DISCORD_IMAGES:-2}" ] && break
+    f="${IMAGE_OUTPUT}/${base}-${name}.jpg"
+    [ -f "$f" ] && [[ ! " ${files[*]} " == *" $f "* ]] && files+=("$f")
+  done
+  if [ ${#files[@]} -eq 0 ] && [ "${DISCORD_IMAGES:-2}" -gt 0 ]; then
+    for f in "${IMAGE_OUTPUT}/${base}"-*_corrected.jpg; do    # none of the listed ones: any image
+      [ -f "$f" ] && { files+=("$f"); break; }
+    done
+  fi
+  [ ${#files[@]} -eq 0 ] && [ "${DISCORD_IMAGES:-2}" -gt 0 ] && return 1
+  if [ "${DISCORD_SKY_TRACK}" == "true" ] && [ -f "${IMAGE_OUTPUT}/${base}-polar-direction.png" ]; then
+    files+=("${IMAGE_OUTPUT}/${base}-polar-direction.png")
+  fi
+  local dir_part="" secs_part=""
+  case "${dir,,}" in northbound|southbound) dir_part=" · ${dir,,}" ;; esac
+  [ "${secs:-0}" -gt 0 ] 2>/dev/null && secs_part=" · $((secs / 60)) min"
+  local msg="🛰️ **${sat}** · $(date -d "@$start" '+%d/%m/%Y %H:%M') ($(date -u -d "@$start" '+%H:%M') UTC)
+Max elevation ${elev}°${dir_part} · ${day_word}${secs_part}
+${STATION_TITLE}"
+  [ -n "${DISCORD_SITE_URL}" ] && msg="${msg}
+${DISCORD_SITE_URL%/}/captures/listImages?pass_id=${id}"
+  log "Posting ${base} to Discord (${#files[@]} image(s))" "INFO"
+  if [ "$wait" == "--wait" ]; then
+    "$LRPT_HOME/scripts/push_discord.sh" "$msg" "${files[@]}"
+  else
+    ( nohup "$LRPT_HOME/scripts/push_discord.sh" "$msg" "${files[@]}" > /dev/null 2>&1 & )
+  fi
+}

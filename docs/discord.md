@@ -42,6 +42,21 @@ in `config/settings.local.yml` (not in git, readable by you only) and `~/.raspbe
 (mode 600), and the log never shows it. If it leaks, delete the webhook in Discord and make a new
 one. To stop posting, run the install again and answer `-` to the webhook question.
 
+## Post earlier captures
+
+New passes are posted by themselves. To post captures that are already on the site:
+
+```bash
+./scripts/discord_post.sh -l                 # the newest 20 captures with their numbers
+./scripts/discord_post.sh 123 124            # these captures
+./scripts/discord_post.sh --last 3           # the newest 3
+./scripts/discord_post.sh --today            # every capture of today
+./scripts/discord_post.sh --day 2026-11-14   # every capture of that day
+```
+
+It lists what it will post and asks first (`-y` skips the question). Captures go out oldest first,
+one every few seconds. A capture whose images were already deleted is skipped.
+
 ## Settings
 
 | Setting | Default | What it does |
@@ -60,4 +75,5 @@ Change the last two in `config/settings.yml` and run the install.
 - The post runs in the background after the capture is saved, so a slow or failed post never holds
   up the station. If Discord says to slow down, it waits and tries once more. The result is in the
   log (`Posted to Discord …` or `Discord post failed …`).
-- Re-processed passes (`reprocess_meteor.sh`) are not posted.
+- Re-processed passes (`reprocess_meteor.sh`) are not posted by themselves; post them with
+  `discord_post.sh`.

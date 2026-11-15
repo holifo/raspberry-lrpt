@@ -1,5 +1,13 @@
 # Changelog
 
+## Raspberry-LRPT v1.22.0 (2026-11-15)
+
+- **Post earlier captures to Discord:** `./scripts/discord_post.sh` posts captures already on the
+  site, the same way new passes are posted: by number (`-l` lists the newest 20), the newest N
+  (`--last N`), or a whole day (`--today`, `--day YYYY-MM-DD`). It asks first (`-y` doesn't),
+  posts oldest first and skips captures whose images are gone.
+- Posts leave out the direction or length when the pass record doesn't have them.
+
 ## Raspberry-LRPT v1.21.1 (2026-11-15)
 
 - User guide: a **Posting to Discord** section (how to turn it on and off, what gets posted, keeping

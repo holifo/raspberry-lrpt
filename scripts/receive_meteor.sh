@@ -430,29 +430,8 @@ if [ -n "$(find /srv/images -maxdepth 1 -type f -name "$(basename "$IMAGE_FILE_B
   daily_map_later "$EPOCH_START"
 
   # post the pass to Discord (discord_webhook in settings; in the background, never waited for)
-  if [ -n "${DISCORD_WEBHOOK}" ]; then
-    if [ "${daylight}" == "1" ]; then
-      discord_order="${thumbnail_preference} ${METEOR_DAY_ENHANCEMENTS}"; day_word="day pass"
-    else
-      discord_order="${thumbnail_preference} ${METEOR_NIGHT_ENHANCEMENTS}"; day_word="night pass"
-    fi
-    discord_files=()
-    for name in ${discord_order}; do
-      [ ${#discord_files[@]} -ge "${DISCORD_IMAGES:-2}" ] && break
-      f="${IMAGE_FILE_BASE}-${name}.jpg"
-      [ -f "$f" ] && [[ ! " ${discord_files[*]} " == *" $f "* ]] && discord_files+=("$f")
-    done
-    if [ "${DISCORD_SKY_TRACK}" == "true" ] && [ -f "${IMAGE_FILE_BASE}-polar-direction.png" ]; then
-      discord_files+=("${IMAGE_FILE_BASE}-polar-direction.png")
-    fi
-    discord_msg="🛰️ **${SAT_NAME}** · $(date -d "@$EPOCH_START" '+%d/%m/%Y %H:%M') ($(date -u -d "@$EPOCH_START" '+%H:%M') UTC)
-Max elevation ${SAT_MAX_ELEVATION}° · ${PASS_DIRECTION,,} · ${day_word} · $((CAPTURE_TIME / 60)) min
-${STATION_TITLE}"
-    [ -n "${DISCORD_SITE_URL}" ] && discord_msg="${discord_msg}
-${DISCORD_SITE_URL%/}/captures/listImages?pass_id=${pass_id}"
-    log "Posting the pass to Discord (${#discord_files[@]} image(s))" "INFO"
-    ( nohup "$LRPT_HOME/scripts/push_discord.sh" "$discord_msg" "${discord_files[@]}" > /dev/null 2>&1 & )
-  fi
+  discord_pass "$FILENAME_BASE" "$daylight" "$SAT_NAME" "$EPOCH_START" "$SAT_MAX_ELEVATION" \
+               "$PASS_DIRECTION" "$CAPTURE_TIME" "$pass_id" || true
 else
   log "No images found" "INFO"
 fi
