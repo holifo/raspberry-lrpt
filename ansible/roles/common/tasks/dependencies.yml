@@ -23,21 +23,18 @@
       - sox
       - sqlite3
       - wget
-      - wkhtmltopdf
-      - libatlas-base-dev
       - libegl-dev
       - libgfortran5
       - libgles-dev
       - libjpeg-dev
-      - libncurses5-dev
-      - libncursesw5-dev
+      - libncurses-dev
       - libopenblas-dev
       - libsox-fmt-mp3
       - libsqlite3-dev
       - libtiff-dev
       - libusb-1.0-0
       - libusb-1.0-0-dev
-      - libvolk2-dev
+      - "{{ volk_dev_package }}"
       - libxft-dev
       - libxft2
       - zlib1g-dev
@@ -48,6 +45,7 @@
       - python3-matplotlib
       - python3-numpy
       - python3-pil
+      - fonts-dejavu-core
       - python3-pip
       - python3-pyproj
       - python3-requests
@@ -59,7 +57,6 @@
   command: pip3 install envbash==1.2.0 --break-system-packages
   register: pip_install
   changed_when: "'Successfully installed' in pip_install.stdout"
-  when: raspbian_version.stdout == 'bookworm'
 
 - name: predict (pass prediction)
   become: yes

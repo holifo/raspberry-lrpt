@@ -33,80 +33,52 @@ if [ $(echo "$GAIN==0"|bc) -eq 1 ]; then
   gain='Automatic'
 fi
 
-# get the base config and append vars as needed
 # the install's merged settings (settings.yml + this station's settings.local.yml)
 settings_file="${LRPT_HOME}/config/.settings.merged.yml"
 [ -f "$settings_file" ] || settings_file="${LRPT_HOME}/config/settings.yml"
-yml_config=$(cat "$settings_file")
-yml_config=$(echo "${yml_config}" | sed -e "s/\.\.\.$/sat_name: '$SAT_NAME'\n.../")                   # sat_name
-yml_config=$(echo "${yml_config}" | sed -e "s/\.\.\.$/capture_start: '$START_DATE'\n.../")            # capture_start
-yml_config=$(echo "${yml_config}" | sed -e "s/\.\.\.$/enhancement: '$ENHANCEMENT'\n.../")             # enhancement
-yml_config=$(echo "${yml_config}" | sed -e "s/\.\.\.$/sat_max_elevation: '$SAT_MAX_ELEVATION'\n.../") # sat_max_elevation
-yml_config=$(echo "${yml_config}" | sed -e "s/\.\.\.$/sun_elevation: '$SUN_ELEV'\n.../")              # sun_elevation
-yml_config=$(echo "${yml_config}" | sed -e "s/\.\.\.$/pass_direction: $PASS_DIRECTION\n.../")         # pass_direction
-yml_config=$(echo "${yml_config}" | sed -e "s/\.\.\.$/pass_side: $PASS_SIDE\n.../")                   # pass_side
-yml_config=$(echo "${yml_config}" | sed -e "s/\.\.\.$/pass_side_long: $pass_side_long\n.../")         # pass_side_long
-yml_config=$(echo "${yml_config}" | sed -e "s/\.\.\.$/gain: $gain\n.../")                             # gain
+layout_file="${LRPT_HOME}/config/annotation/annotation.yml"
+pass_values=("sat_name=$SAT_NAME" "capture_start=$START_DATE" "enhancement=$ENHANCEMENT"
+             "sat_max_elevation=$SAT_MAX_ELEVATION" "sun_elevation=$SUN_ELEV"
+             "pass_direction=$PASS_DIRECTION" "pass_side=$PASS_SIDE" "pass_side_long=$pass_side_long"
+             "gain=$gain")
 
-# vars for image manipulation: a private work folder, so several images can be annotated at once
+# a private work folder, so several images can be annotated at once
 tmp_dir=$(mktemp -d "${LRPT_HOME}/tmp/annotation.XXXXXX")
 trap 'rm -rf "$tmp_dir"' EXIT
-rendered_file="${tmp_dir}/index.html"
 annotation="${tmp_dir}/annotation.png"
 
-# the panel is the same for every image of a pass: render it once and keep it, keyed by the
-# settings, pass details and template it is made from
+# the panel is the same for every image of a pass: draw it once and keep it, keyed by the
+# settings, pass details and layout (and logo) it is made from
 cache_dir="${LRPT_HOME}/tmp/annotation-cache"
 mkdir -p "$cache_dir"
 find "$cache_dir" -type f -mmin +720 -delete 2>/dev/null
-panel_key=$( { echo "${yml_config}"; cat "${LRPT_HOME}/config/annotation/"*; } | md5sum | cut -c1-16)
+panel_key=$( { cat "$settings_file"; printf '%s\n' "${pass_values[@]}"; cat "${LRPT_HOME}/config/annotation/"* 2>/dev/null; } \
+             | md5sum | cut -c1-16)
 panel="${cache_dir}/${panel_key}.png"
 
 if [ ! -s "$panel" ]; then
-# generate annotation html and copy any assets
-$SCRIPTS_DIR/tools/jinja2_to_file.py "${LRPT_HOME}/config/annotation/annotation.html.j2" "${yml_config}" "${rendered_file}"
-find $LRPT_HOME/config/annotation/* -type f -not -name "*.j2" -exec cp {} "${tmp_dir}/" \;
-
-# generate annotation png and crop to content
-# wkhtmltoimage (Qt) wants a private runtime folder: in an SSH session /run/user/<uid> can be
-# 0770, which makes Qt print "QStandardPaths: wrong permissions on runtime directory"; --quiet
-# drops its "Loading page (1/2)" progress lines
-qt_runtime="${XDG_RUNTIME_DIR_QT:-/tmp/runtime-$(id -un)}"
-mkdir -p -m 700 "$qt_runtime" && chmod 700 "$qt_runtime"
-XDG_RUNTIME_DIR="$qt_runtime" $WKHTMLTOIMG --quiet --enable-local-file-access --format png --quality 100 "file://${rendered_file}" "${annotation}"
-# (no "-colorspace RGB" anywhere in this script: on ImageMagick 6.9 it converts to linear RGB and
-#  saves it that way, which makes the whole capture about 3x darker)
-$CONVERT -format png "${annotation}" -background none -flatten -trim +repage "${annotation}"
-
-# rounded corners and a 70% transparent panel, done here because Debian's wkhtmltoimage
-# (unpatched Qt) ignores --transparent. The template paints the panel #cacaca on a white
-# page: pixels close to the panel colour get alpha 0.3, darker text/logo/border pixels
-# stay opaque, and a rounded-rectangle mask cuts the corners.
-ann_w=$($IDENTIFY -format "%w" "${annotation}")
-ann_h=$($IDENTIFY -format "%h" "${annotation}")
-$CONVERT "${annotation}" -alpha set \
-         -channel A -fx "0.3 + 0.7 * min(1, abs(0.299*r + 0.587*g + 0.114*b - 0.792) / 0.35)" +channel \
-         \( -size "${ann_w}x${ann_h}" xc:none -fill white \
-            -draw "roundrectangle 0,0,$((ann_w - 1)),$((ann_h - 1)),16,16" \) \
-         -compose DstIn -composite "${annotation}"
-# keep it for the pass's other images (mv is atomic, so parallel runs never see half a file)
-cp "${annotation}" "${panel}.$$" && mv -f "${panel}.$$" "${panel}"
+  # the panel: drawn with Pillow (annotation.yml), light grey and 70% transparent with a dark
+  # border and rounded corners; text and logo opaque
+  if ! python3 "$SCRIPTS_DIR/image_processors/annotation_panel.py" "$settings_file" "$layout_file" \
+       "${annotation}" "${pass_values[@]}"; then
+    log "Could not draw the annotation for ${INPUT_JPG}; the image is kept without it" "WARN"
+    [ "${INPUT_JPG}" == "${OUTPUT_JPG}" ] || cp "${INPUT_JPG}" "${OUTPUT_JPG}"
+    exit 0
+  fi
+  # keep it for the pass's other images (mv is atomic, so parallel runs never see half a file)
+  # (no "-colorspace RGB" anywhere in this script: on ImageMagick 6.9 it converts to linear RGB and
+  #  saves it that way, which makes the whole capture about 3x darker)
+  cp "${annotation}" "${panel}.$$" && mv -f "${panel}.$$" "${panel}"
 else
   cp "$panel" "${annotation}"
 fi
 
 # resize the annotation, keeping aspect ratio: to ANNOTATION_WIDTH_PERCENT of the
-# capture image's width when set, otherwise double its rendered size
+# capture image's width when set, otherwise as drawn (twice the layout's base size)
 if [ -n "${ANNOTATION_WIDTH_PERCENT}" ] && [ "${ANNOTATION_WIDTH_PERCENT%.*}" -gt 0 ] 2>/dev/null; then
   capture_w=$($IDENTIFY -format "%w" "${INPUT_JPG}")
   new_img_w=$(( capture_w * ${ANNOTATION_WIDTH_PERCENT%.*} / 100 ))
   $CONVERT "${annotation}" -resize "${new_img_w}x" "${annotation}"
-else
-  img_w=$($CONVERT "${annotation}" -format "%w" info:)
-  img_h=$($CONVERT "${annotation}" -format "%h" info:)
-  new_img_w=$((img_w * 2))
-  new_img_h=$((img_h * 2))
-  $CONVERT "${annotation}" -resize "${new_img_w}x${new_img_h}^" "${annotation}"
 fi
 
 # extend the image if the user specified and didn't use

@@ -67,10 +67,16 @@ echo "${DIM}$(date '+%d/%m/%Y %H:%M:%S') · log: $LOG${RESET}"
 step "Checking the system"
 
 codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
-[ "$codename" = "bookworm" ] || die "This station needs Raspberry Pi OS / Debian Bookworm (found: ${codename:-unknown})"
+case "$codename" in
+  bookworm|trixie) ;;
+  *) die "This station needs Raspberry Pi OS / Debian Bookworm or Trixie (found: ${codename:-unknown})" ;;
+esac
 arch=$(dpkg --print-architecture)
 case "$arch" in arm64|armhf|amd64) ;; *) die "Unsupported architecture: $arch" ;; esac
-ok "OS: Bookworm ($arch)"
+satdump_deb=$(ls software/satdump_*_"${codename}"_"${arch}".deb 2>/dev/null | head -1)
+[ -n "$satdump_deb" ] || die "No SatDump package for ${codename} ${arch} in software/.
+      Build it once on this Pi with scripts/tools/build_satdump_deb.sh (about an hour), then run this again."
+ok "OS: ${codename^} ($arch)"
 
 free_mb=$(df -Pm / | awk 'NR==2 {print $4}')
 [ "$free_mb" -lt 1024 ] && die "Only ${free_mb} MB free on / - free at least 1 GB first"
@@ -189,7 +195,16 @@ next=$(sqlite3 "$DB_FILE" "SELECT sat_name || ' at ' || strftime('%d/%m %H:%M', 
                                    || ', max ' || max_elev || '°'
                             FROM predict_passes WHERE pass_start > strftime('%s','now') AND is_active = 1
                             ORDER BY pass_start LIMIT 1;" 2>/dev/null)
-sdr=$(lsusb 2>/dev/null | grep -iE "RTL28|0bda:28" | head -1)
+# the station's receiver on USB (receiver_type in the settings)
+receiver=$(grep -E "^RECEIVER_TYPE=" "$HOME/.raspberry-lrpt.conf" 2>/dev/null | cut -d= -f2 | tr -d "'\"")
+case "$receiver" in
+  airspy_mini|airspy_r2)    usb_id="1d50:60a1";          sdr_name="Airspy" ;;
+  airspy_hf_plus_discovery) usb_id="03eb:800c";          sdr_name="Airspy HF+" ;;
+  hackrf)                   usb_id="1d50:6089|1d50:cc15"; sdr_name="HackRF" ;;
+  sdrplay|mirisdr)          usb_id="1df7:|2040:d300";    sdr_name="Mirics/SDRplay" ;;
+  *)                        usb_id="RTL28|0bda:28";      sdr_name="RTL-SDR" ;;
+esac
+sdr=$(lsusb 2>/dev/null | grep -iE "$usb_id" | head -1)
 secs=$(( $(date +%s) - START ))
 
 echo ""
@@ -197,8 +212,11 @@ echo "${BOLD}${GREEN}✓ Install/upgrade complete${RESET} in $((secs / 60)) min 
 echo "   Web panel : http://$(hostname -I | awk '{print $1}'):${WEBPANEL_PORT}   (public name: ${WEB_SERVER_NAME})"
 echo "   Next pass : ${next:-none scheduled}"
 if [ -n "$sdr" ]; then echo "   SDR       : ${GREEN}found${RESET} ${DIM}${sdr#*ID }${RESET}"
-else echo "   SDR       : ${YELLOW}no RTL-SDR found on USB${RESET}"; fi
-echo "   Services  : $(svc nginx) $(svc php8.2-fpm) $(svc atd) $(svc ntpsec)"
+else echo "   SDR       : ${YELLOW}no ${sdr_name} found on USB${RESET}"; fi
+php_fpm=$(systemctl list-unit-files --no-legend 'php*-fpm.service' 2>/dev/null | awk '{print $1}' | sort -V | tail -1)
+php_fpm=${php_fpm%.service}
+[ "$receiver" == "sdrplay" ] && sdrplay_svc=" $(svc sdrplay)"
+echo "   Services  : $(svc nginx) $(svc "${php_fpm:-php-fpm}") $(svc atd) $(svc ntpsec)${sdrplay_svc}"
 echo "   Log       : $LOG"
 
 if [ "$install_type" == 'install' ]; then

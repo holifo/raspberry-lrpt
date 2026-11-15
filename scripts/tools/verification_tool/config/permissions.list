@@ -58,7 +58,7 @@ directory 755 $USER $USER /home/$USER/raspberry-lrpt/webpanel/public/assets/js
 directory 755 $USER $USER /home/$USER/raspberry-lrpt/webpanel/public/assets/web_img
 directory 770 $USER $USER /home/$USER/raspberry-lrpt/ansible/ramfs_path
 directory 770 $USER www-data /home/$USER/raspberry-lrpt/db
-file 600 $USER $USER /home/$USER/raspberry-lrpt/config/annotation/annotation.html.j2
+file 600 $USER $USER /home/$USER/raspberry-lrpt/config/annotation/annotation.yml
 file 644 $USER $USER /home/$USER/.config/meteordemod/kernels/tps.cl
 file 644 $USER $USER /home/$USER/.config/meteordemod/rain.bmp
 file 644 $USER $USER /home/$USER/.config/meteordemod/settings.ini
@@ -95,7 +95,6 @@ file 644 $USER $USER /home/$USER/raspberry-lrpt/ansible/group_vars/all.yml
 file 644 $USER $USER /home/$USER/raspberry-lrpt/ansible/hosts
 file 644 $USER $USER /home/$USER/raspberry-lrpt/ansible/roles/common/files/52-airspy.rules
 file 644 $USER $USER /home/$USER/raspberry-lrpt/ansible/roles/common/files/airspy-blacklist.conf
-file 644 $USER $USER /home/$USER/raspberry-lrpt/ansible/roles/common/files/annotation.html.j2_file
 file 644 $USER $USER /home/$USER/raspberry-lrpt/ansible/roles/common/files/disable-wifi-powermgmt.service
 file 644 $USER $USER /home/$USER/raspberry-lrpt/ansible/roles/common/files/rtlsdr.conf
 file 644 $USER $USER /home/$USER/raspberry-lrpt/ansible/roles/common/handlers/main.yml
@@ -247,3 +246,5 @@ file 644 $USER $USER /home/$USER/raspberry-lrpt/ansible/roles/common/files/sdrpl
 file 755 $USER $USER /home/$USER/raspberry-lrpt/ansible/roles/common/files/install_sdrplay_api.sh
 file 755 $USER $USER /home/$USER/raspberry-lrpt/scripts/tools/noaa_v2_import.py
 file 755 $USER $USER /home/$USER/raspberry-lrpt/scripts/tools/upgrade_from_noaa_v2.sh
+file 755 $USER $USER /home/$USER/raspberry-lrpt/scripts/image_processors/annotation_panel.py
+file 755 $USER $USER /home/$USER/raspberry-lrpt/scripts/tools/build_satdump_deb.sh

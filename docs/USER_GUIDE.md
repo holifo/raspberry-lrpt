@@ -229,6 +229,8 @@ Run them on the Pi as your normal user (not with `sudo`).
 | Change the receiver | the same, pick it from the list, then `sudo reboot` ([receivers](receivers.md)) |
 | Move a raspberry-noaa-v2 station over | `./scripts/tools/upgrade_from_noaa_v2.sh` ([how](upgrade_from_noaa_v2.md)) |
 | Check the receiver's drivers | `./scripts/tools/verification_tool/verification.sh` |
+| Build the SatDump package (Trixie, once) | `./scripts/tools/build_satdump_deb.sh` ([Trixie](trixie.md)) |
+| See the image label with example values | `./scripts/testing/produce_annotation_image.sh /tmp/label.png` ([label](annotation.md)) |
 | See the scheduled passes (local time) | `atq \| sort -k6,6n -k3,3M -k4,4n -k5,5` |
 | Download orbits and reschedule now | `./scripts/schedule.sh -t` |
 | List the kept recordings | `./scripts/reprocess_meteor.sh -l` |
@@ -266,7 +268,7 @@ web login, Discord webhook) are in `config/settings.local.yml` and win over it. 
 | `storage` | sd | What the Pi runs from, asked by the install. `sd`: each pass is decoded on a RAM disk to spare the SD card. `ssd`: no RAM disk |
 | `delete_older_than_n` | 30 | Captures older than this many days are deleted |
 | `flip_meteor_image` | true | Turn northbound passes the right way up |
-| `annotation_width_percent` | 50 | Width of the station label, as a share of the image |
+| `annotation_width_percent` | 50 | Width of the station label, as a share of the image; its text is in `config/annotation/annotation.yml` ([label](annotation.md)) |
 | `meteor_daytime_enhancements` / `…nighttime…` | (lists) | Order of the images on a capture's page |
 | `meteor_daytime_thumbnail` / `…nighttime…` | MSA / MCIR | Which image becomes the capture's card |
 | `produce_spectrogram` | true | The spectrogram per pass |
@@ -296,6 +298,7 @@ images or map layers are processed at once; set it to 2 if the Pi ever runs shor
 | The install stops at "SDRplay licence accepted" | SDRplay's API needs its licence accepted | Run the install, answer `n` to "Keep these settings?" and `y` at the licence question |
 | SDRplay: SatDump says it can't open the device | The `sdrplay` service isn't running | `sudo systemctl restart sdrplay`; `sudo systemctl status sdrplay` |
 | A new receiver isn't found after changing it | The old kernel driver still holds it | `sudo reboot` |
+| The install stops at step 1 with "No SatDump package for trixie" | No SatDump package for this release in `software/` yet | `./scripts/tools/build_satdump_deb.sh` once ([Trixie](trixie.md)) |
 | The install stops at step 1 | A capture is running, or a tracked file was edited on the Pi | Wait for the pass; `git status` shows the edited file |
 
 More in [troubleshooting.md](troubleshooting.md).

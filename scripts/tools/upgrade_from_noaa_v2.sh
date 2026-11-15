@@ -15,8 +15,8 @@
 #     (nothing is deleted; remove that folder yourself when you no longer need it)
 #   - runs install_and_upgrade.sh, which shows the settings for review and asks the new questions
 #
-# Raspberry-LRPT needs Raspberry Pi OS Bookworm 64-bit. On an older system (Bullseye, Buster or
-# 32-bit) save the station to a file, put Bookworm on the Pi, clone and import it:
+# Raspberry-LRPT needs Raspberry Pi OS Bookworm or Trixie, 64-bit. On an older system (Bullseye,
+# Buster or 32-bit) save the station to a file, put Bookworm or Trixie on the Pi, clone and import it:
 #   upgrade_from_noaa_v2.sh --export      writes ~/noaa-v2-station-<date>.tar.gz
 #   upgrade_from_noaa_v2.sh --import FILE on the new system, from ~/raspberry-lrpt
 #
@@ -95,7 +95,7 @@ if [ "$MODE" == "export" ]; then
   ok "Saved to $out ($(du -h "$out" 2>/dev/null | cut -f1))"
   echo
   echo "  It holds your settings, including the web admin password: keep it private."
-  echo "  Copy it off the Pi, install Raspberry Pi OS Bookworm 64-bit, then:"
+  echo "  Copy it off the Pi, install Raspberry Pi OS Bookworm or Trixie 64-bit, then:"
   echo "    cd ~ && git clone https://github.com/holifo/raspberry-lrpt raspberry-lrpt"
   echo "    ~/raspberry-lrpt/scripts/tools/upgrade_from_noaa_v2.sh --import $(basename "$out")"
   exit 0
@@ -105,10 +105,10 @@ fi
 step "Checks"
 [ "$NEW" == "$HOME/raspberry-lrpt" ] || die "Run this from the clone in ~/raspberry-lrpt (it is in $NEW)"
 codename=$(. /etc/os-release 2>/dev/null; echo "$VERSION_CODENAME")
-if [ "$codename" != "bookworm" ]; then
-  die "Raspberry-LRPT needs Raspberry Pi OS Bookworm 64-bit (this is ${codename:-unknown}).
+if [ "$codename" != "bookworm" ] && [ "$codename" != "trixie" ]; then
+  die "Raspberry-LRPT needs Raspberry Pi OS Bookworm or Trixie, 64-bit (this is ${codename:-unknown}).
       Save the station first:  $0 --export
-      then install Bookworm and run this with --import FILE."
+      then install Bookworm or Trixie and run this with --import FILE."
 fi
 ok "Raspberry Pi OS $codename"
 

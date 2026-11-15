@@ -156,12 +156,12 @@ backup() {
     exit
   fi
 
-  if [[ -f ${HOME}/raspberry-lrpt/config/annotation/annotation.html.j2 ]]; then
-    cp -pr ${HOME}/raspberry-lrpt/config/annotation/annotation.html.j2 ${BACKUP_LOC}/annotation.html.j2
+  if [[ -f ${HOME}/raspberry-lrpt/config/annotation/annotation.yml ]]; then
+    cp -pr ${HOME}/raspberry-lrpt/config/annotation/annotation.yml ${BACKUP_LOC}/annotation.yml
     if [[ $? -eq 0 ]]; then
-      loggit "PASS" "Successfully backed up annotation.html.j2"
+      loggit "PASS" "Successfully backed up annotation.yml"
     else
-      loggit "FAIL" "Failed to backup annotation.html.j2, aborting..."
+      loggit "FAIL" "Failed to backup annotation.yml, aborting..."
       exit 1
     fi
   else
@@ -324,22 +324,22 @@ restore() {
     exit 1
   fi
 
-  if [[ -f ${BACKUP_LOC}/annotation.html.j2 ]]; then
+  if [[ -f ${BACKUP_LOC}/annotation.yml ]]; then
     # Keep github original
-    if [[ ! -f ${HOME}/raspberry-lrpt/config/annotation/annotation.html.j2.original ]]; then
-      if [[ -f ${HOME}/raspberry-lrpt/config/annotation/annotation.html.j2 ]]; then
-        cp -pr ${HOME}/raspberry-lrpt/config/annotation/annotation.html.j2 ${HOME}/raspberry-lrpt/config/annotation/annotation.html.j2.original
+    if [[ ! -f ${HOME}/raspberry-lrpt/config/annotation/annotation.yml.original ]]; then
+      if [[ -f ${HOME}/raspberry-lrpt/config/annotation/annotation.yml ]]; then
+        cp -pr ${HOME}/raspberry-lrpt/config/annotation/annotation.yml ${HOME}/raspberry-lrpt/config/annotation/annotation.yml.original
       fi
     fi
-    cp -pr ${BACKUP_LOC}/annotation.html.j2 ${HOME}/raspberry-lrpt/config/annotation/annotation.html.j2
+    cp -pr ${BACKUP_LOC}/annotation.yml ${HOME}/raspberry-lrpt/config/annotation/annotation.yml
     if [[ $? -eq 0 ]]; then
-      loggit "PASS" "Successfully restored annotation.html.j2"
+      loggit "PASS" "Successfully restored annotation.yml"
     else
-      loggit "FAIL" "Failed to restore annotation.html.j2, aborting..."
+      loggit "FAIL" "Failed to restore annotation.yml, aborting..."
       exit 1
     fi
   else
-    loggit "FAIL" "${BACKUP_LOC}/annotation.html.j2, not found, aborting..."
+    loggit "FAIL" "${BACKUP_LOC}/annotation.yml, not found, aborting..."
     exit
   fi
 

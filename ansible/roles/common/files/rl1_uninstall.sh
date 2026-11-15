@@ -12,12 +12,15 @@ start=$(date +%s)
 
 UNINSTALL_LOG=/tmp/uninstall.log
 PACKAGES_BULLSEYE="satdump nginx predict php7.4-intl php8.0-sqlite3 php8.0-mbstring php8.0-fpm"
-PACKAGES_BOOKWORM="satdump nginx predict php8.2-intl php8.2-sqlite3 php8.2-mbstring php8.2-fpm"
+PACKAGES_BOOKWORM="satdump rtl-sdr nginx predict php8.2-intl php8.2-sqlite3 php8.2-mbstring php8.2-fpm"
+PACKAGES_TRIXIE="satdump rtl-sdr nginx predict php8.4-intl php8.4-sqlite3 php8.4-mbstring php8.4-fpm"
 PATHS="/srv/audio /srv/videos /srv/images $HOME/.config/composer $HOME/.config/gmic $HOME/.config/matplotlib $HOME/.config/meteordemod $HOME/.config/composer $HOME/.config/satdump $HOME/raspberry-lrpt $HOME/.predict $HOME/.raspberry-lrpt.conf /usr/local/bin/rtl_* /var/log/raspberry-lrpt /etc/sudoers.d/020_www-data-atrm-nopasswd /var/www/wx-new /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default /tmp/rtl-sdr /etc/modprobe.d/rtlsdr.conf"
 SERVICES="phpsessionclean.service phpsessionclean.timer nginx.service"
 OS=$(cat /etc/os-release | grep -E "^DEBIAN_CODENAME|^VERSION_CODENAME" | awk -F"=" '{print $NF}' | sort | head -1)
 
-if [[ ${OS} == "bookworm" ]]; then
+if [[ ${OS} == "trixie" ]]; then
+  PACKAGES=${PACKAGES_TRIXIE}
+elif [[ ${OS} == "bookworm" ]]; then
   PACKAGES=${PACKAGES_BOOKWORM}
 elif [[ ${OS} == "bullseye" ]]; then
   PACKAGES=${PACKAGES_BULLSEYE}

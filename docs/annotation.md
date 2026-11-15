@@ -1,42 +1,48 @@
-If you want to update the annotation that exists on the images, the process is fairly straightforward.
-Simply edit the file `config/annotation/annotation.html.j2` following the instructions in the file
-and the next pass captures you receive should have the images overlaid with the new annotation format.
+# The image label
 
-Note that hte `annotation.html.j2` template uses the
-[Jinja2 template specification](https://jinja.palletsprojects.com/en/2.11.x/). Simply speaking, this means any
-variables you wish replaced should be wrapped in double curly braces (`{{ my_var }}`), and in general, any
-Jinja2 template syntax should work. However, it's recommended that you keep the template as pure to variable
-replacement without complex conditionals as possible as this will keep the template easier to debug.
+Every capture image gets a label: your station on the left, the pass on the right, on a light grey
+70% transparent panel with rounded corners. It is drawn with Python Pillow by
+`scripts/image_processors/annotation_panel.py`, from `config/annotation/annotation.yml`.
 
-To have additional resources included in the HTML rendering of the annotation (images, etc.), simply place
-the referenced images in the same directory alonside the template file (`config/annotation/`).
-
-## Testing
-
-If you want to iterate on your annotation without needing to wait for a new pass, you can make modifications
-to the `config/annotation/annotation.html.j2` file and then run the `scripts/testing/produce_annotation_image.sh`,
-passing an output file to write the annotation image to for inspection. This script will inject parameters
-in the same way a typical pass would, allowing you to view your HTML-driven annotation with similar parameters
-that you would see during a pass capture. For example, run the following command:
-
-```bash
-./scripts/testing/produce_annotation_image.sh /tmp/output.png
+```yaml
+logo: ''                 # a square PNG in config/annotation/ (e.g. logo.png, 256 px), drawn at 64 px
+logo_text: LRPT          # shown instead when there is no logo
+station:                 # the middle column
+  - "{station_title}"
+  - "{ground_station_location}"
+  - "137 MHz {antenna_information} antenna"
+pass:                    # the right column
+  - "Satellite: {sat_name} | {capture_start}"
+  - "Max Elevation: {sat_max_elevation}° {pass_side_long} | Sun Elevation: {sun_elevation}°"
+  - "Direction: {pass_direction} | {enhancement} | Gain: {gain}"
+font: DejaVuSans.ttf     # any TrueType font in /usr/share/fonts
+bold_font: DejaVuSans-Bold.ttf
+font_size: 15
 ```
 
-After running the above command, open the file `/tmp/output.png` to see what your HTML-driven annotation would
-look like. You can go about this in a couple different ways, but below are a couple helpful methods depending on your
-scenario:
+Each line can use `{key}` for any setting in `config/settings.yml` and for these, filled in for each
+image: `sat_name`, `capture_start`, `sat_max_elevation`, `sun_elevation`, `pass_direction`,
+`pass_side` (E/W), `pass_side_long` (East/West), `enhancement` and `gain`. Add or remove lines as
+you like; each column is centred.
 
-1. If you are on a remote Linix-based machine, you can copy the file from your remote Raspberry Pi instance to your
-local machine via executing (from your local machine) `scp pi@<your_pi_ip_address>:/tmp/output.png`, where
-`<your_pi_ip_address>` is the IP or hostname of your remote Pi instance. This will place the file `output.png` in the
-local directory on your local machine where you ran the command from.
-2. If you're running on a Windows-based machine, you can hack around needing any kind of FTP-based transfer by copying
-the file into the assets directory of the webpanel on your Raspberry Pi, and then viewing it from your local machine
-browser. Copy the file to the asset directory using `cp output.png /var/www/wx-new/public/assets/` and then open
-a browser on your local machine pointed to the webpanel on your remote Pi at this address:
-`http://<your_pi_ip_or_hostname>/assets/output.png`.
+Settings in `config/settings.yml` place it on the image:
 
-This is the image that will be overlaid in the location specified on your capture images. Note that
-the background is by default transparent to ensure that the image does not block any more of the capture image
-than it needs to.
+| Setting | What it does |
+|---|---|
+| `image_annotation_location` | Where: `NorthWest`, `North`, `NorthEast`, `West`, `Center`, `East`, `SouthWest`, `South`, `SouthEast` |
+| `annotation_width_percent` | Its width as a share of the image's (50 = half); 0 = as drawn |
+| `extend_for_annotation` | Add a black band above or below the image for it, instead of covering the picture |
+
+## Trying it out
+
+```bash
+./scripts/testing/produce_annotation_image.sh /tmp/label.png
+```
+
+draws the label with example pass details. To look at it from another computer, copy it over
+(`scp pi@<your_pi>:/tmp/label.png .`) or into the web panel's folder
+(`cp /tmp/label.png /var/www/wx-new/public/assets/` and open `http://<your_pi>/assets/label.png`).
+
+Before v1.24.0 the label was an HTML template (`annotation.html.j2`) rendered with wkhtmltoimage,
+which Debian Trixie no longer has. If you had changed that template, put the same text in
+`annotation.yml`.

@@ -1,5 +1,37 @@
 # Changelog
 
+## Raspberry-LRPT v1.24.0 (2026-11-15)
+
+- **Raspberry Pi OS Trixie (Debian 13)**, as well as Bookworm. The install picks each release's
+  package names: PHP 8.4 on Trixie (8.2 on Bookworm) with the matching nginx socket,
+  `libvolk-dev`, `libncurses-dev`, envbash on both; `libatlas-base-dev` (MeteorDemod only) is
+  gone. The web panel was tested on PHP 8.4: every page, no deprecation warnings.
+- **SatDump on Trixie:** `scripts/tools/build_satdump_deb.sh` builds the same SatDump 1.2.3 commit
+  as the Bookworm package, once, on a Trixie Pi (about an hour) into
+  `software/satdump_<version>_trixie_<arch>.deb`. Until a station has it, the install stops at
+  step 1 and says so. See [docs/trixie.md](docs/trixie.md).
+- **The image label is drawn with Pillow** instead of wkhtmltoimage (which Trixie dropped). It looks
+  the same: logo, station and pass details on a 70% transparent panel with rounded corners. The
+  layout is now `config/annotation/annotation.yml` (logo, two columns of lines with `{setting}`
+  values, font) instead of the HTML template; if you had changed `annotation.html.j2`, move the text
+  there. See [docs/annotation.md](docs/annotation.md). wkhtmltopdf is no longer installed.
+- **RTL-SDR Blog driver as packages:** the install builds the RTL-SDR Blog driver (RTL-SDR Blog V4
+  support) with its own Debian packaging into `librtlsdr0` and `rtl-sdr` .debs from a pinned
+  commit and installs them with apt (the `1:` epoch keeps them over Debian's librtlsdr). It
+  replaces the osmocom build in `/usr/local`, which the install removes, and the old trick of
+  deleting Debian's library files.
+- The install's summary checks the station's own receiver on USB (not only RTL-SDRs) and the
+  PHP-FPM service of whichever PHP is installed.
+
+### Upgrade
+
+```bash
+cd ~/raspberry-lrpt && git pull && ./install_and_upgrade.sh
+```
+
+Bookworm stations need nothing else: the install swaps the RTL-SDR driver for the packages (about
+a minute) and the labels look the same.
+
 ## Raspberry-LRPT v1.23.0 (2026-11-15)
 
 - **All of raspberry-noaa-v2's receivers again:** besides RTL-SDR and Airspy (Mini, R2, HF+

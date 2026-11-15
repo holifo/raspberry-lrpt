@@ -6,10 +6,10 @@
     name:
       - nginx
       - composer
-      - php8.2-fpm
-      - php8.2-intl
-      - php8.2-mbstring
-      - php8.2-sqlite3
+      - php{{ php_version }}-fpm
+      - php{{ php_version }}-intl
+      - php{{ php_version }}-mbstring
+      - php{{ php_version }}-sqlite3
 
 # The station has no firewall of its own: it sits behind the router, which forwards only the web
 # panel's port. Older installs turned UFW on; switch it off and remove it.
@@ -97,8 +97,8 @@
     group: root
     mode: 0644
   loop:
-    - { site: default, src: "nginx_default_{{ raspbian_version.stdout }}.j2", enabled: "{{ enable_non_tls | bool }}" }
-    - { site: default-tls, src: "nginx_tls_default_{{ raspbian_version.stdout }}.j2", enabled: "{{ enable_tls | bool }}" }
+    - { site: default, src: "nginx_default.j2", enabled: "{{ enable_non_tls | bool }}" }
+    - { site: default-tls, src: "nginx_tls_default.j2", enabled: "{{ enable_tls | bool }}" }
   loop_control:
     label: "{{ item.site }}"
   when: item.enabled | bool

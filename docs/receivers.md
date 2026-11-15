@@ -28,13 +28,22 @@ sudo reboot                                        # so the kernel drivers are s
 
 | Receiver | Set up by the install |
 |---|---|
-| RTL-SDR | Debian's DVB driver blacklisted; the osmocom `rtl-sdr` tools built from source (they support the RTL-SDR Blog V4) with their udev rules |
+| RTL-SDR | Debian's DVB driver blacklisted; the **RTL-SDR Blog driver** (it supports the RTL-SDR Blog V4) built as `librtlsdr0` and `rtl-sdr` packages and installed with apt, with its udev rules |
 | Airspy, Airspy HF+ | the `airspy` or `airspyhf` tools, Airspy udev rules, the `airspy` kernel module blacklisted |
 | HackRF | the `hackrf` tools and their udev rules |
 | MiriSDR | the `msi001`/`msi2500` kernel drivers blacklisted and unloaded, udev rules for MSi2500 receivers |
 | SDRplay | the same blacklist, **SDRplay's API** and **SatDump's SDRplay plugin** (below) |
 
 SatDump's plugins for RTL-SDR, Airspy, HackRF and MiriSDR come with the SatDump package.
+
+## RTL-SDR: the RTL-SDR Blog driver
+
+The install builds the [RTL-SDR Blog driver](https://github.com/rtlsdrblog/rtl-sdr-blog) with its
+own Debian packaging into `librtlsdr0` and `rtl-sdr` packages, from a pinned commit, and installs
+them with apt (about a minute on a Pi). It supports every RTL2832U stick, including the RTL-SDR
+Blog V4, on Bookworm and Trixie. Their version starts with `1:` so apt keeps them over Debian's own
+librtlsdr. `dpkg -l librtlsdr0` shows it (`1:0.7.0~rtlsdrblog1+git…`). Stations from before v1.24.0
+had a build in `/usr/local`; the install removes it.
 
 ## SDRplay
 

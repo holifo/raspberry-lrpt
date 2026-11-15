@@ -31,7 +31,7 @@ input_fileext="${input_file##*.}"
 os_release=$(cat /etc/os-release | grep -E "^DEBIAN_CODENAME|^VERSION_CODENAME" | awk -F"=" '{print $NF}' | sort | head -1)
 
 #adjust output with os release
-if [[ "${os_release}" == "bullseye" || "${os_release}" == "bookworm" ]];
+if [[ "${os_release}" == "bullseye" || "${os_release}" == "bookworm" || "${os_release}" == "trixie" ]];
 then
    gmic_temp_1="${input_path}/_${input_filename}_c1.${input_fileext}"
 else

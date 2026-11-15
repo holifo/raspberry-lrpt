@@ -21,10 +21,11 @@ Everything carried over goes to `config/settings.local.yml` (not in git, readabl
 the install shows it for review before it runs. Nothing is deleted: the backup folder is
 `~/raspberry-noaa-v2.backup-<date>`, and you remove it when you no longer need it.
 
-## The station already runs Bookworm 64-bit
+## The station already runs Bookworm or Trixie, 64-bit
 
-Raspberry-LRPT needs Raspberry Pi OS **Bookworm 64-bit**. Check with `cat /etc/os-release`. If it
-says bookworm and `uname -m` says aarch64:
+Raspberry-LRPT needs Raspberry Pi OS **Bookworm or Trixie, 64-bit**. Check with
+`cat /etc/os-release`. If it says bookworm or trixie and `uname -m` says aarch64 (on Trixie, build
+the SatDump package first: [Trixie](trixie.md)):
 
 ```bash
 cd ~ && git clone https://github.com/holifo/raspberry-lrpt raspberry-lrpt
@@ -47,7 +48,7 @@ asks before it starts. Then it:
 
 ## An older system (Bullseye, Buster or 32-bit)
 
-The upgrade can't happen in place: the Pi needs a fresh Bookworm 64-bit. Save the station to a
+The upgrade can't happen in place: the Pi needs a fresh Bookworm or Trixie, 64-bit. Save the station to a
 file first, on the old system:
 
 ```bash
@@ -57,7 +58,7 @@ cd ~ && git clone https://github.com/holifo/raspberry-lrpt raspberry-lrpt
 
 That writes `~/noaa-v2-station-<date>.tar.gz` with the settings, the database and the Meteor
 images. It holds the web admin password, so keep it private. Copy it off the Pi (a USB stick, or
-`scp` to another computer), put Raspberry Pi OS Bookworm 64-bit on the card, copy the file back to
+`scp` to another computer), put Raspberry Pi OS Bookworm or Trixie 64-bit on the card, copy the file back to
 the home folder and run:
 
 ```bash

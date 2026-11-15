@@ -22,52 +22,69 @@
         group: root
         mode: 0644
 
-    # Debian 12's librtlsdr doesn't support the RTL-SDR V4. Delete its .so files so SatDump and
-    # the tools use the osmocom build below.
-    - name: Debian librtlsdr check (RTL-SDR V4 fix)
-      find:
-        paths: "{{ '/usr/lib/aarch64-linux-gnu/' if system_architecture == 'arm64' else '/lib/arm-linux-gnueabihf/' }}"
-        patterns: "librtlsdr.so*"
-        use_regex: true
-        file_type: file
-      register: libraries_to_delete
-      when: raspbian_version.stdout == 'bookworm' and system_architecture in ['arm64', 'armhf']
+    # The RTL-SDR Blog driver (it supports the RTL-SDR Blog V4), built with its own Debian
+    # packaging into librtlsdr0 and rtl-sdr packages. The epoch in the version (1:) keeps them
+    # ahead of Debian's own librtlsdr, so apt never swaps them back. SatDump's RTL-SDR plugin
+    # uses this librtlsdr.so.0.
+    - name: RTL-SDR Blog driver check
+      command: dpkg-query -W -f=${Version} librtlsdr0
+      register: librtlsdr_version
+      changed_when: false
+      failed_when: false
 
-    - name: Debian librtlsdr removed (RTL-SDR V4 fix)
-      become: yes
-      file:
-        path: "{{ item.path }}"
-        state: absent
-      loop: "{{ libraries_to_delete.files | default([]) }}"
-      loop_control:
-        label: "{{ item.path | basename }}"
-      when: raspbian_version.stdout == 'bookworm' and system_architecture in ['arm64', 'armhf']
+    - name: RTL-SDR Blog driver (built as .deb packages)
+      when: librtlsdr_version.stdout != rtlsdr_blog_version
+      block:
+        - name: Tools to build the packages
+          become: yes
+          apt:
+            name: [debhelper, dpkg-dev, fakeroot, cmake, libusb-1.0-0-dev, pkg-config]
+            state: present
 
-    - name: RTL-SDR tools check
-      stat:
-        path: /usr/local/bin/rtl_sdr
-      register: rtlsdr_bin
+        - name: RTL-SDR Blog source
+          shell: |
+            set -e
+            rm -rf /tmp/rtl-sdr-blog
+            git init -q /tmp/rtl-sdr-blog
+            cd /tmp/rtl-sdr-blog
+            git remote add origin https://github.com/rtlsdrblog/rtl-sdr-blog
+            git fetch -q --depth 1 origin {{ rtlsdr_blog_commit }}
+            git -c advice.detachedHead=false checkout -q FETCH_HEAD
+            {
+              printf 'rtl-sdr (%s) unstable; urgency=medium\n\n' "{{ rtlsdr_blog_version }}"
+              printf '  * RTL-SDR Blog driver %s, packaged by Raspberry-LRPT.\n\n' "{{ rtlsdr_blog_commit[:7] }}"
+              printf ' -- Raspberry-LRPT <raspberry-lrpt@localhost>  %s\n\n' "$(date -R)"
+              cat debian/changelog
+            } > debian/changelog.new
+            mv debian/changelog.new debian/changelog
 
-    - name: RTL-SDR source
-      git:
-        repo: https://github.com/osmocom/rtl-sdr.git
-        dest: /tmp/rtl-sdr
-        update: no
-      when: not rtlsdr_bin.stat.exists
+        - name: RTL-SDR Blog packages built
+          command: dpkg-buildpackage -b --no-sign -uc -us
+          args:
+            chdir: /tmp/rtl-sdr-blog
 
-    - name: RTL-SDR tools (osmocom, built from source)
+        - name: RTL-SDR Blog packages installed
+          become: yes
+          shell: |
+            set -e
+            cd /tmp
+            apt-get install -y -q --allow-downgrades ./librtlsdr0_*.deb ./rtl-sdr_*.deb
+            rm -rf /tmp/rtl-sdr-blog /tmp/librtlsdr*.deb /tmp/rtl-sdr_*.deb /tmp/rtl-sdr*.buildinfo /tmp/rtl-sdr*.changes
+
+    # stations from before v1.24.0 had osmocom's build in /usr/local, which would win over the
+    # packages (and an old copy of its udev rules)
+    - name: Old RTL-SDR build removed (/usr/local)
       become: yes
       shell: |
-        set -e
-        mkdir -p build && cd build
-        cmake ../ -DDETACH_KERNEL_DRIVER=ON
-        make
-        make install
-        ldconfig
-        install -m 0644 ../rtl-sdr.rules /etc/udev/rules.d/rtl-sdr.rules
-      args:
-        chdir: /tmp/rtl-sdr
-      when: not rtlsdr_bin.stat.exists
+        found=0
+        for f in /usr/local/bin/rtl_* /usr/local/lib/librtlsdr* /usr/local/lib/pkgconfig/librtlsdr.pc \
+                 /usr/local/include/rtl-sdr.h /usr/local/include/rtl-sdr_export.h \
+                 /etc/udev/rules.d/rtl-sdr.rules /tmp/rtl-sdr; do
+          [ -e "$f" ] && { rm -rf "$f"; found=1; }
+        done
+        [ $found -eq 1 ] && ldconfig && echo removed || true
+      register: old_rtlsdr
+      changed_when: "'removed' in old_rtlsdr.stdout"
 
 # ---- Airspy (Mini, R2) and Airspy HF+ Discovery --------------------------------------------
 - name: Airspy tools

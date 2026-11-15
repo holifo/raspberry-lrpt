@@ -196,9 +196,13 @@ loggit "INFO" "*** Checking drivers for the receiver: ${RECEIVER_SETTING:-unknow
 receiver_packages=""
 case "$RECEIVER_SETTING" in
   rtlsdr)
+    receiver_packages="rtl-sdr librtlsdr0"
     perms file 644 root root /etc/modprobe.d/rtlsdr.conf
-    perms file 644 root root /etc/udev/rules.d/rtl-sdr.rules
-    perms file 755 root root /usr/local/bin/rtl_sdr ;;
+    if dpkg-query -W -f='${Version}' librtlsdr0 2>/dev/null | grep -q "rtlsdrblog"; then
+      loggit "PASS" "librtlsdr0 is the RTL-SDR Blog driver ($(dpkg-query -W -f='${Version}' librtlsdr0))"; PASSES=$(expr ${PASSES} + 1)
+    else
+      loggit "FAIL" "librtlsdr0 is not the RTL-SDR Blog driver (run ./install_and_upgrade.sh)"; FAILURES=$(expr ${FAILURES} + 1)
+    fi ;;
   airspy_mini|airspy_r2|airspy_hf_plus_discovery)
     [ "$RECEIVER_SETTING" == "airspy_hf_plus_discovery" ] && receiver_packages="airspyhf" || receiver_packages="airspy"
     perms file 644 root root /etc/modprobe.d/airspy-blacklist.conf

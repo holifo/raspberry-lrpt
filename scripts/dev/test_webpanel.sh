@@ -97,7 +97,8 @@ srv = os.path.join(work, 'srv')
 # settings + group vars, resolving the group vars' own templates
 v = yaml.safe_load(open(os.path.join(repo, 'config/settings.yml')))
 v.update(yaml.safe_load(open(os.path.join(repo, 'ansible/group_vars/all.yml'))))
-v.update(target_user='tester', system_timezone={'stdout': 'Europe/Athens'})
+v.update(target_user='tester', system_timezone={'stdout': 'Europe/Athens'},
+         raspbian_version={'stdout': os.environ.get('TEST_CODENAME', 'bookworm')})
 env = jinja2.Environment(undefined=jinja2.StrictUndefined)
 for _ in range(3):
     for k, val in list(v.items()):

@@ -38,7 +38,6 @@ IDENTIFY="/usr/bin/identify"
 PREDICT="/usr/bin/predict"
 RTL_FM="/usr/local/bin/rtl_fm"
 SQLITE3="/usr/bin/sqlite3"
-WKHTMLTOIMG="/usr/bin/wkhtmltoimage"
 METEORDEMOD="/usr/local/bin/meteordemod"
 SATDUMP="/usr/bin/satdump"
 

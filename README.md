@@ -49,8 +49,8 @@ More in [the screenshots](docs/webpanel_screenshots.md).
 
 ## Requirements
 
-- Raspberry Pi 4 or 5 (or a 64-bit Debian PC) with **Raspberry Pi OS Bookworm 64-bit**. Trixie is
-  not supported yet.
+- Raspberry Pi 4 or 5 (or a 64-bit Debian PC) with **Raspberry Pi OS Bookworm or Trixie, 64-bit**.
+  On Trixie the SatDump package is built once on the Pi first ([Trixie](docs/trixie.md)).
 - A receiver: an RTL-SDR, Airspy (Mini, R2 or HF+ Discovery), HackRF One, SDRplay RSP or MSi2500
   (MiriSDR) receiver ([receivers](docs/receivers.md)), and a 137 MHz antenna such as a QFH.
 
@@ -81,7 +81,7 @@ cd ~ && git clone https://github.com/holifo/raspberry-lrpt raspberry-lrpt
 ~/raspberry-lrpt/scripts/tools/upgrade_from_noaa_v2.sh
 ```
 
-It needs Bookworm 64-bit; an older system saves the station to a file first
+It needs Bookworm or Trixie, 64-bit; an older system saves the station to a file first
 (`--export`) and loads it on the new one (`--import`). See
 [upgrading from raspberry-noaa-v2](docs/upgrade_from_noaa_v2.md).
 
@@ -127,6 +127,7 @@ processes number 2. `./scripts/daily_map.sh --all` redraws the daily maps that c
 - [Annotation](docs/annotation.md), [pruning](docs/pruning.md), [database backups](docs/db_backups.md),
   [TLS for the web panel](docs/tls_webserver.md), [posting to Discord](docs/discord.md),
   [receivers](docs/receivers.md), [upgrading from raspberry-noaa-v2](docs/upgrade_from_noaa_v2.md),
+  [Trixie](docs/trixie.md), [the image label](docs/annotation.md),
   [troubleshooting](docs/troubleshooting.md)
 
 ## Licence

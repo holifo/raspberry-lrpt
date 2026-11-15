@@ -25,6 +25,14 @@ ramfs_path: "/var/ramfs"
 
 # SatDump package bundled in software/ (satdump_<version>_<codename>_<arch>.deb)
 satdump_version: "1.2.3-0b654b4ec"
+# package names that differ between Debian releases (raspbian_version is the codename)
+php_version: "{{ {'bookworm': '8.2', 'trixie': '8.4'}[raspbian_version.stdout] | default('8.2') }}"
+volk_dev_package: "{{ 'libvolk2-dev' if raspbian_version.stdout == 'bookworm' else 'libvolk-dev' }}"
+
+# the RTL-SDR Blog driver (RTL-SDR Blog V4 support), built as .deb packages on the station
+rtlsdr_blog_commit: "aed0ea19f3a273370a13c9009b96313c75d54c7b"
+rtlsdr_blog_version: "1:0.7.0~rtlsdrblog1+git{{ rtlsdr_blog_commit[:7] }}"
+
 # the SatDump commit that deb was built from (the SDRplay plugin is built from its source)
 satdump_commit: "0b654b4ec091cae61f357aac3150dd06779d056c"
 

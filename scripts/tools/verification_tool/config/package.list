@@ -43,5 +43,4 @@ satdump
 socat
 sox
 sqlite3
-wkhtmltopdf
 zlib1g-dev
