@@ -1,5 +1,11 @@
 # Changelog
 
+## Raspberry-LRPT v1.22.1 (2026-11-15)
+
+- Docs: the README's install text mentions the optional Discord webhook and that an upgrade asks
+  newly added questions once; `docs/troubleshooting.md` points to this project's GitHub issues
+  instead of upstream's Discord server.
+
 ## Raspberry-LRPT v1.22.0 (2026-11-15)
 
 - **Post earlier captures to Discord:** `./scripts/discord_post.sh` posts captures already on the
