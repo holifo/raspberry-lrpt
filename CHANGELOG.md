@@ -1,5 +1,10 @@
 # Changelog
 
+## Raspberry-LRPT v1.21.1 (2026-11-15)
+
+- User guide: a **Posting to Discord** section (how to turn it on and off, what gets posted, keeping
+  the webhook private, with a diagram) and a troubleshooting row for missing posts.
+
 ## Raspberry-LRPT v1.21.0 (2026-11-15)
 
 - **Posting to Discord** is back, as an option: each pass that made images is posted to a

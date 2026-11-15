@@ -8,6 +8,7 @@ goes wrong. For installing, see the [README](../README.md).
 - [The life of one pass](#the-life-of-one-pass)
 - [The web panel](#the-web-panel)
 - [The daily map](#the-daily-map)
+- [Posting to Discord](#posting-to-discord)
 - [Commands](#commands)
 - [Settings worth knowing](#settings-worth-knowing)
 - [Troubleshooting](#troubleshooting)
@@ -169,6 +170,49 @@ top. There are two maps a day:
 - **Passes left out:** a pass with no orbit or corrupt line times (no map drawn) is not added.
 - **Turn it off:** `daily_map: false` in `config/settings.yml`, then run the install.
 
+## Posting to Discord
+
+The station can post every pass that made images to a Discord channel. It is off until you give it
+a webhook.
+
+```mermaid
+flowchart LR
+    P[Pass decoded] --> D[Capture saved<br/>on the site]
+    D --> M[Message:<br/>satellite, time, elevation,<br/>direction, day/night, link]
+    D --> I[Best images<br/>+ sky track]
+    M --> W((Discord<br/>webhook))
+    I --> W
+    W --> C[Your channel]
+```
+
+**Turn it on**
+
+1. In Discord: open the channel, then **Edit Channel → Integrations → Webhooks → New Webhook →
+   Copy Webhook URL**.
+2. On the Pi: `cd ~/raspberry-lrpt && ./install_and_upgrade.sh`. An upgrade asks the Discord
+   question once; later, answer `n` to "Keep these settings?" to reach it. Paste the URL, then give
+   the web panel's address as seen from the internet (for the link in each post) or `-` for none.
+3. Check it: `./scripts/push_discord.sh --test` posts a test message.
+
+**What gets posted:** one message per pass, after the capture is on the site:
+
+- satellite, local and UTC time, maximum elevation, direction, day or night, length
+- station name and a link to the capture's page
+- the best images: `discord_images` (default 2), chosen in the order of the day or night
+  thumbnail list, then the image list
+- the sky track (`discord_sky_track`)
+
+Images over Discord's 10 MB limit are sent smaller. Re-processed passes are not posted.
+
+**Keep the webhook private:** anyone who has it can post in your channel. The install keeps it in
+`config/settings.local.yml` (not in git); the log never shows it. If it leaks, delete the webhook in
+Discord and make a new one.
+
+**Turn it off:** run the install, answer `n` to "Keep these settings?" and `-` to the webhook
+question.
+
+More in [discord.md](discord.md).
+
 ## Commands
 
 Run them on the Pi as your normal user (not with `sudo`).
@@ -238,6 +282,7 @@ images or map layers are processed at once; set it to 2 if the Pi ever runs shor
 | The passes map shows no satellites | No orbit data in the web panel | `./scripts/schedule.sh -t` |
 | The daily map is missing a pass | That pass had no map (see above), or its product is over 2 days old | Re-process it within 2 days |
 | `git pull` asks for a password or says 403 | The repo is private | Use the deploy key or access token set up for the Pi |
+| No Discord post after a pass | No webhook, a wrong one, or Discord refused it | `./scripts/push_discord.sh --test`; the log says `Discord post failed (HTTP …)` with Discord's reason. 401/404: make a new webhook and give it to the install |
 | The install stops at step 1 | A capture is running, or a tracked file was edited on the Pi | Wait for the pass; `git status` shows the edited file |
 
 More in [troubleshooting.md](troubleshooting.md).
