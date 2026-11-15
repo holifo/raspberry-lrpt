@@ -11,7 +11,7 @@
     "test_freq_offset":      { "type": "number" },
     "receiver_type": {
       "type": "string",
-      "enum": [ "rtlsdr", "airspy_mini", "airspy_r2", "airspy_hf_plus_discovery" ]
+      "enum": [ "rtlsdr", "airspy_mini", "airspy_r2", "airspy_hf_plus_discovery", "hackrf", "sdrplay", "mirisdr" ]
     },
     "meteor_decoder": {
       "type": "string",
@@ -132,7 +132,9 @@
     "discord_webhook":         { "type": "string", "pattern": "^(https://(canary\\.|ptb\\.)?(discord|discordapp)\\.com/api/webhooks/[0-9]+/[A-Za-z0-9_-]+)?$" },
     "discord_site_url":        { "type": "string", "pattern": "^(https?://[^\\s]+)?$" },
     "discord_images":          { "type": "integer", "minimum": 0, "maximum": 9 },
-    "discord_sky_track":       { "type": "boolean" }
+    "discord_sky_track":       { "type": "boolean" },
+    "sdr_extra_options":       { "type": "string", "pattern": "^[A-Za-z0-9_ .=:-]*$" },
+    "sdrplay_licence_accepted": { "type": "boolean" }
   },
   "required": [
     "latitude",
@@ -208,6 +210,8 @@
     "discord_webhook",
     "discord_site_url",
     "discord_images",
-    "discord_sky_track"]
+    "discord_sky_track",
+    "sdr_extra_options",
+    "sdrplay_licence_accepted"]
 }
 

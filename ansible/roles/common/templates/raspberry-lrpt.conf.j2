@@ -74,6 +74,7 @@ PRUNE_OLDEST={{ delete_oldest_n }}
 
 # Receiver and Decoder Configuration
 RECEIVER_TYPE={{ receiver_type }}
+SDR_EXTRA_OPTIONS={{ sdr_extra_options|default('') | quote }}
 METEOR_DECODER={{ meteor_decoder }}
 
 # Telemetry and Annotations

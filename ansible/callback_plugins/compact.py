@@ -26,6 +26,7 @@ PARTS = {
     'configs.yml': 'Settings and SatDump config',
     'ntp.yml': 'Time (NTP)',
     'sdr.yml': 'SDR drivers',
+    'sdrplay.yml': 'SDRplay API and plugin',
     'tools.yml': 'Scheduler and folders',
     'ramfs.yml': 'RAM disk',
     'main.yml': 'Web server',

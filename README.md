@@ -51,7 +51,8 @@ More in [the screenshots](docs/webpanel_screenshots.md).
 
 - Raspberry Pi 4 or 5 (or a 64-bit Debian PC) with **Raspberry Pi OS Bookworm 64-bit**. Trixie is
   not supported yet.
-- An RTL-SDR or an Airspy (Mini, R2 or HF+ Discovery) and a 137 MHz antenna such as a QFH.
+- A receiver: an RTL-SDR, Airspy (Mini, R2 or HF+ Discovery), HackRF One, SDRplay RSP or MSi2500
+  (MiriSDR) receiver ([receivers](docs/receivers.md)), and a 137 MHz antenna such as a QFH.
 
 ## Install
 
@@ -63,12 +64,26 @@ cd raspberry-lrpt
 ```
 
 The folder must be `~/raspberry-lrpt`. A first install asks about your station: name, location
-(latitude, longitude, altitude), the text on the images, receiver, SD card or SSD, gains, bias tee,
-web panel port, admin login and an optional Discord webhook. Enter keeps the value shown. The
+(latitude, longitude, altitude), the text on the images, receiver (from a list; the install sets up
+its drivers), SD card or SSD, gains, bias tee, web panel port, admin login and an optional Discord
+webhook. Enter keeps the value shown. The
 answers are saved in `config/settings.local.yml` (not in git), which overrides
 `config/settings.yml`; everything else stays in `settings.yml`.
 The install then checks the system, runs Ansible, sets up the web panel and schedules the passes,
 and ends by printing the web panel's address.
+
+## Coming from raspberry-noaa-v2
+
+A raspberry-noaa-v2 station keeps its settings and Meteor captures:
+
+```bash
+cd ~ && git clone https://github.com/holifo/raspberry-lrpt raspberry-lrpt
+~/raspberry-lrpt/scripts/tools/upgrade_from_noaa_v2.sh
+```
+
+It needs Bookworm 64-bit; an older system saves the station to a file first
+(`--export`) and loads it on the new one (`--import`). See
+[upgrading from raspberry-noaa-v2](docs/upgrade_from_noaa_v2.md).
 
 ## Update
 
@@ -111,6 +126,7 @@ processes number 2. `./scripts/daily_map.sh --all` redraws the daily maps that c
 - [Changelog](CHANGELOG.md)
 - [Annotation](docs/annotation.md), [pruning](docs/pruning.md), [database backups](docs/db_backups.md),
   [TLS for the web panel](docs/tls_webserver.md), [posting to Discord](docs/discord.md),
+  [receivers](docs/receivers.md), [upgrading from raspberry-noaa-v2](docs/upgrade_from_noaa_v2.md),
   [troubleshooting](docs/troubleshooting.md)
 
 ## Licence

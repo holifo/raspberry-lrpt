@@ -24,8 +24,6 @@
       - sqlite3
       - wget
       - wkhtmltopdf
-      - airspy
-      - airspyhf
       - libatlas-base-dev
       - libegl-dev
       - libgfortran5
@@ -146,13 +144,6 @@
       file:
         path: /home/{{ target_user }}/MeteorDemod
         state: absent
-
-# Only RTL-SDR and Airspy receivers are supported; the HackRF tools of older installs go
-- name: Other SDR tools removed (HackRF)
-  become: yes
-  apt:
-    name: hackrf
-    state: absent
 
 # No remote-desktop apps on this station (remote access is SSH only)
 - name: Remote-desktop apps check

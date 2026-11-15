@@ -55,8 +55,20 @@ case "$RECEIVER_TYPE" in
          samplerate="192e3"
          receiver="airspyhf"
          ;;
+     "hackrf")
+         samplerate="2e6"
+         receiver="hackrf"
+         ;;
+     "sdrplay")
+         samplerate="2e6"
+         receiver="sdrplay"
+         ;;
+     "mirisdr")
+         samplerate="2e6"
+         receiver="mirisdr"
+         ;;
      *)
-         log "Unsupported RECEIVER_TYPE: $RECEIVER_TYPE (RTL-SDR and Airspy only)" "ERROR"
+         log "Unsupported RECEIVER_TYPE: $RECEIVER_TYPE" "ERROR"
          exit 1
          ;;
 esac
@@ -92,13 +104,27 @@ fi
 interleaving="METEOR_${SAT_NUMBER}_80K_INTERLEAVING"
 mode="$([[ "${!interleaving}" == "true" ]] && echo "_80k" || echo "")"
 
-if [[ "$receiver" == "rtlsdr" ]]; then
-  gain_option="--gain"
-  ppm_correction="--ppm_correction"
-else
-  gain_option="--general_gain"
-  FREQ_OFFSET=""
-fi
+# the gain setting (dB) in each receiver's own SatDump options
+ppm_correction=""
+case "$receiver" in
+  rtlsdr)                    # 0-49.6 dB
+    gain_args="--gain $GAIN"
+    ppm_correction="--ppm_correction" ;;
+  airspy)                    # 0-21 (linearity gain steps)
+    gain_args="--general_gain $GAIN" ;;
+  airspyhf)                  # automatic gain, no setting
+    gain_args="" ;;
+  hackrf)                    # 0-102 dB: LNA 0-40 in 8 dB steps first, the rest on the VGA (0-62, 2 dB steps)
+    read -r lna vga < <(awk -v g="$GAIN" 'BEGIN { l = int(g / 8) * 8; if (l > 40) l = 40; if (l < 0) l = 0;
+                                                v = int((g - l) / 2) * 2; if (v > 62) v = 62; if (v < 0) v = 0; print l, v }')
+    gain_args="--lna_gain $lna --vga_gain $vga" ;;
+  sdrplay)                   # IF gain 20-59; LNA state from sdr_extra_options, else 5
+    gain_args="--if_gain $(awk -v g="$GAIN" 'BEGIN { g = int(g + 0.5); if (g < 20) g = 20; if (g > 59) g = 59; print g }')"
+    [[ "$SDR_EXTRA_OPTIONS" == *"--lna_gain"* ]] || gain_args="$gain_args --lna_gain 5" ;;
+  mirisdr)                   # 0-100 dB, set in 10 dB steps
+    gain_args="--gain $(awk -v g="$GAIN" 'BEGIN { g = int(g / 10 + 0.5); if (g < 0) g = 0; if (g > 10) g = 10; print g }')" ;;
+esac
+[ "$receiver" == "rtlsdr" ] || FREQ_OFFSET=""
 
 if [[ "$USE_DEVICE_STRING" == "true" ]]; then
   sdr_id_option="--source_id"
@@ -173,8 +199,8 @@ if [[ "${PRODUCE_SPECTROGRAM}" == "true" ]]; then
   spectro_pid=$!
 fi
 
-log "$SATDUMP live meteor_m2-x_lrpt${mode} $audio_temporary_storage_directory --source $receiver --samplerate $samplerate $ppm_correction ${FREQ_OFFSET} --frequency ${METEOR_FREQUENCY}e6 $sdr_id_option $SDR_DEVICE_ID $gain_option $GAIN $bias_tee_option $finish_processing --fill_missing --timeout $CAPTURE_TIME $spectro_opts" "INFO"
-$SATDUMP live meteor_m2-x_lrpt${mode} "$audio_temporary_storage_directory" --source $receiver --samplerate $samplerate $ppm_correction ${FREQ_OFFSET} --frequency "${METEOR_FREQUENCY}e6" $sdr_id_option $SDR_DEVICE_ID $gain_option $GAIN $bias_tee_option $finish_processing --fill_missing --timeout $CAPTURE_TIME $spectro_opts >> $LRPT_LOG 2>&1
+log "$SATDUMP live meteor_m2-x_lrpt${mode} $audio_temporary_storage_directory --source $receiver --samplerate $samplerate $ppm_correction ${FREQ_OFFSET} --frequency ${METEOR_FREQUENCY}e6 $sdr_id_option $SDR_DEVICE_ID $gain_args $bias_tee_option $SDR_EXTRA_OPTIONS $finish_processing --fill_missing --timeout $CAPTURE_TIME $spectro_opts" "INFO"
+$SATDUMP live meteor_m2-x_lrpt${mode} "$audio_temporary_storage_directory" --source $receiver --samplerate $samplerate $ppm_correction ${FREQ_OFFSET} --frequency "${METEOR_FREQUENCY}e6" $sdr_id_option $SDR_DEVICE_ID $gain_args $bias_tee_option $SDR_EXTRA_OPTIONS $finish_processing --fill_missing --timeout $CAPTURE_TIME $spectro_opts >> $LRPT_LOG 2>&1
 rm -f "$LIVE_FILE"
 [ -n "$spectro_pid" ] && wait "$spectro_pid"
 

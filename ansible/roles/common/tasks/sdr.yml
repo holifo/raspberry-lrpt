@@ -1,57 +1,61 @@
 ---
-# Only RTL-SDR and Airspy receivers are supported
-- name: Kernel drivers that would grab the SDRs blacklisted
-  become: yes
-  copy:
-    src: "{{ item }}"
-    dest: /etc/modprobe.d/{{ item }}
-    owner: root
-    group: root
-    mode: 0644
-  loop: [rtlsdr.conf, airspy-blacklist.conf]
+# Drivers for the receiver chosen at setup (receiver_type). SatDump's own plugins talk to the
+# receivers; this adds what each one needs around them: udev rules (so the station user can open
+# it), kernel drivers kept off it, tools and, for SDRplay, SDRplay's API and SatDump's plugin.
+- name: Receiver family
+  set_fact:
+    sdr_family: >-
+      {{ 'airspy' if receiver_type in ['airspy_mini', 'airspy_r2']
+         else ('airspyhf' if receiver_type == 'airspy_hf_plus_discovery' else receiver_type) }}
+    satdump_plugins: "/usr/lib/{{ 'aarch64-linux-gnu' if system_architecture == 'arm64' else 'x86_64-linux-gnu' }}/satdump/plugins"
 
-- name: MiriSDR blacklist of older installs removed
-  become: yes
-  file:
-    path: /etc/modprobe.d/blacklist-msi.conf
-    state: absent
-
-# Debian 12's librtlsdr doesn't support the RTL-SDR V4. Delete its .so files so SatDump and the
-# tools use the osmocom build below.
-- name: Debian librtlsdr check (RTL-SDR V4 fix)
-  find:
-    paths: "{{ '/usr/lib/aarch64-linux-gnu/' if system_architecture == 'arm64' else '/lib/arm-linux-gnueabihf/' }}"
-    patterns: "librtlsdr.so*"
-    use_regex: true
-    file_type: file
-  register: libraries_to_delete
-  when: raspbian_version.stdout == 'bookworm' and system_architecture in ['arm64', 'armhf']
-
-- name: Debian librtlsdr removed (RTL-SDR V4 fix)
-  become: yes
-  file:
-    path: "{{ item.path }}"
-    state: absent
-  loop: "{{ libraries_to_delete.files | default([]) }}"
-  loop_control:
-    label: "{{ item.path | basename }}"
-  when: raspbian_version.stdout == 'bookworm' and system_architecture in ['arm64', 'armhf']
-
-- name: RTL-SDR tools check
-  stat:
-    path: /usr/local/bin/rtl_sdr
-  register: rtlsdr_bin
-
-- name: RTL-SDR tools (osmocom, built from source)
-  when: not rtlsdr_bin.stat.exists
+# ---- RTL-SDR -------------------------------------------------------------------------------
+- name: RTL-SDR
+  when: sdr_family == 'rtlsdr'
   block:
+    - name: RTL-SDR kernel driver blacklisted
+      become: yes
+      copy:
+        src: rtlsdr.conf
+        dest: /etc/modprobe.d/rtlsdr.conf
+        owner: root
+        group: root
+        mode: 0644
+
+    # Debian 12's librtlsdr doesn't support the RTL-SDR V4. Delete its .so files so SatDump and
+    # the tools use the osmocom build below.
+    - name: Debian librtlsdr check (RTL-SDR V4 fix)
+      find:
+        paths: "{{ '/usr/lib/aarch64-linux-gnu/' if system_architecture == 'arm64' else '/lib/arm-linux-gnueabihf/' }}"
+        patterns: "librtlsdr.so*"
+        use_regex: true
+        file_type: file
+      register: libraries_to_delete
+      when: raspbian_version.stdout == 'bookworm' and system_architecture in ['arm64', 'armhf']
+
+    - name: Debian librtlsdr removed (RTL-SDR V4 fix)
+      become: yes
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ libraries_to_delete.files | default([]) }}"
+      loop_control:
+        label: "{{ item.path | basename }}"
+      when: raspbian_version.stdout == 'bookworm' and system_architecture in ['arm64', 'armhf']
+
+    - name: RTL-SDR tools check
+      stat:
+        path: /usr/local/bin/rtl_sdr
+      register: rtlsdr_bin
+
     - name: RTL-SDR source
       git:
         repo: https://github.com/osmocom/rtl-sdr.git
         dest: /tmp/rtl-sdr
         update: no
+      when: not rtlsdr_bin.stat.exists
 
-    - name: RTL-SDR compiled and installed
+    - name: RTL-SDR tools (osmocom, built from source)
       become: yes
       shell: |
         set -e
@@ -63,12 +67,81 @@
         install -m 0644 ../rtl-sdr.rules /etc/udev/rules.d/rtl-sdr.rules
       args:
         chdir: /tmp/rtl-sdr
+      when: not rtlsdr_bin.stat.exists
 
-- name: Airspy udev rules
+# ---- Airspy (Mini, R2) and Airspy HF+ Discovery --------------------------------------------
+- name: Airspy tools
+  become: yes
+  apt:
+    name: "{{ 'airspy' if sdr_family == 'airspy' else 'airspyhf' }}"
+    state: present
+  when: sdr_family in ['airspy', 'airspyhf']
+
+- name: Airspy kernel driver blacklisted and udev rules
   become: yes
   copy:
-    src: 52-airspy.rules
-    dest: /etc/udev/rules.d/52-airspy.rules
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
     owner: root
     group: root
     mode: 0644
+  loop:
+    - { src: airspy-blacklist.conf, dest: /etc/modprobe.d/airspy-blacklist.conf }
+    - { src: 52-airspy.rules, dest: /etc/udev/rules.d/52-airspy.rules }
+  loop_control:
+    label: "{{ item.dest }}"
+  when: sdr_family in ['airspy', 'airspyhf']
+
+# ---- HackRF ---------------------------------------------------------------------------------
+# the package brings the hackrf_* tools and libhackrf0's udev rules
+- name: HackRF tools
+  become: yes
+  apt:
+    name: hackrf
+    state: present
+  when: sdr_family == 'hackrf'
+
+# ---- MiriSDR and SDRplay: both are Mirics chips (USB vendor 1df7) ------------------------------
+- name: Mirics kernel drivers blacklisted (MiriSDR, SDRplay)
+  become: yes
+  copy:
+    src: blacklist-msi.conf
+    dest: /etc/modprobe.d/blacklist-msi.conf
+    owner: root
+    group: root
+    mode: 0644
+  when: sdr_family in ['mirisdr', 'sdrplay']
+
+- name: Mirics kernel blacklist removed (other receivers)
+  become: yes
+  file:
+    path: /etc/modprobe.d/blacklist-msi.conf
+    state: absent
+  when: sdr_family not in ['mirisdr', 'sdrplay']
+
+- name: Mirics kernel drivers unloaded
+  become: yes
+  command: modprobe -r msi2500 msi001
+  changed_when: false
+  failed_when: false
+  when: sdr_family in ['mirisdr', 'sdrplay']
+
+- name: MiriSDR udev rules
+  become: yes
+  copy:
+    src: 66-mirisdr.rules
+    dest: /etc/udev/rules.d/66-mirisdr.rules
+    owner: root
+    group: root
+    mode: 0644
+  when: sdr_family == 'mirisdr'
+
+# ---- SDRplay: SDRplay's own API (closed source) and SatDump's plugin for it --------------------
+- import_tasks: sdrplay.yml
+  when: sdr_family == 'sdrplay'
+
+- name: Udev rules reloaded
+  become: yes
+  command: udevadm control --reload-rules
+  changed_when: false
+  failed_when: false

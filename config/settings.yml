@@ -20,9 +20,22 @@ station_title: 'My Meteor station'
 ntp_server: 'pool.ntp.org'
 
 # receiver settings
-#   receiver_type - the receiver type which program uses ('rtlsdr', 'airspy_mini', 'airspy_r2' or 'airspy_hf_plus_discovery'; only RTL-SDR and Airspy are supported)
+#   receiver_type - the receiver, picked from a list by the install's setup questions:
+#                   'rtlsdr', 'airspy_mini', 'airspy_r2', 'airspy_hf_plus_discovery', 'hackrf',
+#                   'sdrplay' (SDRplay RSP, needs SDRplay's API: see sdrplay_licence_accepted) or
+#                   'mirisdr' (MSi2500/MSi001 receivers). The install sets up that receiver's drivers.
+#                   The gain settings below mean, per receiver: rtlsdr 0-49.6 dB; Airspy 0-21;
+#                   Airspy HF+ automatic (not used); hackrf 0-102 dB (LNA first, then VGA);
+#                   sdrplay IF gain 20-59 (LNA state 5 unless sdr_extra_options says otherwise);
+#                   mirisdr 0-100 dB in 10 dB steps.
+#   sdr_extra_options - more SatDump options for the receiver, added to every capture, e.g.
+#                       '--amp' (HackRF amplifier) or '--lna_gain 20' (SDRplay LNA state)
+#   sdrplay_licence_accepted - SDRplay's API is closed source; the install downloads it from
+#                              sdrplay.com only when this is true (asked by the setup questions)
 #   meteor_decoder - which receiver method to use (either 'meteordemod' or 'satdump')
 receiver_type: 'rtlsdr'
+sdr_extra_options: ''
+sdrplay_licence_accepted: false
 
 meteor_decoder: 'satdump'
 

@@ -1,0 +1,12 @@
+[Unit]
+Description=SDRplay API service (used by SatDump for SDRplay receivers)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/sdrplay_apiService
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

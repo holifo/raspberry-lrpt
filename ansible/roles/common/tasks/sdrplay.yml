@@ -1,0 +1,99 @@
+---
+# SDRplay receivers (receiver_type: sdrplay). Two parts:
+#  1. SDRplay's API: closed source, downloaded from sdrplay.com (checked against its SHA-256) and
+#     installed the way its own install_lib.sh does: library and headers in /usr/local, the
+#     sdrplay_apiService daemon as a systemd service, and SDRplay's udev rules. Only after the
+#     owner accepted SDRplay's licence in the setup questions (sdrplay_licence_accepted).
+#  2. SatDump's SDRplay plugin: the SatDump package has none, so it is built here from SatDump's
+#     source at the commit the package came from (satdump_commit), against the package's headers.
+#     It loads the API at run time (dlopen), so it needs only the headers to build.
+- name: SDRplay licence accepted
+  assert:
+    that: sdrplay_licence_accepted | default(false) | bool
+    fail_msg: >-
+      SDRplay's API is closed source and needs its licence accepted. Run ./install_and_upgrade.sh,
+      answer n to "Keep these settings?" and accept the licence at the SDRplay question, or pick
+      another receiver.
+    quiet: true
+
+- name: SDRplay API paths
+  set_fact:
+    sdrplay_arch: "{{ {'arm64': 'arm64', 'amd64': 'amd64', 'armhf': 'armhf'}[system_architecture] }}"
+    sdrplay_api_mm: "{{ sdrplay_api_version.split('.')[:2] | join('.') }}"
+
+- name: SDRplay API check
+  stat:
+    path: /usr/local/lib/libsdrplay_api.so.{{ sdrplay_api_mm }}
+  register: sdrplay_api_lib
+
+- name: SDRplay API installer downloaded (sdrplay.com)
+  get_url:
+    url: "{{ sdrplay_api_url }}"
+    dest: /tmp/sdrplay_api.run
+    checksum: "sha256:{{ sdrplay_api_sha256 }}"
+    mode: 0644
+    timeout: 120
+  when: not sdrplay_api_lib.stat.exists
+
+- name: SDRplay API installed
+  become: yes
+  script: install_sdrplay_api.sh {{ sdrplay_arch }} {{ sdrplay_api_mm }}
+  when: not sdrplay_api_lib.stat.exists
+
+- name: SDRplay API service unit
+  become: yes
+  copy:
+    src: sdrplay.service
+    dest: /etc/systemd/system/sdrplay.service
+    owner: root
+    group: root
+    mode: 0644
+
+- name: SDRplay API service running
+  become: yes
+  systemd:
+    name: sdrplay
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+# ---- SatDump's plugin ---------------------------------------------------------------------------
+- name: SDRplay plugin check
+  command: cat /usr/local/share/raspberry-lrpt/sdrplay_plugin.commit
+  register: sdrplay_plugin_commit
+  changed_when: false
+  failed_when: false
+
+- name: SDRplay plugin (built from SatDump's source)
+  when: >-
+    sdrplay_plugin_commit.stdout | default('') != satdump_commit
+    or not (satdump_plugins + '/libsdrplay_sdr_support.so') is file
+  block:
+    - name: SatDump source of the SDRplay plugin
+      shell: |
+        set -e
+        rm -rf /tmp/satdump-src
+        git init -q /tmp/satdump-src
+        cd /tmp/satdump-src
+        git remote add origin https://github.com/SatDump/SatDump
+        git fetch -q --depth 1 --filter=blob:none origin {{ satdump_commit }}
+        git sparse-checkout set plugins/sdr_sources/sdrplay_sdr_support
+        git -c advice.detachedHead=false checkout -q FETCH_HEAD
+
+    - name: SDRplay plugin compiled
+      shell: >-
+        g++ -O2 -std=c++17 -shared -fPIC -DSOURCE_PATH_SIZE=0
+        -DSDRPLAY_LIB_PATH='"/usr/local/lib/libsdrplay_api.so.3"'
+        -I/usr/include/satdump -I/usr/local/include
+        main.cpp sdrplay_sdr.cpp -lsatdump_core -o /tmp/libsdrplay_sdr_support.so
+      args:
+        chdir: /tmp/satdump-src/plugins/sdr_sources/sdrplay_sdr_support
+
+    - name: SDRplay plugin installed
+      become: yes
+      shell: |
+        set -e
+        install -m 0644 /tmp/libsdrplay_sdr_support.so "{{ satdump_plugins }}/libsdrplay_sdr_support.so"
+        mkdir -p /usr/local/share/raspberry-lrpt
+        echo "{{ satdump_commit }}" > /usr/local/share/raspberry-lrpt/sdrplay_plugin.commit
+        rm -rf /tmp/satdump-src /tmp/libsdrplay_sdr_support.so

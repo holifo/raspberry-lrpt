@@ -189,6 +189,51 @@ while IFS= read -r line; do
   fi
 done < ${PACKAGE_LIST}
 
+# the receiver's own drivers (receiver_type in settings.yml)
+RECEIVER_SETTING=$(grep -E "^RECEIVER_TYPE=" "$HOME/.raspberry-lrpt.conf" 2>/dev/null | cut -d= -f2 | tr -d "'\"")
+loggit "INFO" ""
+loggit "INFO" "*** Checking drivers for the receiver: ${RECEIVER_SETTING:-unknown} ***"
+receiver_packages=""
+case "$RECEIVER_SETTING" in
+  rtlsdr)
+    perms file 644 root root /etc/modprobe.d/rtlsdr.conf
+    perms file 644 root root /etc/udev/rules.d/rtl-sdr.rules
+    perms file 755 root root /usr/local/bin/rtl_sdr ;;
+  airspy_mini|airspy_r2|airspy_hf_plus_discovery)
+    [ "$RECEIVER_SETTING" == "airspy_hf_plus_discovery" ] && receiver_packages="airspyhf" || receiver_packages="airspy"
+    perms file 644 root root /etc/modprobe.d/airspy-blacklist.conf
+    perms file 644 root root /etc/udev/rules.d/52-airspy.rules ;;
+  hackrf)
+    receiver_packages="hackrf" ;;
+  mirisdr)
+    perms file 644 root root /etc/modprobe.d/blacklist-msi.conf
+    perms file 644 root root /etc/udev/rules.d/66-mirisdr.rules ;;
+  sdrplay)
+    perms file 644 root root /etc/modprobe.d/blacklist-msi.conf
+    perms file 644 root root /etc/udev/rules.d/66-sdrplay.rules
+    perms file 755 root root /usr/local/bin/sdrplay_apiService
+    if systemctl is-active --quiet sdrplay; then
+      loggit "PASS" "sdrplay service is running"; PASSES=$(expr ${PASSES} + 1)
+    else
+      loggit "FAIL" "sdrplay service is not running (sudo systemctl status sdrplay)"; FAILURES=$(expr ${FAILURES} + 1)
+    fi
+    if ls /usr/lib/*/satdump/plugins/libsdrplay_sdr_support.so > /dev/null 2>&1; then
+      loggit "PASS" "SatDump's SDRplay plugin is installed"; PASSES=$(expr ${PASSES} + 1)
+    else
+      loggit "FAIL" "SatDump's SDRplay plugin is missing (run ./install_and_upgrade.sh)"; FAILURES=$(expr ${FAILURES} + 1)
+    fi ;;
+esac
+for line in $receiver_packages; do
+  package_status=$(dpkg-query -W ${line} 2>&1 | head -1)
+  if [[ "${package_status}" == *"no packages found matching"* ]]; then
+    loggit "FAIL" "${package_status}"
+    FAILURES=$(expr ${FAILURES} + 1)
+  else
+    loggit "PASS" "${package_status}"
+    PASSES=$(expr ${PASSES} + 1)
+  fi
+done
+
 
 loggit "INFO" ""
 loggit "INFO" "*************************************************"

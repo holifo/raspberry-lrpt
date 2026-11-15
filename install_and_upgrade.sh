@@ -105,9 +105,10 @@ if pgrep -f "satdump live" >/dev/null; then
   fi
 fi
 
-# a first install reboots at the end; the SDR modprobe config marks an existing install
+# a first install reboots at the end; the station's shell settings (or, on stations from before
+# v1.23.0 and raspberry-noaa-v2 ones, the RTL-SDR modprobe config) mark an existing install
 install_type='install'
-[ -f /etc/modprobe.d/rtlsdr.conf ] && install_type='upgrade'
+{ [ -f "$HOME/.raspberry-lrpt.conf" ] || [ -f /etc/modprobe.d/rtlsdr.conf ]; } && install_type='upgrade'
 ok "Mode: $install_type"
 
 step "Station settings"

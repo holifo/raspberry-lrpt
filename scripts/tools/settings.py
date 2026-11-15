@@ -35,7 +35,8 @@ QUESTIONS = [
     ('altitude',                'Altitude in metres',                                'number'),
     ('ground_station_location', 'Location written on the images',                    'text'),
     ('antenna_information',     'Antenna written on the images',                     'text'),
-    ('receiver_type',           'Receiver',                                          'choice'),
+    ('receiver_type',           'Receiver',                                          'receiver'),
+    ('sdrplay_licence_accepted', 'Accept SDRplay\'s API licence',                     'licence'),
     ('storage',                 'The Pi runs from (sd = SD card, ssd = SSD)',          'choice'),
     ('meteor_m2_3_gain',        'Gain for METEOR-M2 3 in dB',                        'number'),
     ('meteor_m2_4_gain',        'Gain for METEOR-M2 4 in dB',                        'number'),
@@ -47,8 +48,23 @@ QUESTIONS = [
     ('discord_site_url',        'Web panel address for links in the Discord posts',  'url'),
 ]
 
+# receivers: setting -> (name in the menu, gain range or None (automatic gain), suggested gain,
+# what the gain number means)
+RECEIVERS = {
+    'rtlsdr':                   ('RTL-SDR (RTL-SDR Blog V3/V4, Nooelec and other RTL2832U sticks)', (0, 49.6), 40, 'dB'),
+    'airspy_mini':              ('Airspy Mini', (0, 21), 15, 'linearity gain step'),
+    'airspy_r2':                ('Airspy R2', (0, 21), 15, 'linearity gain step'),
+    'airspy_hf_plus_discovery': ('Airspy HF+ Discovery', None, None, ''),
+    'hackrf':                   ('HackRF One', (0, 102), 56, 'dB, LNA first, then VGA'),
+    'sdrplay':                  ('SDRplay RSP1/RSP1A/RSP1B/RSP2/RSPduo/RSPdx (installs SDRplay\'s API)', (20, 59), 40, 'IF gain'),
+    'mirisdr':                  ('MSi2500/MSi001 receiver (MiriSDR, "SDRplay clones")', (0, 100), 60, 'dB, 10 dB steps'),
+}
+SDRPLAY_LICENCE = ('SDRplay\'s API is closed source. The install downloads it from sdrplay.com and\n'
+                   '     installs it under SDRplay\'s licence (https://www.sdrplay.com/api/ - the text is\n'
+                   '     also kept in /usr/local/share/doc/sdrplay_api/ after the install).')
+
 # questions added after stations were first set up: an upgrade asks them once (ask-new)
-NEW_QUESTIONS = ('storage', 'discord_webhook', 'discord_site_url')
+NEW_QUESTIONS = ('storage', 'discord_webhook', 'discord_site_url', 'sdrplay_licence_accepted')
 
 
 def load(path):
@@ -90,9 +106,21 @@ def current(data, key):
 def shown(key, kind, value):
     if kind in ('password', 'secret_url'):
         return '(set)' if value else '(not set)'
-    if kind == 'bool':
+    if kind in ('bool', 'licence'):
         return 'yes' if value else 'no'
+    if kind == 'receiver' and value in RECEIVERS:
+        return RECEIVERS[value][0].split(' (')[0]
     return '' if value is None else str(value)
+
+
+def skip(key, data):
+    """Questions that don't apply to this station's receiver."""
+    receiver = data.get('receiver_type')
+    if key == 'sdrplay_licence_accepted':
+        return receiver != 'sdrplay'
+    if key in ('meteor_m2_3_gain', 'meteor_m2_4_gain'):
+        return receiver in RECEIVERS and RECEIVERS[receiver][1] is None
+    return False
 
 
 def summary():
@@ -100,6 +128,8 @@ def summary():
     source = 'config/settings.local.yml over config/settings.yml' if os.path.isfile(LOCAL) else 'config/settings.yml'
     print('   Settings from ' + source + ':')
     for key, question, kind in QUESTIONS:
+        if skip(key, data):
+            continue
         print('     %-50s %s' % (question, shown(key, kind, current(data, key))))
 
 
@@ -122,6 +152,7 @@ def setup(only=None):
         return line.strip()
 
     print('   Press Enter to keep the value in [brackets].')
+    receiver_changed = False
     for key, question, kind in QUESTIONS:
         if only is not None and key not in only:
             continue
@@ -130,6 +161,22 @@ def setup(only=None):
             now = detect_storage() or now    # first time: suggest what the Pi actually boots from
         if key == 'discord_site_url' and not answers.get('discord_webhook', data.get('discord_webhook')):
             continue                         # only asked when there is a webhook
+        view = dict(data, **answers)
+        if skip(key, view):
+            continue
+        if key == 'receiver_type':
+            names = list(RECEIVERS)
+            print('   Receivers:')
+            for i, r in enumerate(names, 1):
+                print('     %d  %s' % (i, RECEIVERS[r][0]))
+        if key in ('meteor_m2_3_gain', 'meteor_m2_4_gain'):
+            receiver = view.get('receiver_type')
+            lo, hi = RECEIVERS[receiver][1]
+            question = '%s (%g-%g, %s)' % (question.replace(' in dB', ''), lo, hi, RECEIVERS[receiver][3])
+            if receiver_changed or now is None or not lo <= float(now) <= hi:
+                now = RECEIVERS[receiver][2]      # a new receiver: suggest its usual gain
+        if key == 'sdrplay_licence_accepted':
+            print('     ' + SDRPLAY_LICENCE)
         while True:
             if kind == 'password':
                 sys.stdout.flush()
@@ -160,6 +207,10 @@ def setup(only=None):
             try:
                 if kind == 'number':
                     value = float(raw)
+                    if key in ('meteor_m2_3_gain', 'meteor_m2_4_gain'):
+                        lo, hi = RECEIVERS[view.get('receiver_type')][1]
+                        if not lo <= value <= hi:
+                            raise ValueError('between %g and %g' % (lo, hi))
                     if key == 'latitude' and not -90 <= value <= 90:
                         raise ValueError('between -90 and 90')
                     if key == 'longitude' and not -180 <= value <= 180:
@@ -168,10 +219,18 @@ def setup(only=None):
                     value = int(raw)
                     if not 1 <= value <= 65534:
                         raise ValueError('between 1 and 65534')
-                elif kind == 'bool':
+                elif kind in ('bool', 'licence'):
                     if raw.lower() not in ('y', 'yes', 'n', 'no'):
                         raise ValueError('yes or no')
                     value = raw.lower().startswith('y')
+                elif kind == 'receiver':
+                    names = list(RECEIVERS)
+                    if raw.isdigit() and 1 <= int(raw) <= len(names):
+                        value = names[int(raw) - 1]
+                    elif raw in names:
+                        value = raw
+                    else:
+                        raise ValueError('a number from 1 to %d' % len(names))
                 elif kind in ('url', 'secret_url'):
                     if not re.match(props[key]['pattern'], raw):
                         raise ValueError('a webhook URL from Discord (https://discord.com/api/webhooks/...)'
@@ -187,6 +246,11 @@ def setup(only=None):
             except ValueError as e:
                 print('     Please give %s.' % (e if str(e) and 'could not convert' not in str(e)
                                                   and 'invalid literal' not in str(e) else 'a number'))
+        if key == 'receiver_type':
+            receiver_changed = value != data.get('receiver_type')
+        if key == 'sdrplay_licence_accepted' and not value:
+            print('     Without it the install stops at the SDRplay step: run it again and accept,\n'
+                  '     or pick another receiver.')
         if key == 'bias_tee':
             answers['meteor_m2_3_enable_bias_tee'] = bool(value)
             answers['meteor_m2_4_enable_bias_tee'] = bool(value)
@@ -228,6 +292,7 @@ if __name__ == '__main__':
         missing = [k for k in NEW_QUESTIONS if k not in local]
         if 'discord_webhook' not in missing and not merged().get('discord_webhook'):
             missing = [k for k in missing if k != 'discord_site_url']    # asked only with a webhook
+        missing = [k for k in missing if not skip(k, merged())]           # not for this receiver
         if missing:
             print('   A new question since this station was set up:' if len(missing) == 1
                   else '   New questions since this station was set up:')

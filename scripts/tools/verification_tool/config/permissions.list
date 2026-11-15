@@ -241,3 +241,9 @@ file 755 $USER $USER /home/$USER/raspberry-lrpt/scripts/tools/verification_tool/
 file 755 $USER $USER /home/$USER/raspberry-lrpt/scripts/tools/verification_tool/verification.sh
 file 755 $USER $USER /home/$USER/raspberry-lrpt/support.sh
 file 770 $USER www-data /home/$USER/raspberry-lrpt/db/panel.db
+file 644 $USER $USER /home/$USER/raspberry-lrpt/ansible/roles/common/files/66-mirisdr.rules
+file 644 $USER $USER /home/$USER/raspberry-lrpt/ansible/roles/common/files/blacklist-msi.conf
+file 644 $USER $USER /home/$USER/raspberry-lrpt/ansible/roles/common/files/sdrplay.service
+file 755 $USER $USER /home/$USER/raspberry-lrpt/ansible/roles/common/files/install_sdrplay_api.sh
+file 755 $USER $USER /home/$USER/raspberry-lrpt/scripts/tools/noaa_v2_import.py
+file 755 $USER $USER /home/$USER/raspberry-lrpt/scripts/tools/upgrade_from_noaa_v2.sh

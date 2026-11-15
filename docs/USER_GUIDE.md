@@ -38,7 +38,7 @@ flowchart LR
 |---|---|
 | **Orbits** | `schedule.sh` downloads METEOR-M2 3 and M2 4 orbits (TLEs) from CelesTrak every night. If CelesTrak fails, it keeps yesterday's. |
 | **Scheduling** | Every pass above 15° for the next 7 days, day and night, as `at` jobs. Overlapping passes: the better one is kept. |
-| **Recording** | SatDump 1.2.3 records and decodes live from the RTL-SDR (`satdump live meteor_m2-x_lrpt`). |
+| **Recording** | SatDump 1.2.3 records and decodes live from the receiver: RTL-SDR, Airspy, HackRF, SDRplay or MiriSDR ([receivers](receivers.md)) (`satdump live meteor_m2-x_lrpt`). |
 | **Images** | Every composite the satellite's channels allow, each with the station label, plus thumbnails, a sky track, an elevation/azimuth graph and a spectrogram. |
 | **Daily map** | After each pass, the day's passes are joined onto one map (see [below](#the-daily-map)). |
 | **Web panel** | nginx + PHP on the Pi; public at the station's address. |
@@ -226,6 +226,9 @@ Run them on the Pi as your normal user (not with `sudo`).
 | Update the station | `cd ~/raspberry-lrpt && git pull && ./install_and_upgrade.sh` |
 | Update scripts only (no install needed) | `cd ~/raspberry-lrpt && git pull` |
 | Change your station's answers | `./install_and_upgrade.sh`, answer `n` to "Keep these settings?" |
+| Change the receiver | the same, pick it from the list, then `sudo reboot` ([receivers](receivers.md)) |
+| Move a raspberry-noaa-v2 station over | `./scripts/tools/upgrade_from_noaa_v2.sh` ([how](upgrade_from_noaa_v2.md)) |
+| Check the receiver's drivers | `./scripts/tools/verification_tool/verification.sh` |
 | See the scheduled passes (local time) | `atq \| sort -k6,6n -k3,3M -k4,4n -k5,5` |
 | Download orbits and reschedule now | `./scripts/schedule.sh -t` |
 | List the kept recordings | `./scripts/reprocess_meteor.sh -l` |
@@ -267,6 +270,8 @@ web login, Discord webhook) are in `config/settings.local.yml` and win over it. 
 | `meteor_daytime_enhancements` / `…nighttime…` | (lists) | Order of the images on a capture's page |
 | `meteor_daytime_thumbnail` / `…nighttime…` | MSA / MCIR | Which image becomes the capture's card |
 | `produce_spectrogram` | true | The spectrogram per pass |
+| `receiver_type` | rtlsdr | The receiver, picked from a list by the install; the gain settings mean different things per receiver ([receivers](receivers.md)) |
+| `sdr_extra_options` | | More SatDump options for every capture, e.g. `--amp` (HackRF) or `--lna_gain 20` (SDRplay) |
 | `station_title` | | Name in the station bar |
 | `lang_setting` | en | Language for visitors who haven't picked one |
 | `discord_webhook` | | Post each pass to Discord: asked by the install, kept in `settings.local.yml`; empty = off ([Discord](discord.md)) |
@@ -288,6 +293,9 @@ images or map layers are processed at once; set it to 2 if the Pi ever runs shor
 | The daily map is missing a pass | That pass had no map (see above), or its product is over 2 days old | Re-process it within 2 days |
 | `git pull` asks for a password or says 403 | The repo is private | Use the deploy key or access token set up for the Pi |
 | No Discord post after a pass | No webhook, a wrong one, or Discord refused it | `./scripts/push_discord.sh --test`; the log says `Discord post failed (HTTP …)` with Discord's reason. 401/404: make a new webhook and give it to the install |
+| The install stops at "SDRplay licence accepted" | SDRplay's API needs its licence accepted | Run the install, answer `n` to "Keep these settings?" and `y` at the licence question |
+| SDRplay: SatDump says it can't open the device | The `sdrplay` service isn't running | `sudo systemctl restart sdrplay`; `sudo systemctl status sdrplay` |
+| A new receiver isn't found after changing it | The old kernel driver still holds it | `sudo reboot` |
 | The install stops at step 1 | A capture is running, or a tracked file was edited on the Pi | Wait for the pass; `git status` shows the edited file |
 
 More in [troubleshooting.md](troubleshooting.md).

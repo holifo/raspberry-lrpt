@@ -25,6 +25,13 @@ ramfs_path: "/var/ramfs"
 
 # SatDump package bundled in software/ (satdump_<version>_<codename>_<arch>.deb)
 satdump_version: "1.2.3-0b654b4ec"
+# the SatDump commit that deb was built from (the SDRplay plugin is built from its source)
+satdump_commit: "0b654b4ec091cae61f357aac3150dd06779d056c"
+
+# SDRplay's API (closed source), installed only for receiver_type: sdrplay
+sdrplay_api_version: "3.15.2"
+sdrplay_api_url: "https://www.sdrplay.com/software/SDRplay_RSP_API-Linux-{{ sdrplay_api_version }}.run"
+sdrplay_api_sha256: "3a97ca764263bbe76fb0f2220e6408942357e8864c19e1408a6d6987af382fe3"
 
 # log output file
 log_file: "/var/log/raspberry-lrpt/output.log"

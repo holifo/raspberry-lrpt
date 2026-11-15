@@ -1,5 +1,39 @@
 # Changelog
 
+## Raspberry-LRPT v1.23.0 (2026-11-15)
+
+- **All of raspberry-noaa-v2's receivers again:** besides RTL-SDR and Airspy (Mini, R2, HF+
+  Discovery), the HackRF One, SDRplay RSPs and MSi2500/MSi001 (MiriSDR) receivers. The install
+  asks for the receiver from a numbered list, suggests a gain for it and checks its range, and
+  sets up only what that receiver needs: RTL-SDR's osmocom tools and blacklist, the Airspy or
+  HackRF tools and udev rules, the Mirics kernel drivers blacklisted for MiriSDR and SDRplay. See
+  [docs/receivers.md](docs/receivers.md).
+- **SDRplay:** after you accept SDRplay's licence in the setup questions, the install downloads
+  SDRplay's API 3.15.2 from sdrplay.com (checked against its SHA-256), installs it with its
+  udev rules and the `sdrplay` service, and builds SatDump's SDRplay plugin on the Pi (the
+  SatDump package has none). Built and tested without an SDRplay receiver: the plugin builds and
+  SatDump loads it, so the first real pass is its first test.
+- The gain setting is passed the way each receiver understands it: HackRF LNA then VGA, SDRplay
+  IF gain (LNA state 5), MiriSDR in 10 dB steps; the Airspy HF+ uses automatic gain.
+  `sdr_extra_options` adds SatDump options to every capture (e.g. `--amp`, `--lna_gain 20`).
+- **Upgrade from raspberry-noaa-v2:** `scripts/tools/upgrade_from_noaa_v2.sh` moves a
+  raspberry-noaa-v2 station over: its settings (location, receiver, gains, web login, the Meteor
+  Discord webhook) and its Meteor captures. It stops the old jobs, moves the NOAA captures and the
+  old folder to a backup folder and runs the install. On an older system, `--export` saves the
+  station to a file and `--import` loads it on a fresh Bookworm. See
+  [docs/upgrade_from_noaa_v2.md](docs/upgrade_from_noaa_v2.md).
+- The verification tool checks the drivers of the station's receiver.
+- An existing install is now recognised by `~/.raspberry-lrpt.conf`, so stations without an
+  RTL-SDR aren't treated as a first install.
+
+### Upgrade
+
+```bash
+cd ~/raspberry-lrpt && git pull && ./install_and_upgrade.sh
+```
+
+Nothing to change for an existing RTL-SDR or Airspy station.
+
 ## Raspberry-LRPT v1.22.1 (2026-11-15)
 
 - Docs: the README's install text mentions the optional Discord webhook and that an upgrade asks
