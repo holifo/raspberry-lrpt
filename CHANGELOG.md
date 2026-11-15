@@ -1,5 +1,18 @@
 # Changelog
 
+## Raspberry-LRPT v1.21.0 (2026-11-15)
+
+- **Posting to Discord** is back, as an option: each pass that made images is posted to a
+  Discord channel through a webhook, with a short message (satellite, local and UTC time, maximum
+  elevation, direction, day or night, station name, a link to the capture's page), the pass's best
+  images (`discord_images`, default 2, picked from the day or night thumbnail list) and the sky
+  track (`discord_sky_track`). Images over Discord's 10 MB limit are posted smaller. Off until a
+  webhook is given ([docs/discord.md](docs/discord.md)).
+- The install asks for the webhook (and the web panel's public address for the link) once on an
+  upgrade, and keeps it in `config/settings.local.yml`, not in git. `~/.raspberry-lrpt.conf` is now
+  readable by the station user only (mode 600). The log never shows the webhook.
+- `./scripts/push_discord.sh --test` posts a test message.
+
 ## Raspberry-LRPT v1.20.0 (2026-11-15): first public release
 
 A Raspberry Pi ground station for METEOR-M2 3 and M2 4 (LRPT, 137.9 MHz), decoding live with

@@ -187,6 +187,21 @@ admin_password: ''
 web_passes_date_format: 'd/m/Y'
 web_datetime_format: 'd/m/Y H:i:s'
 
+# Discord: post each pass that made images to a Discord channel
+#   discord_webhook - the channel's webhook URL (Discord: channel > Edit Channel > Integrations >
+#                     Webhooks > New Webhook > Copy Webhook URL); empty = don't post.
+#                     It works like a password: give it in the install's setup question, which keeps
+#                     it in config/settings.local.yml (not tracked), not here.
+#   discord_site_url - the web panel's address as seen from the internet, for a link to the
+#                      capture's page in the post (empty = no link)
+#   discord_images - how many images to post (0-9), picked in the order of the day or night
+#                    thumbnail list, then the day or night enhancement list
+#   discord_sky_track - also post the sky-track graph
+discord_webhook: ''
+discord_site_url: ''
+discord_images: 2
+discord_sky_track: true
+
 # log level for output from scripts
 log_level: DEBUG
 

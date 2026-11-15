@@ -15,6 +15,7 @@
 import getpass
 import json
 import os
+import re
 import sys
 
 import yaml
@@ -24,7 +25,8 @@ BASE = os.path.join(REPO, 'config', 'settings.yml')
 LOCAL = os.path.join(REPO, 'config', 'settings.local.yml')
 SCHEMA = os.path.join(REPO, 'config', 'settings_schema.json')
 
-# (setting, question, kind); kind: text, number, integer, bool, choice, password.
+# (setting, question, kind); kind: text, number, integer, bool, choice, password, url, secret_url
+# (a url that works like a password: shown as (set), '-' clears it).
 # 'bias_tee' sets meteor_m2_3_enable_bias_tee and meteor_m2_4_enable_bias_tee together.
 QUESTIONS = [
     ('station_title',           'Station name shown in the web panel',               'text'),
@@ -41,10 +43,12 @@ QUESTIONS = [
     ('web_port',                'Web panel port',                                    'integer'),
     ('admin_username',          'Admin user name (for /admin/passes)',               'text'),
     ('admin_password',          'Admin password',                                    'password'),
+    ('discord_webhook',         'Discord webhook URL to post passes to (- = none)',  'secret_url'),
+    ('discord_site_url',        'Web panel address for links in the Discord posts',  'url'),
 ]
 
 # questions added after stations were first set up: an upgrade asks them once (ask-new)
-NEW_QUESTIONS = ('storage',)
+NEW_QUESTIONS = ('storage', 'discord_webhook', 'discord_site_url')
 
 
 def load(path):
@@ -84,7 +88,7 @@ def current(data, key):
 
 
 def shown(key, kind, value):
-    if kind == 'password':
+    if kind in ('password', 'secret_url'):
         return '(set)' if value else '(not set)'
     if kind == 'bool':
         return 'yes' if value else 'no'
@@ -124,6 +128,8 @@ def setup(only=None):
         now = current(data, key)
         if key == 'storage' and 'storage' not in answers:
             now = detect_storage() or now    # first time: suggest what the Pi actually boots from
+        if key == 'discord_site_url' and not answers.get('discord_webhook', data.get('discord_webhook')):
+            continue                         # only asked when there is a webhook
         while True:
             if kind == 'password':
                 sys.stdout.flush()
@@ -148,6 +154,9 @@ def setup(only=None):
             if raw == '':
                 value = now
                 break
+            if raw == '-' and kind in ('url', 'secret_url'):
+                value = ''
+                break
             try:
                 if kind == 'number':
                     value = float(raw)
@@ -163,6 +172,11 @@ def setup(only=None):
                     if raw.lower() not in ('y', 'yes', 'n', 'no'):
                         raise ValueError('yes or no')
                     value = raw.lower().startswith('y')
+                elif kind in ('url', 'secret_url'):
+                    if not re.match(props[key]['pattern'], raw):
+                        raise ValueError('a webhook URL from Discord (https://discord.com/api/webhooks/...)'
+                                         if kind == 'secret_url' else 'an address like http://example.org:8080')
+                    value = raw
                 elif kind == 'choice':
                     if raw not in props[key]['enum']:
                         raise ValueError('one of: ' + ', '.join(props[key]['enum']))
@@ -210,7 +224,10 @@ if __name__ == '__main__':
     elif cmd == 'setup':
         setup()
     elif cmd == 'ask-new':
-        missing = [k for k in NEW_QUESTIONS if k not in load(LOCAL)]
+        local = load(LOCAL)
+        missing = [k for k in NEW_QUESTIONS if k not in local]
+        if 'discord_webhook' not in missing and not merged().get('discord_webhook'):
+            missing = [k for k in missing if k != 'discord_site_url']    # asked only with a webhook
         if missing:
             print('   A new question since this station was set up:' if len(missing) == 1
                   else '   New questions since this station was set up:')

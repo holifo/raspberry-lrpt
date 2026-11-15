@@ -21,6 +21,8 @@ Made by holifo (SV5QNF).
 - Draws a spectrogram (waterfall, SNR, decoder lock, elevation), a sky track and an
   elevation/azimuth graph for every pass, and keeps the decoded frames (`.cadu`) of the last 5
   passes for offline re-processing.
+- Can post each pass to a Discord channel (message, best images, sky track, link to the
+  capture), off until you give it a webhook ([how](docs/discord.md)).
 - Web panel in nine languages (English, Deutsch, Français, Italiano, Español, Ελληνικά, 中文, हिन्दी, العربية), light or dark:
   - **Passes:** next-pass countdown, passes grouped by day, and a live decode panel while a pass
     is recorded (spectrum and waterfall, SNR, Viterbi and frame-sync locks, BER).
@@ -105,7 +107,8 @@ processes number 2. `./scripts/daily_map.sh --all` redraws the daily maps that c
 - [Screenshots of every view](docs/webpanel_screenshots.md)
 - [Changelog](CHANGELOG.md)
 - [Annotation](docs/annotation.md), [pruning](docs/pruning.md), [database backups](docs/db_backups.md),
-  [TLS for the web panel](docs/tls_webserver.md), [troubleshooting](docs/troubleshooting.md)
+  [TLS for the web panel](docs/tls_webserver.md), [posting to Discord](docs/discord.md),
+  [troubleshooting](docs/troubleshooting.md)
 
 ## Licence
 

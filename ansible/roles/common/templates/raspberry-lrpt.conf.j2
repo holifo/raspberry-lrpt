@@ -88,6 +88,12 @@ METEOR_NIGHT_ENHANCEMENTS='{{ meteor_nighttime_enhancements }}'
 METEOR_DAY_THUMBNAIL='{{ meteor_daytime_thumbnail|default("") }}'
 METEOR_NIGHT_THUMBNAIL='{{ meteor_nighttime_thumbnail|default("") }}'
 
+# Discord (empty webhook = don't post)
+DISCORD_WEBHOOK={{ discord_webhook|default('') | quote }}
+DISCORD_SITE_URL={{ discord_site_url|default('') | quote }}
+DISCORD_IMAGES={{ discord_images|default(2)|int }}
+DISCORD_SKY_TRACK={{ discord_sky_track|default(true)|lower }}
+
 
 # Network Time Protocol
 NTP_SERVER={{ ntp_server }}

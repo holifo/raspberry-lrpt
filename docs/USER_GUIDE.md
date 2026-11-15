@@ -58,6 +58,7 @@ sequenceDiagram
     R->>R: sky track, elevation graph
     R->>W: database row: capture appears
     R-)R: daily map redrawn in the background
+    R-)R: posted to Discord, if set up
 ```
 
 After the pass, SatDump builds its composites (a few minutes), then the station labels and
@@ -186,6 +187,7 @@ Run them on the Pi as your normal user (not with `sudo`).
 | Redraw a day's maps | `./scripts/daily_map.sh 2026-11-13` |
 | Redraw every day that can be | `./scripts/daily_map.sh --all` |
 | Make the time-lapse now | `./scripts/animation.sh` for today, `./scripts/animation.sh 2026-11-14` for one day, `--all` for every day it can (add `--redo` after changing the area) |
+| Send a test post to Discord | `./scripts/push_discord.sh --test` |
 | Follow the log | `tail -f /var/log/raspberry-lrpt/output.log` (or open `/log`) |
 | Check the orbit data | `grep -c 59051 ~/.config/satdump/satdump_tles.txt` (should be 1 or more) |
 
@@ -196,7 +198,7 @@ recording, or after an update that changes the images. `-y` skips the "replace?"
 ## Settings worth knowing
 
 Settings live in `config/settings.yml`; your install answers (station, location, receiver, gains,
-web login) are in `config/settings.local.yml` and win over it. After changing either, run
+web login, Discord webhook) are in `config/settings.local.yml` and win over it. After changing either, run
 `./install_and_upgrade.sh`.
 
 | Setting | Default | What it does |
@@ -218,6 +220,8 @@ web login) are in `config/settings.local.yml` and win over it. After changing ei
 | `produce_spectrogram` | true | The spectrogram per pass |
 | `station_title` | | Name in the station bar |
 | `lang_setting` | en | Language for visitors who haven't picked one |
+| `discord_webhook` | | Post each pass to Discord: asked by the install, kept in `settings.local.yml`; empty = off ([Discord](discord.md)) |
+| `discord_site_url`, `discord_images`, `discord_sky_track` | , 2, true | Link to the capture in the post, how many images, the sky track |
 
 `PARALLEL_JOBS` in `~/.raspberry-lrpt.conf` (default: the number of CPU cores) limits how many
 images or map layers are processed at once; set it to 2 if the Pi ever runs short of memory.
