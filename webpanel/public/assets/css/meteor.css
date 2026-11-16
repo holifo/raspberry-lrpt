@@ -83,3 +83,8 @@ html[data-theme="dark"] .st-planned.mi-st { color: #7fb8ec; border-color: #7fb8e
 .mi-h1:first-of-type { border-top: 0; margin-top: 8px; }
 .mi-h3 { font-size: 1rem; font-weight: 600; margin: 18px 0 8px; }
 .mi-card.sat-iss { box-shadow: inset 4px 0 0 var(--iss); }
+
+/* About this software (bottom of the Sat info page) */
+.mi-about p { margin: 0 0 8px; line-height: 1.5; }
+.mi-about p:last-child { margin-bottom: 0; }
+.mi-about .fa-robot { color: var(--pl-dim); margin-right: 2px; }

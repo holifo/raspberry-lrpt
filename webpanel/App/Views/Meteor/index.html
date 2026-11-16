@@ -38,9 +38,7 @@
   <h1 class="page-title">{{ lang['sinfo_title']|default('Satellite info') }}</h1>
   <div class="page-meta">{{ lang['mi_checked']|default('Checked') }} {{ checked|date(constant('Config\\Config::PASSES_DATE_FORMAT')) }}</div>
 </div>
-{% if iss %}
-<nav class="mi-jump"><a href="#meteor"><span class="sat-dot m23"></span> Meteor-M</a> <a href="#iss"><span class="sat-dot iss"></span> ISS</a></nav>
-{% endif %}
+<nav class="mi-jump"><a href="#meteor"><span class="sat-dot m23"></span> Meteor-M</a>{% if iss %} <a href="#iss"><span class="sat-dot iss"></span> ISS</a>{% endif %} <a href="#about"><i class="fas fa-info-circle"></i> {{ lang['about_jump']|default('About') }}</a></nav>
 <h2 class="mi-h mi-h1" id="meteor">{{ lang['mi_title']|default('The Meteor-M series') }}</h2>
 <p class="mi-intro">{{ lang['mi_intro']|default("Russia's polar-orbiting weather satellites, built by VNIIEM for Roshydromet and Roscosmos. Each flies a sun-synchronous orbit about 820 km up and sends its MSU-MR images down on 137.9 MHz as LRPT, which this station receives.") }}</p>
 
@@ -184,4 +182,15 @@
   {% for src in sources %}<li><a href="{{ src[1] }}" rel="noopener" target="_blank">{{ src[0] }}</a></li>{% endfor %}
   {% if iss %}{% for src in iss.sources %}<li><a href="{{ src[1] }}" rel="noopener" target="_blank">{{ src[0] }}</a></li>{% endfor %}{% endif %}
 </ul>
+
+{# ---- about this software: who made it, and that AI was used ---- #}
+<h2 class="mi-h mi-h1" id="about">{{ lang['about_h']|default('About this software') }}</h2>
+<div class="mi-box mi-about">
+  <p>{{ (lang['about_p']|default('Raspberry-LRPT is free, open-source ground station software for the Meteor-M weather satellites, made by {author} and based on {upstream}.'))|e|replace({
+        '{author}': '<a href="https://github.com/holifo" rel="noopener" target="_blank">holifo</a>',
+        '{upstream}': '<a href="https://github.com/jekhokie/raspberry-noaa-v2" rel="noopener" target="_blank">raspberry-noaa-v2</a>'})|raw }}</p>
+  <p><i class="fas fa-robot"></i> {{ (lang['about_ai']|default('Made with the help of AI. Much of the code, the documentation and the translations on this site were written by {claude}, an AI assistant made by Anthropic (most recently the Claude Opus 5.5 model, used through Claude Code), working to holifo\'s instructions. holifo decided what to build and tested it on a working station.'))|e|replace({
+        '{claude}': '<a href="https://www.anthropic.com/claude" rel="noopener" target="_blank">Claude</a>'})|raw }}</p>
+  <p class="mi-dim">{{ lang['about_ai_note']|default('The satellite facts on this page were checked against the sources above on the date shown at the top, but AI can make mistakes: if something looks wrong, please say so on GitHub.') }}</p>
+</div>
 {% endblock %}

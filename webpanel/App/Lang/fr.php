@@ -346,5 +346,10 @@ return array(
   "iss_events" => "Événements SSTV de l'année",
   "iss_ev_differ" => "Les sources diffèrent sur la fréquence.",
   "iss_next" => "Le prochain événement n'est pas encore annoncé. L'ARISS les annonce quelques semaines à l'avance sur ariss.org et ses réseaux sociaux ; réglez iss_sstv_frequency en conséquence.",
+  "about_jump" => "À propos",
+  "about_h" => "À propos de ce logiciel",
+  "about_p" => "Raspberry-LRPT est un logiciel libre et open source de station de réception pour les satellites météo Meteor-M, réalisé par {author} à partir de {upstream}.",
+  "about_ai" => "Réalisé avec l'aide de l'IA. Une grande partie du code, de la documentation et des traductions de ce site a été écrite par {claude}, un assistant IA conçu par Anthropic (dernièrement le modèle Claude Opus 5.5, utilisé via Claude Code), selon les instructions de holifo. holifo a décidé de ce qu'il fallait construire et l'a testé sur une station en service.",
+  "about_ai_note" => "Les informations sur les satellites de cette page ont été vérifiées à la date indiquée en haut à partir des sources ci-dessus, mais l'IA peut se tromper : si quelque chose semble faux, signalez-le sur GitHub.",
 );
 ?>

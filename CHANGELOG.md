@@ -1,5 +1,14 @@
 # Changelog
 
+## Raspberry-LRPT v1.30.0 (2026-11-16)
+
+- **"About this software" on the Sat info page:** a box at the bottom (with an "About" jump link at
+  the top) says who made Raspberry-LRPT and that it was made with the help of AI: much of the code,
+  documentation and translations were written by Claude, Anthropic's AI assistant (most recently
+  Claude Opus 5.5, through Claude Code), to holifo's instructions, and tested on a working station.
+  It also notes that AI can make mistakes and asks people to report them on GitHub. In all nine
+  languages.
+
 ## Raspberry-LRPT v1.29.2 (2026-11-16)
 
 - **Fix: the install failed on Trixie** at "Packages and SatDump" with *Dependency is not
