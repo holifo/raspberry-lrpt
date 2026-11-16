@@ -11,6 +11,7 @@
 #   settings.py setup          ask the setup questions; Enter keeps the value shown
 #   settings.py merged FILE    write settings.yml + settings.local.yml merged into FILE
 #   settings.py ask-new        ask only the questions added since this station's setup (upgrades)
+#   settings.py set KEY VALUE  set one setting in settings.local.yml
 
 import getpass
 import json
@@ -41,6 +42,7 @@ QUESTIONS = [
     ('meteor_m2_3_gain',        'Gain for METEOR-M2 3 in dB',                        'number'),
     ('meteor_m2_4_gain',        'Gain for METEOR-M2 4 in dB',                        'number'),
     ('bias_tee',                'Power an LNA through the antenna cable (bias tee)', 'bool'),
+    ('iss_sstv',                'Also record the ISS\'s SSTV pictures (extra)',      'bool'),
     ('web_port',                'Web panel port',                                    'integer'),
     ('admin_username',          'Admin user name (for /admin/passes)',               'text'),
     ('admin_password',          'Admin password',                                    'password'),
@@ -64,7 +66,7 @@ SDRPLAY_LICENCE = ('SDRplay\'s API is closed source. The install downloads it fr
                    '     also kept in /usr/local/share/doc/sdrplay_api/ after the install).')
 
 # questions added after stations were first set up: an upgrade asks them once (ask-new)
-NEW_QUESTIONS = ('storage', 'discord_webhook', 'discord_site_url', 'sdrplay_licence_accepted')
+NEW_QUESTIONS = ('storage', 'discord_webhook', 'discord_site_url', 'sdrplay_licence_accepted', 'iss_sstv')
 
 
 def load(path):
@@ -118,6 +120,8 @@ def skip(key, data):
     receiver = data.get('receiver_type')
     if key == 'sdrplay_licence_accepted':
         return receiver != 'sdrplay'
+    if key == 'iss_sstv':
+        return receiver not in (None, 'rtlsdr')     # the ISS recorder uses rtl_fm
     if key in ('meteor_m2_3_gain', 'meteor_m2_4_gain'):
         return receiver in RECEIVERS and RECEIVERS[receiver][1] is None
     return False
@@ -257,6 +261,11 @@ def setup(only=None):
         else:
             answers[key] = value
 
+    save_local(answers)
+    print('   Saved to config/settings.local.yml')
+
+
+def save_local(answers):
     old = os.umask(0o077)
     try:
         with open(LOCAL, 'w') as f:
@@ -266,7 +275,22 @@ def setup(only=None):
     finally:
         os.umask(old)
     os.chmod(LOCAL, 0o600)
-    print('   Saved to config/settings.local.yml')
+
+
+def set_value(key, raw):
+    """Set one setting in settings.local.yml (a yes/no setting takes on/off, yes/no, true/false)."""
+    with open(SCHEMA) as f:
+        prop = json.load(f)['properties'].get(key)
+    if prop is None:
+        sys.exit('Unknown setting: ' + key)
+    value = yaml.safe_load(raw)
+    if prop.get('type') == 'boolean':
+        if str(raw).lower() not in ('on', 'off', 'yes', 'no', 'true', 'false'):
+            sys.exit('%s takes on or off' % key)
+        value = str(raw).lower() in ('on', 'yes', 'true')
+    answers = load(LOCAL)
+    answers[key] = value
+    save_local(answers)
 
 
 def write_merged(path):
@@ -297,6 +321,8 @@ if __name__ == '__main__':
             print('   A new question since this station was set up:' if len(missing) == 1
                   else '   New questions since this station was set up:')
             setup(missing)
+    elif cmd == 'set' and len(sys.argv) == 4:
+        set_value(sys.argv[2], sys.argv[3])
     elif cmd == 'merged' and len(sys.argv) == 3:
         write_merged(sys.argv[2])
     else:

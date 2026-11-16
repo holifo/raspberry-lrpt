@@ -1,5 +1,13 @@
 # Changelog
 
+## Raspberry-LRPT v1.28.0 (2026-11-16)
+
+- **On/off switch for the ISS extra:** `scripts/iss_sstv.sh on|off` turns ISS SSTV on or off
+  straight away, without the whole install: it saves the choice, updates the station's settings and
+  the web panel, removes the ISS's scheduled passes (off) or schedules them again with Meteor
+  first (on). Without an argument it says whether it is on. The setup questions now ask "Also
+  record the ISS's SSTV pictures (extra)" too (once on an upgrade; RTL-SDR stations only).
+
 ## Raspberry-LRPT v1.27.0 (2026-11-16)
 
 - **The Meteor-M tab is now "Sat info"** (still at `/meteor`, short label "Info" on phones), with

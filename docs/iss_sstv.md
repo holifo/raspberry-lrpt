@@ -48,6 +48,20 @@ only see the ISS on the site when it actually sent something.
    The Satellites tab shows the ISS on the map and has an ISS tab with its position and next pass.
    With Discord set up, the pictures are posted too.
 
+## Turning it on or off
+
+The ISS is an extra: switch it on the Pi any time, without running the whole install.
+
+```bash
+~/raspberry-lrpt/scripts/iss_sstv.sh off   # no ISS passes, the ISS leaves the web panel
+~/raspberry-lrpt/scripts/iss_sstv.sh on    # schedules the ISS's passes again (Meteor keeps priority)
+~/raspberry-lrpt/scripts/iss_sstv.sh       # shows whether it is on
+```
+
+The choice is kept in `config/settings.local.yml`, so later installs keep it. The setup questions
+also ask "Also record the ISS's SSTV pictures (extra)" (asked once on an upgrade). A recording
+already running finishes; Meteor passes are not touched.
+
 ## Settings
 
 | Setting | Default | What it does |
