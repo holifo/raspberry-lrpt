@@ -27,9 +27,53 @@ class AdminController extends \Lib\Controller {
   public function passesAction($args) {
     $pass = $this->loadModel('Pass');
     $pass->getActiveList();
+    # ?sw=<meteor|iss>-<result> from switchAction
+    $sw = null;
+    if (isset($args['sw']) && preg_match('/^(meteor|iss)-([a-z]+)$/', $args['sw'], $m)
+        && in_array($m[2], self::SWITCH_RESULTS, true)) {
+      $sw = array('what' => $m[1], 'result' => $m[2]);
+    }
     $args = array_merge($args, array('pass' => $pass,
+                                     'sw' => $sw,
+                                     'iss_switchable' => Config::RECEIVER_TYPE === 'rtlsdr',
                                      'admin_action' => 'passes'));
     View::renderTemplate('Admin/passes.html', $args);
+  }
+
+  # Meteor and ISS switches (Admin > Passes): POST what=meteor|iss, state=on|off from this site's
+  # own page. It runs scripts/switch.sh --web as the station user (sudo rule 030_www-data-switch:
+  # those four commands only); the script refuses while a pass is recording or within 2 minutes
+  # of the last change. Results go back as /admin/passes?sw=<what>-<result>.
+  const SWITCH_RESULTS = ['on', 'off', 'busy', 'wait', 'fail'];
+  public function switchAction($args) {
+    $what = $_POST['what'] ?? '';
+    $state = $_POST['state'] ?? '';
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? ($_SERVER['HTTP_REFERER'] ?? '');
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    $o_host = parse_url($origin, PHP_URL_HOST);
+    $o_port = parse_url($origin, PHP_URL_PORT);
+    $same_site = $o_host && $host !== '' && $o_host . ($o_port ? ':' . $o_port : '') === $host;
+    if (!in_array($what, ['meteor', 'iss'], true)) {
+      header('Location: /admin/passes');
+      return;
+    }
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !in_array($state, ['on', 'off'], true) || !$same_site
+        || ($what === 'iss' && Config::RECEIVER_TYPE !== 'rtlsdr')) {
+      header('Location: /admin/passes?sw=' . $what . '-fail');
+      return;
+    }
+    $cmd = 'sudo -n -H -u ' . escapeshellarg(Config::STATION_USER) . ' '
+         . escapeshellarg(Config::LRPT_HOME . '/scripts/switch.sh') . ' --web ' . $what . ' ' . $state . ' 2>&1';
+    exec($cmd, $out, $code);
+    $result = [0 => $state, 2 => 'busy', 3 => 'wait'][$code] ?? 'fail';
+    if ($result === 'fail') {
+      error_log('Switch ' . $what . ' ' . $state . ' failed (' . $code . '): ' . implode(' | ', $out));
+    }
+    # the script rewrote Config.php: don't let the next page read the cached copy
+    if (function_exists('opcache_invalidate')) {
+      opcache_invalidate(dirname(__DIR__, 2) . '/Config/Config.php', true);
+    }
+    header('Location: /admin/passes?sw=' . $what . '-' . $result);
   }
 
   # TODO: This is not very DRY between this and the above function - do

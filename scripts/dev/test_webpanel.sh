@@ -99,7 +99,10 @@ v = yaml.safe_load(open(os.path.join(repo, 'config/settings.yml')))
 v.update(yaml.safe_load(open(os.path.join(repo, 'ansible/group_vars/all.yml'))))
 v.update(target_user='tester', system_timezone={'stdout': 'Europe/Athens'},
          raspbian_version={'stdout': os.environ.get('TEST_CODENAME', 'bookworm')},
-         system_architecture='arm64')
+         system_architecture='arm64',
+         # the sample data has ISS passes and a capture: show the ISS extra (off by default on a
+         # station); TEST_ISS=0 tests it off
+         iss_sstv=os.environ.get('TEST_ISS', '1') == '1')
 env = jinja2.Environment(undefined=jinja2.StrictUndefined)
 for _ in range(3):
     for k, val in list(v.items()):

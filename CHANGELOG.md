@@ -1,5 +1,19 @@
 # Changelog
 
+## Raspberry-LRPT v1.29.0 (2026-11-16)
+
+- **On/off switches on the website:** Admin > Passes now has two switches at the top, one for the
+  Meteor captures (METEOR-M2 3 and M2 4 together) and one for the ISS extra. A switch takes effect
+  straight away: off removes that satellite's scheduled passes, on schedules them again (Meteor
+  keeps priority over the ISS). Safeguards: the admin login, only clicks from the station's own
+  pages, refused while a pass is being recorded and for two minutes after the last change, each
+  change written to the Live log. The web server may run only those four switch commands (a sudo
+  rule), nothing else. Texts in all nine languages.
+- **The same from the Pi:** `scripts/switch.sh meteor|iss on|off` (no argument shows what is on).
+  `scripts/iss_sstv.sh` from v1.28.0 still works.
+- **The ISS is now off by default** (`iss_sstv: false`); Meteor stays on. Turn the ISS on with its
+  switch. An upgrade's setup question about the ISS now suggests "no".
+
 ## Raspberry-LRPT v1.28.0 (2026-11-16)
 
 - **On/off switch for the ISS extra:** `scripts/iss_sstv.sh on|off` turns ISS SSTV on or off

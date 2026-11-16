@@ -121,7 +121,7 @@ keep_recordings: 5
 #   iss_sstv_frequency - the ISS downlink to record, MHz: 437.550 (70 cm, ARISS's 2026 events) or
 #                        145.800 (2 m, earlier events); the decoder finds the mode itself
 #   iss_sstv_gain - the RTL-SDR's gain for the ISS (dB)
-iss_sstv: true
+iss_sstv: false
 iss_sstv_dates: ""
 iss_sstv_min_elevation: 20
 iss_sstv_frequency: 437.550

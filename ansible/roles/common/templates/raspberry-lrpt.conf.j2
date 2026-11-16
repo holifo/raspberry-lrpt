@@ -56,7 +56,7 @@ STORAGE={{ storage }}
 KEEP_RECORDINGS={{ keep_recordings }}
 
 # ISS SSTV (ARISS events)
-ISS_SSTV={{ iss_sstv|default(true)|lower }}
+ISS_SSTV={{ iss_sstv|default(false)|lower }}
 ISS_SSTV_DATES="{{ iss_sstv_dates|default('') }}"
 ISS_SSTV_MIN_ELEV={{ iss_sstv_min_elevation|default(20)|int }}
 ISS_SSTV_FREQ={{ '%.4f'|format(iss_sstv_frequency|default(437.55)|float) }}

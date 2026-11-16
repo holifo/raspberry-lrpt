@@ -183,8 +183,9 @@ which one is recorded (437.550 by default); the decoder finds the mode itself.
 Between Meteor passes the station records the ISS's passes above 20° with `rtl_fm` and decodes the
 pictures (`scripts/receive_iss.sh`). Meteor always has priority: an overlapping ISS pass isn't
 scheduled, an ISS recording ends before the next Meteor pass, and a Meteor pass stops an ISS
-recording that is still running. It is on by default
-(`iss_sstv: true`), needs an RTL-SDR, and a pass with no pictures leaves nothing behind.
+recording that is still running. It is off by default:
+turn it on with the switch on Admin > Passes or `scripts/switch.sh iss on` (`iss_sstv`). It needs
+an RTL-SDR, and a pass with no pictures leaves nothing behind.
 
 - **Where to see them:** violet **ISS** cards on the Captures page (filter chip **ISS**), each with
   its pictures (`SSTV 1`, `SSTV 2`, …), the sky track and the recording (`.wav`). ISS passes are in
@@ -301,7 +302,7 @@ web login, Discord webhook) are in `config/settings.local.yml` and win over it. 
 | `sdr_extra_options` | | More SatDump options for every capture, e.g. `--amp` (HackRF) or `--lna_gain 20` (SDRplay) |
 | `station_title` | | Name in the station bar |
 | `lang_setting` | en | Language for visitors who haven't picked one |
-| `iss_sstv` | true | Record the ISS's passes and decode its SSTV pictures (RTL-SDR; [ISS SSTV](iss_sstv.md)) |
+| `iss_sstv` | false | Record the ISS's passes and decode its SSTV pictures (RTL-SDR; [ISS SSTV](iss_sstv.md)) |
 | `iss_sstv_frequency` | 437.550 | ISS downlink to record: 437.550 (70 cm, 2026's events) or 145.800 (2 m) |
 | `iss_sstv_dates`, `iss_sstv_min_elevation`, `iss_sstv_gain` | "", 20, 40 | Only between two dates (empty = always), lowest pass, gain |
 | `discord_webhook` | | Post each pass to Discord: asked by the install, kept in `settings.local.yml`; empty = off ([Discord](discord.md)) |

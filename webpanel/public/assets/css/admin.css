@@ -34,3 +34,26 @@
   .a-thumb img { width: 44px; height: 44px; }
   .admin-toolbar .toolbar-page { display: none; }
 }
+
+/* Meteor and ISS switches (Admin > Passes); colours come from site.css / dark.css variables */
+.switches { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 10px; margin: 4px 0 14px; }
+.st-switch { display: flex; align-items: center; gap: 12px; margin: 0; padding: 10px 14px;
+  border: 1px solid var(--pl-line); border-radius: 8px; background: var(--pl-card); }
+.st-switch .sat-dot { flex: none; margin: 0; }
+.st-switch.sw-meteor { --sw-on: var(--m23); }
+.st-switch.sw-iss { --sw-on: var(--iss); }
+.st-switch .sat-dot.sat-m23 { background: linear-gradient(90deg, var(--m23) 50%, var(--m24) 50%); }
+.st-switch:not(.is-on) .sat-dot { opacity: 0.4; }
+.sw-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.sw-text span { color: var(--pl-dim); font-size: 0.85rem; }
+.st-switch .sw { margin-left: auto; flex: none; display: flex; align-items: center; gap: 8px;
+  border: 0; background: none; padding: 4px; color: inherit; cursor: pointer; font-weight: 600; }
+.st-switch .sw:disabled { cursor: not-allowed; opacity: 0.5; }
+.sw-track { position: relative; width: 42px; height: 24px; border-radius: 12px; background: #b9c3cd;
+  transition: background 0.2s; }
+.sw-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); transition: left 0.2s; }
+.st-switch.is-on .sw-track { background: var(--sw-on); }
+.st-switch.is-on .sw-knob { left: 21px; }
+.sw-label { min-width: 2.2em; text-align: left; }
+.st-switch .sw:focus-visible .sw-track { outline: 2px solid var(--sw-on); outline-offset: 2px; }

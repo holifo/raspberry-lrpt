@@ -14,7 +14,8 @@ itself. Between Meteor passes the station records the ISS's
 passes and decodes those pictures. ARISS announces the events on [ariss.org](https://www.ariss.org/)
 and on the [ARISS SSTV blog](https://ariss-sstv.blogspot.com/).
 
-It is **on by default**. Passes with no pictures (most of the year) leave nothing behind, so you
+It is **off by default**; turn it on with the switch on Admin > Passes or
+`scripts/switch.sh iss on` (below). Passes with no pictures (most of the year) leave nothing behind, so you
 only see the ISS on the site when it actually sent something.
 
 ## How it works
@@ -50,23 +51,33 @@ only see the ISS on the site when it actually sent something.
 
 ## Turning it on or off
 
-The ISS is an extra: switch it on the Pi any time, without running the whole install.
+The ISS is an extra and is off by default. Switch it (or the Meteor captures) any time, without
+running the whole install:
 
-```bash
-~/raspberry-lrpt/scripts/iss_sstv.sh off   # no ISS passes, the ISS leaves the web panel
-~/raspberry-lrpt/scripts/iss_sstv.sh on    # schedules the ISS's passes again (Meteor keeps priority)
-~/raspberry-lrpt/scripts/iss_sstv.sh       # shows whether it is on
-```
+- **On the website:** Admin > Passes (`/admin/passes`, behind the admin login) has a Meteor and an
+  ISS switch at the top. A change is refused while a pass is being recorded and for two minutes
+  after the last change, only clicks made on the station's own pages count, and each change is
+  written to the Live log. The web server may run only `switch.sh --web meteor|iss on|off`, as
+  the station's user (`/etc/sudoers.d/030_www-data-switch`). While the site has no HTTPS, the admin
+  password travels unencrypted; see [tls_webserver.md](tls_webserver.md).
+- **On the Pi:**
+
+  ```bash
+  ~/raspberry-lrpt/scripts/switch.sh iss on       # schedule the ISS's passes (Meteor keeps priority)
+  ~/raspberry-lrpt/scripts/switch.sh iss off      # no ISS passes, the ISS leaves the web panel
+  ~/raspberry-lrpt/scripts/switch.sh meteor off   # no Meteor passes (both satellites)
+  ~/raspberry-lrpt/scripts/switch.sh              # what is on
+  ```
 
 The choice is kept in `config/settings.local.yml`, so later installs keep it. The setup questions
 also ask "Also record the ISS's SSTV pictures (extra)" (asked once on an upgrade). A recording
-already running finishes; Meteor passes are not touched.
+already running finishes.
 
 ## Settings
 
 | Setting | Default | What it does |
 |---|---|---|
-| `iss_sstv` | true | Record and decode the ISS's passes |
+| `iss_sstv` | false | Record and decode the ISS's passes |
 | `iss_sstv_dates` | "" | Only between these dates, `"YYYY-MM-DD YYYY-MM-DD"` (an ARISS event); empty = every pass |
 | `iss_sstv_min_elevation` | 20 | Lowest maximum elevation of a pass worth recording |
 | `iss_sstv_frequency` | 437.550 | The downlink to record (MHz): 437.550 (70 cm) or 145.800 (2 m), whichever the event uses |

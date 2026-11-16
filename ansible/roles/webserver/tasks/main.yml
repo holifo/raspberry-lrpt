@@ -87,6 +87,16 @@
     group: root
     mode: 0440
 
+- name: www-data may switch Meteor and the ISS on or off (switch.sh --web)
+  become: yes
+  template:
+    src: 030_www-data-switch.j2
+    dest: /etc/sudoers.d/030_www-data-switch
+    owner: root
+    group: root
+    mode: 0440
+    validate: visudo -cf %s
+
 # nginx sites: plain HTTP (default) and/or TLS (default-tls), as enable_non_tls / enable_tls say
 - name: nginx sites
   become: yes

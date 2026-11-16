@@ -1,0 +1,4 @@
+# The web panel's Meteor and ISS switches (Admin > Passes): www-data may run only these four
+# commands, as the station user. The script and its settings belong to that user, not to www-data.
+Cmnd_Alias RL1_SWITCH = {{ lrpt_home }}/scripts/switch.sh --web meteor on, {{ lrpt_home }}/scripts/switch.sh --web meteor off, {{ lrpt_home }}/scripts/switch.sh --web iss on, {{ lrpt_home }}/scripts/switch.sh --web iss off
+www-data ALL=({{ target_user }}) NOPASSWD: RL1_SWITCH

@@ -53,7 +53,7 @@ pictures. Between Meteor passes the station records the ISS's passes and decodes
   ISS recording that is still running.
 - **On the site:** violet ISS cards on the Captures page (filter chip **ISS**), the ISS on the
   Satellites map, and Discord posts with the pictures. Passes with no pictures leave no trace.
-- RTL-SDR only; on by default (`iss_sstv`). See [ISS SSTV](docs/iss_sstv.md).
+- RTL-SDR only; off by default, with an on/off switch on Admin > Passes (`iss_sstv`). See [ISS SSTV](docs/iss_sstv.md).
 
 <p align="center">
   <img src="docs/assets/screenshots/passes-dark.jpg" alt="Passes page" width="49%">

@@ -34,6 +34,49 @@
 
   {% include('Admin/nav.html') %}
 
+  {# Meteor and ISS switches: POST to /admin/switch, which runs scripts/switch.sh --web #}
+  {% set switches = [
+       {'what': 'meteor', 'on': constant('Config\\Config::METEOR_ON'), 'name': 'Meteor', 'dot': 'sat-m23',
+        'title': lang['meteor_sw_title']|default('Meteor captures'),
+        'hint': lang['meteor_sw_hint']|default('Records both Meteor satellites (METEOR-M2 3 and M2 4, LRPT on 137.9 MHz).'),
+        'ok': true},
+       {'what': 'iss', 'on': constant('Config\\Config::ISS_SSTV'), 'name': 'ISS SSTV', 'dot': 'sat-iss',
+        'title': lang['iss_sw_title']|default('ISS SSTV pictures (extra)'),
+        'hint': iss_switchable ? lang['iss_sw_hint']|default('Records the ISS\'s SSTV pictures when it passes. Meteor passes always come first.')
+                               : lang['iss_sw_rtl']|default('Needs an RTL-SDR receiver.'),
+        'ok': iss_switchable}] %}
+  {% if sw %}
+    {% set sw_name = sw.what == 'iss' ? 'ISS SSTV' : 'Meteor' %}
+    {% set sw_msg = {'on': lang['sw_done_on']|default('{name} is on. Its passes are being scheduled; they appear in a minute or two.'),
+                     'off': lang['sw_done_off']|default('{name} is off. Its scheduled passes were removed.'),
+                     'busy': lang['sw_busy']|default('A pass is being recorded. Try again when it ends.'),
+                     'wait': lang['sw_wait']|default('It was changed a moment ago. Try again in two minutes.'),
+                     'fail': lang['sw_fail']|default('It could not be changed. The Live log may say why.')} %}
+    <div class="alert {{ sw.result in ['on', 'off'] ? 'alert-success' : (sw.result == 'fail' ? 'alert-danger' : 'alert-warning') }} alert-dismissible fade show" role="alert">
+      {{ sw_msg[sw.result]|replace({'{name}': sw_name}) }}
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    </div>
+  {% endif %}
+  <div class="switches">
+  {% for s in switches %}
+    <form class="st-switch{% if s.on %} is-on{% endif %} sw-{{ s.what }}" method="post" action="/admin/switch">
+      <span class="sat-dot {{ s.dot }}" aria-hidden="true"></span>
+      <div class="sw-text">
+        <strong>{{ s.title }}</strong>
+        <span>{{ s.hint }}</span>
+      </div>
+      <input type="hidden" name="what" value="{{ s.what }}">
+      <input type="hidden" name="state" value="{{ s.on ? 'off' : 'on' }}">
+      <button type="submit" class="sw" role="switch" aria-checked="{{ s.on ? 'true' : 'false' }}" aria-label="{{ s.title }}"
+              title="{{ s.on ? lang['sw_turn_off']|default('Turn off') : lang['sw_turn_on']|default('Turn on') }}"
+              {% if not s.ok %}disabled{% endif %}>
+        <span class="sw-track"><span class="sw-knob"></span></span>
+        <span class="sw-label">{{ s.on ? lang['sw_on']|default('On') : lang['sw_off']|default('Off') }}</span>
+      </button>
+    </form>
+  {% endfor %}
+  </div>
+
   <p class="note"><i class="fas fa-exclamation-triangle"></i>{{ lang['admin_pass_delete_warning'] }}</p>
 
   {% set sat_colours = {'METEOR-M2 3': 'm23', 'METEOR-M2 4': 'm24', 'ISS': 'iss'} %}
