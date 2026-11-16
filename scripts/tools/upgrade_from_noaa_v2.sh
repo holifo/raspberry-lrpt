@@ -104,7 +104,7 @@ fi
 # ---- checks --------------------------------------------------------------------------------
 step "Checks"
 [ "$NEW" == "$HOME/raspberry-lrpt" ] || die "Run this from the clone in ~/raspberry-lrpt (it is in $NEW)"
-codename=$(. /etc/os-release 2>/dev/null; echo "$VERSION_CODENAME")
+codename=$(. /etc/os-release 2>/dev/null; echo "${DEBIAN_CODENAME:-$VERSION_CODENAME}")
 if [ "$codename" != "bookworm" ] && [ "$codename" != "trixie" ]; then
   die "Raspberry-LRPT needs Raspberry Pi OS Bookworm or Trixie, 64-bit (this is ${codename:-unknown}).
       Save the station first:  $0 --export

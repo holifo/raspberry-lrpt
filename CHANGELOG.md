@@ -1,5 +1,14 @@
 # Changelog
 
+## Raspberry-LRPT v1.24.2 (2026-11-16)
+
+- **Debian-based systems:** the install, the SatDump build script, the upgrade script, the
+  histogram and the uninstaller now use Debian's own release name (`DEBIAN_CODENAME`) when the
+  system has one, so Linux Mint Debian Edition 7 ("Gigi") counts as Trixie. Before, the SatDump
+  build named its package `…_gigi_…` and the install didn't accept the system.
+- **SatDump build on a small `/tmp`:** where `/tmp` is a RAM disk with less than 4 GB free (Trixie),
+  `build_satdump_deb.sh` builds in `~/.cache` instead of stopping (`TMPDIR` still chooses).
+
 ## Raspberry-LRPT v1.24.1 (2026-11-15)
 
 - **Trixie on a 64-bit PC:** the bundled amd64 `predict` package needs ncurses 5, which Trixie

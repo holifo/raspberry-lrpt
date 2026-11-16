@@ -14,7 +14,6 @@
 
 set -e
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
-WORK="${TMPDIR:-/tmp}/satdump-build"
 JOBS=""
 [ "$1" == "-j" ] && JOBS=$2
 
@@ -22,7 +21,7 @@ say()  { echo; echo "==> $*"; }
 die()  { echo "xx  $*" >&2; exit 1; }
 
 [ $EUID -eq 0 ] && die "Run it as your normal user, not with sudo"
-codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
+codename=$(. /etc/os-release && echo "${DEBIAN_CODENAME:-$VERSION_CODENAME}")  # Debian-based (LMDE "gigi" = trixie)
 arch=$(dpkg --print-architecture)
 read -r satdump_version satdump_commit rtl_commit < <(python3 - "$REPO/ansible/group_vars/all.yml" <<'PY'
 import re, sys
@@ -37,8 +36,15 @@ out="$REPO/software/satdump_${satdump_version}_${codename}_${arch}.deb"
 
 mem_mb=$(awk '/MemTotal/ {print int($2 / 1024)}' /proc/meminfo)
 [ -n "$JOBS" ] || JOBS=$(( mem_mb >= 7000 ? $(nproc) : 2 ))
-free_mb=$(df -Pm "${TMPDIR:-/tmp}" | awk 'NR==2 {print $4}')
-[ "$free_mb" -gt 4000 ] || die "Only ${free_mb} MB free in ${TMPDIR:-/tmp}; the build needs about 4 GB (set TMPDIR to a bigger disk)"
+# the build needs about 4 GB; /tmp is often a small RAM disk (Trixie), so fall back to the home disk
+base="${TMPDIR:-/tmp}"
+free_mb=$(df -Pm "$base" | awk 'NR==2 {print $4}')
+if [ "$free_mb" -le 4000 ] && [ -z "$TMPDIR" ]; then
+  base="$HOME/.cache"; mkdir -p "$base"
+  free_mb=$(df -Pm "$base" | awk 'NR==2 {print $4}')
+fi
+[ "$free_mb" -gt 4000 ] || die "Only ${free_mb} MB free in ${base}; the build needs about 4 GB (set TMPDIR to a bigger disk)"
+WORK="$base/satdump-build"
 echo "SatDump ${satdump_version} (${satdump_commit:0:9}) for ${codename} ${arch}, ${JOBS} jobs, ${mem_mb} MB RAM"
 
 say "Build tools and libraries"

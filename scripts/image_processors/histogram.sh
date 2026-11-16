@@ -28,7 +28,7 @@ input_path=$(dirname "${IN_FILE}")
 input_filename="${input_file%.*}"
 input_fileext="${input_file##*.}"
 
-os_release=$(cat /etc/os-release | grep -E "^DEBIAN_CODENAME|^VERSION_CODENAME" | awk -F"=" '{print $NF}' | sort | head -1)
+os_release=$(. /etc/os-release && echo "${DEBIAN_CODENAME:-$VERSION_CODENAME}")
 
 #adjust output with os release
 if [[ "${os_release}" == "bullseye" || "${os_release}" == "bookworm" || "${os_release}" == "trixie" ]];

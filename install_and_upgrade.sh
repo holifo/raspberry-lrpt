@@ -66,7 +66,7 @@ echo "${DIM}$(date '+%d/%m/%Y %H:%M:%S') · log: $LOG${RESET}"
 
 step "Checking the system"
 
-codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
+codename=$(. /etc/os-release && echo "${DEBIAN_CODENAME:-$VERSION_CODENAME}")  # Debian-based (LMDE "gigi" = trixie)
 case "$codename" in
   bookworm|trixie) ;;
   *) die "This station needs Raspberry Pi OS / Debian Bookworm or Trixie (found: ${codename:-unknown})" ;;
