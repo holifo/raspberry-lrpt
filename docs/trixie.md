@@ -10,7 +10,7 @@ install picks the right package names for each:
 | ncurses headers | `libncurses-dev` | `libncurses-dev` |
 | RTL-SDR driver | RTL-SDR Blog packages | RTL-SDR Blog packages |
 | Image label | Pillow | Pillow |
-| SatDump 1.2.3 | in `software/` | built once on the Pi (below), unless `software/` has it |
+| SatDump 1.2.3 | in `software/` | in `software/` for 64-bit PCs (amd64); built once on a Pi (arm64, below) |
 | predict | in `software/` | in `software/` on a Pi; built from source on a 64-bit PC |
 
 ## SatDump on Trixie
@@ -35,7 +35,8 @@ the compiler is killed, add swap or run it with `-j 1`.
 Systems built on Debian, such as Linux Mint Debian Edition 7 ("Gigi", on Trixie), count as their
 Debian release: every check uses `DEBIAN_CODENAME` from `/etc/os-release` when it is there.
 
-Once one Trixie station has built it, the package can be added to the repository's `software/`
+The amd64 package (for PCs, built on LMDE 7) is already in `software/`. Once one Trixie Pi has
+built the arm64 one, the package can be added to the repository's `software/`
 folder so other Trixie stations install it straight away.
 
 ## Moving a station from Bookworm to Trixie

@@ -1,5 +1,12 @@
 # Changelog
 
+## Raspberry-LRPT v1.25.1 (2026-11-16)
+
+- **SatDump for Trixie PCs:** `software/` now has the SatDump 1.2.3 package for Trixie on 64-bit
+  PCs (`satdump_1.2.3-0b654b4ec_trixie_amd64.deb`, built with `build_satdump_deb.sh` on Linux Mint
+  Debian Edition 7), so a Trixie PC installs without building it. Trixie Raspberry Pis still build
+  theirs once (arm64).
+
 ## Raspberry-LRPT v1.25.0 (2026-11-16)
 
 - **ISS SSTV pictures.** During ARISS events the ISS sends slow-scan TV pictures on 145.800 MHz FM.
