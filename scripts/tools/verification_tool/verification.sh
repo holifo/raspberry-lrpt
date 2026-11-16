@@ -126,8 +126,14 @@ perms() {
   #echo "-----------------"
 
   if [[ -e $path ]]; then
-    status=$(stat -c "%F %a %U %G %n" ${path})
-    if [[ "${status}" == "${ptype} ${rperms} ${owner} ${group} ${path}" ]]; then
+    status=$(stat -c "%F %a %U %G %n" ${path} | sed "s/^regular empty file/regular file/")
+    amode=$(stat -c "%a" ${path})
+    # a system whose umask is 002 (Raspberry Pi OS Trixie) adds group write: that is fine as long
+    # as the group could already read it and nothing else differs
+    gw_ok=0
+    if (( (8#${rperms} & 8#040) )) && (( (8#${amode} | 8#020) == (8#${rperms} | 8#020) )); then gw_ok=1; fi
+    if [[ "${status}" == "${ptype} ${rperms} ${owner} ${group} ${path}" ]] || \
+       { [[ ${gw_ok} -eq 1 ]] && [[ "$(stat -c "%F %U %G %n" ${path} | sed "s/^regular empty file/regular file/")" == "${ptype} ${owner} ${group} ${path}" ]]; }; then
       loggit "PASS" "${status}"
       PASSES=$(expr ${PASSES} + 1)
     else
@@ -173,19 +179,48 @@ while IFS= read -r line; do
   perms ${line}
 done < ${PERMISSIONS_OTHER_LIST}
 
+if grep -qE "^METEOR_DECODER=.?meteordemod" "$HOME/.raspberry-lrpt.conf" 2>/dev/null; then
+  perms file 755 root root /usr/local/bin/meteordemod
+  perms directory 755 \$USER \$USER /home/\$USER/.config/meteordemod
+  perms file 644 \$USER \$USER /home/\$USER/.config/meteordemod/settings.ini
+fi
+
+# every script git marks executable must be executable here (a "git pull" keeps that bit)
+not_x=0
+while IFS= read -r f; do
+  if [[ ! -x "$HOME/raspberry-lrpt/$f" ]]; then
+    loggit "FAIL" "$HOME/raspberry-lrpt/$f is not executable (chmod +x it, or run ./install_and_upgrade.sh)"
+    FAILURES=$(expr ${FAILURES} + 1); not_x=1
+  fi
+done < <(git -C "$HOME/raspberry-lrpt" ls-files -s 2>/dev/null | awk '$1 == "100755" {print $4}' | grep -v '^docs/')
+if [[ ${not_x} -eq 0 ]]; then
+  loggit "PASS" "All scripts in $HOME/raspberry-lrpt are executable"
+  PASSES=$(expr ${PASSES} + 1)
+fi
+
 loggit "INFO" ""
 loggit "INFO" "*************************************************"
 loggit "INFO" "*** Checking required packages ***"
 loggit "INFO" "*************************************************"
 
+# installed means dpkg status "install ok installed"; "a|b" in the list means either package
+pkg_installed() {
+  local p
+  for p in ${1//|/ }; do
+    if [[ "$(dpkg-query -W -f='${db:Status-Status}' "$p" 2>/dev/null)" == "installed" ]]; then
+      echo "$p $(dpkg-query -W -f='${Version}' "$p")"; return 0
+    fi
+  done
+  return 1
+}
 while IFS= read -r line; do
-  package_status=$(dpkg-query -W ${line} | head -1)
-  if [[ "${package_status}" == *"no packages found matching"* ]]; then
-    loggit "FAIL" "${package_status}"
-    FAILURES=$(expr ${FAILURES} + 1)
-  else
-    loggit "PASS" "${package_status}"
+  [[ -z "${line}" || "${line}" == \#* ]] && continue
+  if found=$(pkg_installed "${line}"); then
+    loggit "PASS" "${found}"
     PASSES=$(expr ${PASSES} + 1)
+  else
+    loggit "FAIL" "${line//|/ or } is not installed (run ./install_and_upgrade.sh)"
+    FAILURES=$(expr ${FAILURES} + 1)
   fi
 done < ${PACKAGE_LIST}
 
@@ -228,13 +263,12 @@ case "$RECEIVER_SETTING" in
     fi ;;
 esac
 for line in $receiver_packages; do
-  package_status=$(dpkg-query -W ${line} 2>&1 | head -1)
-  if [[ "${package_status}" == *"no packages found matching"* ]]; then
-    loggit "FAIL" "${package_status}"
-    FAILURES=$(expr ${FAILURES} + 1)
-  else
-    loggit "PASS" "${package_status}"
+  if found=$(pkg_installed "${line}"); then
+    loggit "PASS" "${found}"
     PASSES=$(expr ${PASSES} + 1)
+  else
+    loggit "FAIL" "${line} is not installed (run ./install_and_upgrade.sh)"
+    FAILURES=$(expr ${FAILURES} + 1)
   fi
 done
 
@@ -286,7 +320,9 @@ loggit "INFO" "*************************************************"
 ###############################
 
 NGINX="/usr/sbin/nginx"
-NGINX_CMD="curl -s --head --request GET http://0.0.0.0/passes | grep '200 OK'"
+WEB_PORT=$(grep -E "^WEBPANEL_PORT=" "$HOME/.raspberry-lrpt.conf" 2>/dev/null | cut -d= -f2 | tr -d "'\"")
+if grep -qE "^ENABLE_TLS=true" "$HOME/.raspberry-lrpt.conf" 2>/dev/null; then WEB_URL="https://127.0.0.1"; else WEB_URL="http://127.0.0.1:${WEB_PORT:-80}"; fi
+NGINX_CMD="code=\$(curl -sk -o /dev/null -w '%{http_code}' ${WEB_URL}/passes); echo \"web panel at ${WEB_URL}/passes answered HTTP \$code\"; [ \"\$code\" = 200 ]"
 
 SATDUMP="/usr/bin/satdump"
 SATDUMP_CMD="${SATDUMP} live meteor_m2-x_lrpt . --source rtlsdr --samplerate 1.024e6 --frequency 137.9e6 --fill_missing --gain 48 --timeout 1"
@@ -306,6 +342,11 @@ do
   BINNAME=$(echo ${BIN} | awk -F"/" '{print $NF}' | tr '[:lower:]' '[:upper:]')
   BINCMD="${BINNAME}_CMD"
 
+  if [[ ! -x ${BIN} ]]; then
+    loggit "FAIL" "${BIN} is not installed"
+    FAILURES=$(expr ${FAILURES} + 1)
+    continue
+  fi
   v_lddresult=$(${LDD} ${BIN} | grep -i "not found" | wc -l)
 
   if [[ ${v_lddresult} -eq 0 ]]; then

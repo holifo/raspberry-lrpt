@@ -179,4 +179,3 @@
     - common.sh
     - tools/scratch_perms.sh
     - tools/verification_tool/verification.sh
-    - tools/verification_tool/config/build_permissions_list.sh

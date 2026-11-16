@@ -254,7 +254,7 @@ Run them on the Pi as your normal user (not with `sudo`).
 | Change your station's answers | `./install_and_upgrade.sh`, answer `n` to "Keep these settings?" |
 | Change the receiver | the same, pick it from the list, then `sudo reboot` ([receivers](receivers.md)) |
 | Move a raspberry-noaa-v2 station over | `./scripts/tools/upgrade_from_noaa_v2.sh` ([how](upgrade_from_noaa_v2.md)) |
-| Check the receiver's drivers | `./scripts/tools/verification_tool/verification.sh` |
+| Check the receiver's drivers | `./scripts/tools/verification_tool/verification.sh quick` |
 | Build the SatDump package (Trixie, once) | `./scripts/tools/build_satdump_deb.sh` ([Trixie](trixie.md)) |
 | See the image label with example values | `./scripts/testing/produce_annotation_image.sh /tmp/label.png` ([label](annotation.md)) |
 | See the scheduled passes (local time) | `atq \| sort -k6,6n -k3,3M -k4,4n -k5,5` |

@@ -65,7 +65,7 @@ and RSPduo. An RSPdx has more LNA states; give it more LNA gain with
 
 > SDRplay support was built and tested without an SDRplay receiver: the plugin builds and SatDump
 > loads it, but the first real pass will be its first test. If it doesn't work, run
-> `./scripts/tools/verification_tool/verification.sh`, check `sudo systemctl status sdrplay`
+> `./scripts/tools/verification_tool/verification.sh quick`, check `sudo systemctl status sdrplay`
 > and open an issue with the log.
 
 ## Extra SatDump options

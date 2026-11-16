@@ -1,5 +1,22 @@
 # Changelog
 
+## Raspberry-LRPT v1.30.2 (2026-11-16)
+
+- **The checks after a first install no longer report hundreds of false failures.** On a new
+  Trixie Pi the verification tool said "Failing tests 239" for an install that had worked. Its
+  list of file modes was an old snapshot from raspberry-noaa-v2, with files that no longer exist
+  (MeteorDemod, old SatDump debs, old templates) and modes that a group-writable system (umask 002,
+  as on Raspberry Pi OS Trixie) never matches. Now:
+  - it checks the paths that matter (settings file 600, database, folders), accepts an extra
+    group-write bit, checks that every script git marks executable is executable, and checks
+    MeteorDemod's files only when MeteorDemod is the decoder
+  - a package counts only when it is really installed (it used to pass names apt merely knew of),
+    and the list matches what the install puts on (`libncurses-dev`, `libvolk-dev` on Trixie)
+  - the web panel test uses the station's own port and HTTPS setting, and says what it got
+    (it tried port 80 and showed SatDump's last log line as the reason)
+  - NTP's file is `/etc/ntpsec/ntp.conf`; a program that is missing fails clearly
+  - `build_permissions_list.sh` (it copied the upstream author's home folder) is gone
+
 ## Raspberry-LRPT v1.30.1 (2026-11-16)
 
 - **Fix: the SDRplay install failed** at "SDRplay API installed" with

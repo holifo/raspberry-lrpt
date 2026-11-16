@@ -1,8 +1,6 @@
-directory 755 $USER $USER /home/$USER
 file 644 root root /usr/share/satdump/satdump_cfg.json
 file 644 root root /etc/logrotate.d/raspberry-lrpt
-file 644 root root /etc/ntp.conf
-file 755 root root /usr/local/bin/meteordemod
+file 644 root root /etc/ntpsec/ntp.conf
 directory 755 $USER www-data /srv
 directory 775 $USER www-data /srv/images
 directory 775 $USER www-data /srv/images/thumb
