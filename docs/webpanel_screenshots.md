@@ -56,10 +56,12 @@ On a phone the details and the list sit under the map:
 
 ## Meteor-M
 
-The Meteor-M series: the two satellites this station receives, a timeline of every launch and
-plan, the LRPT signal and the instruments, with the sources the facts come from.
+The Sat info tab: the Meteor-M series (the two satellites this station receives, a timeline of every
+launch and plan, the LRPT signal and the instruments) and, further down, the ISS as an extra (its
+orbit, amateur radio frequencies and the year's ARISS SSTV events), with the sources the facts come
+from.
 
-![Meteor-M tab](assets/screenshots/meteor.jpg)
+![Sat info tab](assets/screenshots/meteor.jpg)
 
 ## Captures
 

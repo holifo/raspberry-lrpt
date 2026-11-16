@@ -79,7 +79,7 @@ the composites those channels allow.
 |---|---|---|
 | **Passes** | `/passes` | Station bar (name, grid square, Recording / Waiting), next pass countdown, live decode panel while recording, passes grouped by day |
 | **Satellites** | `/satellite` | Live map of both satellites, the selected one's details, the coming passes |
-| **Meteor-M** | `/meteor` | The series: satellites working now, every launch and plan, the LRPT signal, the instruments |
+| **Sat info** | `/meteor` | The Meteor-M series (satellites working now, every launch and plan, the LRPT signal, the instruments) and, as an extra, the ISS (orbit, amateur radio frequencies, the year's ARISS SSTV events) |
 | **Captures** | `/captures` | Every capture as a card, grouped by day; "About the images" explains the channels and every image type |
 | **One capture** | click a card | Pass details, every image (zoomable viewer), graphs, spectrogram, recording download |
 | **Daily map** | `/daily` | One map per day of all day passes, one of all night passes, and the day's time-lapse |

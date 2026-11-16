@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {#
-  Meteor-M tab (/meteor): the series this station receives. The facts (launches, status, plans,
+  Sat info tab (/meteor): the Meteor-M series this station receives and, as an extra, the ISS. The facts (launches, status, plans,
   sources) are in MeteorController::SERIES / SOURCES; this page lays them out: the satellites
   working now, a timeline of every launch and plan, the coming launches, the LRPT signal and the
   instruments. CSS: public/assets/css/meteor.css.
@@ -35,9 +35,13 @@
    and constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') == 'true' %}
 
 <div class="page-head">
-  <h1 class="page-title">{{ lang['mi_title']|default('The Meteor-M series') }}</h1>
+  <h1 class="page-title">{{ lang['sinfo_title']|default('Satellite info') }}</h1>
   <div class="page-meta">{{ lang['mi_checked']|default('Checked') }} {{ checked|date(constant('Config\\Config::PASSES_DATE_FORMAT')) }}</div>
 </div>
+{% if iss %}
+<nav class="mi-jump"><a href="#meteor"><span class="sat-dot m23"></span> Meteor-M</a> <a href="#iss"><span class="sat-dot iss"></span> ISS</a></nav>
+{% endif %}
+<h2 class="mi-h mi-h1" id="meteor">{{ lang['mi_title']|default('The Meteor-M series') }}</h2>
 <p class="mi-intro">{{ lang['mi_intro']|default("Russia's polar-orbiting weather satellites, built by VNIIEM for Roshydromet and Roscosmos. Each flies a sun-synchronous orbit about 820 km up and sends its MSU-MR images down on 137.9 MHz as LRPT, which this station receives.") }}</p>
 
 {# ---- working now ---- #}
@@ -123,9 +127,61 @@
   </section>
 </div>
 
+{# ---- extra: the ISS (iss_sstv) ---- #}
+{% if iss %}
+{% set df = constant('Config\\Config::PASSES_DATE_FORMAT') %}
+<h2 class="mi-h mi-h1" id="iss">{{ lang['iss_h']|default('Extra: the International Space Station') }}</h2>
+<p class="mi-intro">{{ lang['iss_intro']|default("Not a weather satellite: during ARISS events the ISS sends slow-scan TV pictures, which this station records between Meteor passes. It flies much lower than the Meteors, so its passes are shorter (about 10 minutes).") }}</p>
+<div class="mi-two">
+  <div class="mi-card sat-iss">
+    <div class="mi-card-head">
+      <span class="sat-dot iss"></span>
+      <span class="mi-name">{{ iss.name }}</span>
+      <span class="mi-st st-operational">{{ st['operational'] }}</span>
+    </div>
+    <dl class="mi-dl">
+      <dt>{{ lang['mi_launched']|default('Launched') }}</dt><dd>{{ iss.ts|date(df) }} · {{ iss.site }} (Zarya)</dd>
+      <dt>{{ lang['mi_in_orbit_for']|default('In orbit') }}</dt><dd>{{ iss.years }} {{ lang['mi_years']|default('years') }}</dd>
+      <dt>{{ lang['iss_crewed']|default('Crewed since') }}</dt><dd>{{ iss.crewed_ts|date(df) }}</dd>
+      <dt>NORAD / COSPAR</dt><dd>{{ iss.norad }} / {{ iss.cospar }}</dd>
+      <dt>{{ lang['mi_sig_orbit']|default('Orbit') }}</dt><dd>≈ 420 km, 51.6°, ≈ 93 min</dd>
+      <dt>{{ lang['iss_calls']|default('Callsigns') }}</dt><dd>RS0ISS · NA1SS</dd>
+    </dl>
+    <p class="mi-note">{{ lang['iss_n_deorbit']|default('Its partners plan to fly it until 2030 and then bring it down into the Pacific Ocean with a SpaceX deorbit vehicle.') }}</p>
+    {% if map_on %}<a class="mi-link" href="/satellite"><i class="fas fa-globe-europe"></i> {{ lang['mi_show_map']|default('Where is it now?') }} &rsaquo;</a>{% endif %}
+  </div>
+  <section>
+    <h3 class="mi-h3">{{ lang['iss_radio']|default('Its amateur radio') }}</h3>
+    <dl class="mi-dl mi-box">
+      <dt>{{ lang['iss_r_sstv']|default('SSTV pictures') }}</dt><dd>437.550 MHz FM · Robot 36 <span class="mi-dim">(2026)</span><br>145.800 MHz FM · PD120 <span class="mi-dim">(2025 &amp; before)</span></dd>
+      <dt>{{ lang['iss_r_here']|default('This station records') }}</dt><dd><b>{{ iss.freq }} MHz</b></dd>
+      <dt>{{ lang['iss_r_rep']|default('Voice repeater') }}</dt><dd>↑ 145.990 MHz (67 Hz) · ↓ 437.800 MHz</dd>
+      <dt>{{ lang['iss_r_aprs']|default('APRS packet') }}</dt><dd>145.825 MHz <span class="mi-dim">(437.825 MHz)</span></dd>
+      <dt>{{ lang['iss_r_voice']|default('Crew voice') }}</dt><dd>↓ 145.800 MHz · ↑ 145.200 MHz <span class="mi-dim">(Region 1)</span></dd>
+    </dl>
+    <p class="mi-note">{{ lang['iss_n_radio']|default('The Service Module radio that sends the SSTV pictures was out from November 2025; ARISS has been testing it since, with APRS on 437.825 MHz.') }}</p>
+  </section>
+</div>
+<h3 class="mi-h3">{{ lang['iss_events']|default('SSTV events this year') }}</h3>
+<ol class="mi-list">
+  {% for e in iss.events %}
+    <li class="{{ e.past ? 'st-retired' : 'st-planned' }}">
+      <span class="mi-when">{{ e.from_ts|date('d/m') }}–{{ e.to_ts|date(df) }}</span>
+      <span class="mi-what">
+        <span class="mi-name">ARISS {{ e.name }}</span>
+        <span class="mi-st st-{{ e.past ? 'retired' : 'operational' }}">{{ e.freq }} MHz · {{ e.mode }}</span>
+        {% if e.note is defined %}<span class="mi-note">{{ lang[e.note]|default('Sources differ on the frequency.') }}</span>{% endif %}
+      </span>
+    </li>
+  {% endfor %}
+</ol>
+<p class="mi-note"><i class="fas fa-info-circle"></i> {{ lang['iss_next']|default('The next event is not announced yet. ARISS announces them a few weeks ahead on ariss.org and its social media; set iss_sstv_frequency to match.') }}</p>
+{% endif %}
+
 {# ---- sources ---- #}
 <h2 class="mi-h">{{ lang['mi_sources']|default('Sources') }}</h2>
 <ul class="mi-sources">
   {% for src in sources %}<li><a href="{{ src[1] }}" rel="noopener" target="_blank">{{ src[0] }}</a></li>{% endfor %}
+  {% if iss %}{% for src in iss.sources %}<li><a href="{{ src[1] }}" rel="noopener" target="_blank">{{ src[0] }}</a></li>{% endfor %}{% endif %}
 </ul>
 {% endblock %}

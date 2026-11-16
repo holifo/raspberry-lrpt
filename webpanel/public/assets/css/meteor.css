@@ -75,3 +75,11 @@ html[data-theme="dark"] .st-planned.mi-st { color: #7fb8ec; border-color: #7fb8e
   .mi-tl, .mi-legend { display: none; }
   .mi-list li { grid-template-columns: 86px minmax(0, 1fr); gap: 8px; }
 }
+
+/* Sat info: jump links, section heads, the ISS card (an extra, in violet) */
+.mi-jump { display: flex; gap: 14px; margin: -4px 0 8px; font-size: .9rem; }
+.mi-jump a { color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor; }
+.mi-h1 { font-size: 1.25rem; margin-top: 28px; padding-top: 4px; border-top: 1px solid var(--pl-line); }
+.mi-h1:first-of-type { border-top: 0; margin-top: 8px; }
+.mi-h3 { font-size: 1rem; font-weight: 600; margin: 18px 0 8px; }
+.mi-card.sat-iss { box-shadow: inset 4px 0 0 var(--iss); }

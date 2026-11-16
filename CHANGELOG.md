@@ -1,5 +1,14 @@
 # Changelog
 
+## Raspberry-LRPT v1.27.0 (2026-11-16)
+
+- **The Meteor-M tab is now "Sat info"** (still at `/meteor`, short label "Info" on phones), with
+  the ISS added under the Meteor-M series as an extra: its card (launch, years in orbit, crewed
+  since, NORAD/COSPAR, orbit, callsigns RS0ISS/NA1SS, the planned 2030 deorbit, a link to the map),
+  its amateur radio (SSTV on 437.550 MHz Robot 36 or 145.800 MHz PD120, the frequency this station
+  records, the voice repeater, APRS and crew voice), the year's ARISS SSTV events, and the sources.
+  The ISS part shows only with `iss_sstv` on. All texts in the nine languages.
+
 ## Raspberry-LRPT v1.26.0 (2026-11-16)
 
 - **ISS SSTV on 70 cm, in Robot 36.** ARISS's 2026 events (April, May, October) sent their pictures

@@ -31,8 +31,9 @@ ARISS events. Made by holifo (SV5QNF).
   - **Satellites** (`/satellite`): live ground-track map (full screen, zoom), the selected
     satellite's details (position, look angles, next pass, orbit) and the coming passes; tap a
     pass to see its track.
-  - **Meteor-M** (`/meteor`): the series at a glance: the satellites working now, every launch and
-    the planned ones (M2-5, M2-6, Meteor-MP …), the LRPT signal and the instruments.
+  - **Sat info** (`/meteor`): the Meteor-M series at a glance (the satellites working now, every
+    launch and the planned ones, the LRPT signal and the instruments) and, as an extra, the ISS:
+    its orbit, its amateur radio frequencies and the year's ARISS SSTV events.
   - **Captures:** image grid per pass with a zoomable viewer.
   - **Daily map** (`/daily`): every pass of a day projected onto one map of the region, one for the
     daytime passes and one for the night (SatDump's projection tool), plus a time-lapse of the
