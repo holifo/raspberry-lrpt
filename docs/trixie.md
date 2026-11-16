@@ -10,14 +10,16 @@ install picks the right package names for each:
 | ncurses headers | `libncurses-dev` | `libncurses-dev` |
 | RTL-SDR driver | RTL-SDR Blog packages | RTL-SDR Blog packages |
 | Image label | Pillow | Pillow |
-| SatDump 1.2.3 | in `software/` | in `software/` for 64-bit PCs (amd64); built once on a Pi (arm64, below) |
+| SatDump 1.2.3 | in `software/` | in `software/` (Pi arm64 and PC amd64) |
 | predict | in `software/` | in `software/` on a Pi; built from source on a 64-bit PC |
 
 ## SatDump on Trixie
 
 The station uses SatDump 1.2.3 from a fixed commit (the same on both releases), as a package in
 `software/` named `satdump_<version>_<release>_<arch>.deb`. When there is none for Trixie yet, the
-install stops at step 1 and says so. Build it once:
+install stops at step 1 and says so. Packages for Trixie on a Pi (arm64) and on a 64-bit PC (amd64)
+are in `software/`, so a Trixie station installs straight away. To build one yourself (another
+SatDump commit, or a new release), run:
 
 ```bash
 cd ~ && git clone https://github.com/holifo/raspberry-lrpt raspberry-lrpt
@@ -35,9 +37,8 @@ the compiler is killed, add swap or run it with `-j 1`.
 Systems built on Debian, such as Linux Mint Debian Edition 7 ("Gigi", on Trixie), count as their
 Debian release: every check uses `DEBIAN_CODENAME` from `/etc/os-release` when it is there.
 
-The amd64 package (for PCs, built on LMDE 7) is already in `software/`. Once one Trixie Pi has
-built the arm64 one, the package can be added to the repository's `software/`
-folder so other Trixie stations install it straight away.
+The arm64 package was built with this script on a Raspberry Pi 3 B+ running Trixie (it took most
+of a day, with `-j 1` at the end), and the amd64 one on LMDE 7.
 
 ## Moving a station from Bookworm to Trixie
 

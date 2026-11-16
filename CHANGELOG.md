@@ -1,5 +1,12 @@
 # Changelog
 
+## Raspberry-LRPT v1.29.1 (2026-11-16)
+
+- **Trixie on a Raspberry Pi now installs straight away:** the SatDump 1.2.3 package for Trixie on
+  arm64 (`software/satdump_1.2.3-0b654b4ec_trixie_arm64.deb`, built on a Raspberry Pi 3 B+ with
+  `build_satdump_deb.sh`) is now in the repository, next to the amd64 one. There is no need to
+  build SatDump on the Pi first any more.
+
 ## Raspberry-LRPT v1.29.0 (2026-11-16)
 
 - **On/off switches on the website:** Admin > Passes now has two switches at the top, one for the

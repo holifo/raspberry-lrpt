@@ -65,7 +65,7 @@ More in [the screenshots](docs/webpanel_screenshots.md).
 ## Requirements
 
 - Raspberry Pi 4 or 5 (or a 64-bit Debian PC) with **Raspberry Pi OS Bookworm or Trixie, 64-bit**.
-  On Trixie the SatDump package is built once on the Pi first ([Trixie](docs/trixie.md)).
+  Both have a ready SatDump package ([Trixie](docs/trixie.md)).
 - A receiver: an RTL-SDR, Airspy (Mini, R2 or HF+ Discovery), HackRF One, SDRplay RSP or MSi2500
   (MiriSDR) receiver ([receivers](docs/receivers.md)), and a 137 MHz antenna such as a QFH.
 
