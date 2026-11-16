@@ -8,6 +8,7 @@ goes wrong. For installing, see the [README](../README.md).
 - [The life of one pass](#the-life-of-one-pass)
 - [The web panel](#the-web-panel)
 - [The daily map](#the-daily-map)
+- [Extra: ISS SSTV pictures](#extra-iss-sstv-pictures)
 - [Posting to Discord](#posting-to-discord)
 - [Commands](#commands)
 - [Settings worth knowing](#settings-worth-knowing)
@@ -19,7 +20,8 @@ goes wrong. For installing, see the [README](../README.md).
 ## How the station works
 
 Everything runs by itself. Once a day the station downloads fresh orbits and schedules the passes;
-each pass is then recorded, decoded and published without anyone touching it.
+each pass is then recorded, decoded and published without anyone touching it. As an extra, the
+ISS's passes are scheduled too, between the Meteor passes ([ISS SSTV](#extra-iss-sstv-pictures)).
 
 ```mermaid
 flowchart LR
@@ -170,7 +172,10 @@ top. There are two maps a day:
 - **Passes left out:** a pass with no orbit or corrupt line times (no map drawn) is not added.
 - **Turn it off:** `daily_map: false` in `config/settings.yml`, then run the install.
 
-## ISS SSTV pictures
+## Extra: ISS SSTV pictures
+
+The station is built for the Meteors; the ISS is an extra that uses the receiver while it would
+otherwise be idle, and never at a Meteor pass's expense.
 
 During ARISS events (a few times a year) the ISS sends slow-scan TV pictures: in 2026 on
 437.550 MHz FM in Robot 36, before that on 145.800 MHz FM in PD120. `iss_sstv_frequency` sets

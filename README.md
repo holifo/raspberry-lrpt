@@ -9,8 +9,9 @@
 
 A Raspberry Pi ground station for the **METEOR-M2 3** and **METEOR-M2 4** weather satellites (LRPT,
 137.9 MHz), decoding with **SatDump 1.2.3**. Built on
-[raspberry-noaa-v2](https://github.com/jekhokie/raspberry-noaa-v2) and reworked for METEOR LRPT only.
-Made by holifo (SV5QNF).
+[raspberry-noaa-v2](https://github.com/jekhokie/raspberry-noaa-v2) and reworked for METEOR LRPT.
+**Extra:** between Meteor passes it also catches the slow-scan TV pictures the **ISS** sends during
+ARISS events. Made by holifo (SV5QNF).
 
 ## What it does
 
@@ -21,9 +22,6 @@ Made by holifo (SV5QNF).
 - Draws a spectrogram (waterfall, SNR, decoder lock, elevation), a sky track and an
   elevation/azimuth graph for every pass, and keeps the decoded frames (`.cadu`) of the last 5
   passes for offline re-processing.
-- Between Meteor passes, records the **ISS** on 437.550 MHz (or 145.800 MHz) FM and decodes the **SSTV pictures** it
-  sends during ARISS events (RTL-SDR; on by default; passes with no pictures leave no trace)
-  ([how](docs/iss_sstv.md)).
 - Can post each pass to a Discord channel (message, best images, sky track, link to the
   capture), and earlier captures on request; off until you give it a webhook
   ([how](docs/discord.md)).
@@ -42,6 +40,19 @@ Made by holifo (SV5QNF).
   - **Live log** (`/log`): system dashboard (CPU, temperature, memory, SDR, disk) and the station log.
   - **Admin** (at `/admin/passes`, password protected): delete passes and captures.
   - Live UTC and local clocks, and the station's version in the footer.
+
+### Extra: ISS SSTV pictures
+
+A few times a year, during ARISS events, the International Space Station sends slow-scan TV
+pictures. Between Meteor passes the station records the ISS's passes and decodes them:
+
+- **Frequency:** 437.550 MHz FM by default (ARISS's 2026 events, Robot 36), or 145.800 MHz (PD120);
+  the decoder finds the mode itself and copes with weak, drifting signals.
+- **Meteor always comes first:** an overlapping ISS pass isn't recorded, and a Meteor pass stops an
+  ISS recording that is still running.
+- **On the site:** violet ISS cards on the Captures page (filter chip **ISS**), the ISS on the
+  Satellites map, and Discord posts with the pictures. Passes with no pictures leave no trace.
+- RTL-SDR only; on by default (`iss_sstv`). See [ISS SSTV](docs/iss_sstv.md).
 
 <p align="center">
   <img src="docs/assets/screenshots/passes-dark.jpg" alt="Passes page" width="49%">

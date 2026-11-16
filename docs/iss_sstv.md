@@ -1,4 +1,7 @@
-# ISS SSTV pictures
+# Extra: ISS SSTV pictures
+
+The station is a METEOR-M2 LRPT station; the ISS is an extra that uses the receiver between Meteor
+passes and never takes a Meteor pass's place.
 
 A few times a year, during **ARISS** events, the International Space Station sends slow-scan TV
 (SSTV) pictures, usually a series of twelve, one every few minutes:
