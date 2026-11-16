@@ -62,8 +62,10 @@ scheduled, run `./scripts/schedule.sh -x` afterwards.
 
 - **RTL-SDR only:** the recording uses `rtl_fm`. With another receiver the ISS isn't scheduled
   (the log says so).
-- **Antenna:** a QFH cut for 137 MHz still hears 145.8 MHz, a little weaker; at 437.55 MHz it is
-  much weaker. A 70 cm event may only decode on high passes, unless you add a 70 cm antenna.
+- **Antenna:** a **2 m QFH** (cut for 145.8 MHz) is the antenna this documentation assumes for the
+  ISS: right for 2 m events, and it still receives the Meteors at 137.9 MHz. A QFH cut for
+  137 MHz also hears 145.8 MHz, a little weaker. On 437.55 MHz (70 cm) either QFH is much weaker,
+  so a 70 cm event may only decode on high passes, unless you add a 70 cm antenna.
 
 - **Which frequency:** ARISS announces each event on [ariss.org](https://www.ariss.org/), the
   [ARISS SSTV gallery](https://ariss-usa.org/ARISS_SSTV/) and its social media. Set
