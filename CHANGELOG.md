@@ -1,5 +1,13 @@
 # Changelog
 
+## Raspberry-LRPT v1.30.1 (2026-11-16)
+
+- **Fix: the SDRplay install failed** at "SDRplay API installed" with
+  *cd: /tmp/sdrplay_api: No such file or directory*. SDRplay's 3.15.2 installer did not unpack
+  with `--noexec --target`. It is now unpacked with `--tar xf` (the way the Arch Linux package
+  does it), with the old way as a fallback. The library is found wherever it lands, and if both
+  ways fail the install shows the installer's own message and what it unpacked.
+
 ## Raspberry-LRPT v1.30.0 (2026-11-16)
 
 - **"About this software" on the Sat info page:** a box at the bottom (with an "About" jump link at
