@@ -80,7 +80,7 @@
 {% endblock %}
 
 {% block body %}
-{% set sat_colours = {'METEOR-M2 3': 'm23', 'METEOR-M2 4': 'm24'} %}
+{% set sat_colours = {'METEOR-M2 3': 'm23', 'METEOR-M2 4': 'm24', 'ISS': 'iss'} %}
 {% set now_s = 'now'|date('U') %}
 {% set today = now_s|date('Y-m-d') %}
 {% set tomorrow = (now_s + 86400)|date('Y-m-d') %}
@@ -144,7 +144,7 @@
               <i class="st-live"></i>
             {% endif %}
           </span>
-          <span class="c-sat"><span class="sat-dot"></span><span class="sat-prefix">METEOR-</span>{{ short }}</span>
+          <span class="c-sat"><span class="sat-dot"></span>{% if short != p.sat_name %}<span class="sat-prefix">METEOR-</span>{% endif %}{{ short }}</span>
           <span class="c-time">
             <span class="t-main">{{ p.pass_start|date('H:i') }}<span class="t-end">&ndash;{{ p.pass_end|date('H:i') }}</span></span>
             <span class="t-dur">{{ mins }} {{ lang['unit_min']|default('min') }}</span>
@@ -169,6 +169,7 @@
   <div class="pass-legend">
     <span><span class="sat-dot sat-m23"></span>M2 3</span>
     <span><span class="sat-dot sat-m24"></span>M2 4</span>
+    {% if constant('Config\\Config::ISS_SSTV') %}<span title="{{ lang['iss_sstv_hint']|default('ISS slow-scan TV pictures, 145.800 MHz FM (ARISS events)') }}"><span class="sat-dot sat-iss"></span>ISS SSTV</span>{% endif %}
     <span><span class="elev-bar low mini"><span style="width:60%"></span></span>{{ lang['low_pass']|default('under 30°') }}</span>
     <span><i class="fas fa-sun"></i> / <i class="fas fa-moon"></i> {{ lang['day_night']|default('day / night images') }}</span>
     <span class="legend-tip">{{ lang['tap_pass_hint']|default('Tap a pass to show it on the map') }}</span>

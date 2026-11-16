@@ -58,6 +58,16 @@
   register: pip_install
   changed_when: "'Successfully installed' in pip_install.stdout"
 
+# ISS SSTV: sstv_decode.py decodes the ISS's PD modes itself; this package adds the other SSTV
+# modes (Robot, Martin, Scottie). Wheels exist for arm64 and amd64 only; --no-deps keeps
+# Debian's numpy and Pillow.
+- name: SSTV decoder package (pip)
+  command: pip3 install sstv==0.2.0 --no-deps --break-system-packages
+  register: sstv_install
+  changed_when: "'Successfully installed' in sstv_install.stdout"
+  failed_when: false
+  when: system_architecture != 'armhf'
+
 # predict: the bundled packages, except on a 64-bit PC with a release after Bookworm, where the
 # bundled amd64 package (2.2.3) needs ncurses 5, which Trixie doesn't have. There it is built from
 # its author's repository (predict 2.2.5) into a .deb.

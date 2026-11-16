@@ -193,5 +193,9 @@ return array(
   "lv_decoding" => "Decoding",
   "lv_no_signal" => "No lock yet",
   "lv_peak" => "peak",
+  "iss_sstv_hint" => "ISS slow-scan TV pictures, 145.800 MHz FM (ARISS events)",
+  "lg_sstv" => "SSTV: slow-scan TV pictures the ISS sends on 145.800 MHz FM during ARISS events (usually PD120)",
+  "sstv_note" => "Slow-scan TV pictures sent by the International Space Station on 145.800 MHz FM during an ARISS event, decoded by this station.",
+  "recording_hint_wav" => "FM audio of the pass, for decoding again with any SSTV program",
 );
 ?>

@@ -116,9 +116,26 @@ else
   log "Not updating local copies of TLE files from source" "INFO"
 fi
 
-# publish the Meteor TLEs for the web panel's ground-track map (Passes view)
+# ISS SSTV (iss_sstv): the ISS's orbit is in CelesTrak's "stations" list. Its name line is
+# written as plain "ISS" (CelesTrak says "ISS (ZARYA)"), so file names and predict stay simple.
+# A failed download keeps the previous orbit; the ISS orbit changes with every reboost.
+ISS_TLE="${LRPT_HOME}/tmp/iss.tle"
+if [ "$ISS_SSTV" == "true" ] && { [ "${update_tle}" == "1" ] || [ ! -s "$ISS_TLE" ]; }; then
+  iss_tmp=$(mktemp)
+  if wget -q -T 30 "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle" -O "$iss_tmp" >> $LRPT_LOG 2>&1 &&
+     sed -n '2p' "$iss_tmp" | grep -q '^1 25544'; then
+    { echo "ISS"; sed -n '2,3p' "$iss_tmp"; } | tr -d '\r' > "$ISS_TLE"
+    log "ISS orbit updated" "INFO"
+  else
+    log "ISS orbit download failed - keeping the previous one" "WARN"
+  fi
+  rm -f "$iss_tmp"
+fi
+
+# publish the TLEs for the web panel's ground-track map (Satellites tab); the ISS goes on it too
 if [ -f "${TLE_OUTPUT}" ] && [ -d "${WEB_HOME}/App/Static" ]; then
-  cp "${TLE_OUTPUT}" "${WEB_HOME}/App/Static/meteor.tle" >> $LRPT_LOG 2>&1 ||
+  { cat "${TLE_OUTPUT}"; [ "$ISS_SSTV" == "true" ] && [ -s "$ISS_TLE" ] && cat "$ISS_TLE"; } \
+    > "${WEB_HOME}/App/Static/meteor.tle" 2>> $LRPT_LOG ||
     log "Could not copy TLE file for the web panel map" "WARN"
 fi
 
@@ -171,6 +188,16 @@ fi
 if [ "$METEOR_M2_4_SCHEDULE" == "true" ]; then
   log "Scheduling Meteor-M2 4 captures..." "INFO"
   $LRPT_HOME/scripts/schedule_captures.sh "METEOR-M2 4" "receive_meteor.sh" $TLE_OUTPUT $start_time_ms $end_time_ms >> $LRPT_LOG 2>&1
+fi
+if [ "$ISS_SSTV" == "true" ]; then
+  if [ "$RECEIVER_TYPE" != "rtlsdr" ]; then
+    log "ISS SSTV needs an RTL-SDR (rtl_fm) - not scheduling ISS passes with ${RECEIVER_TYPE}" "WARN"
+  elif [ -s "$ISS_TLE" ]; then
+    log "Scheduling ISS SSTV captures..." "INFO"
+    $LRPT_HOME/scripts/schedule_captures.sh "ISS" "receive_iss.sh" $ISS_TLE $start_time_ms $end_time_ms >> $LRPT_LOG 2>&1
+  else
+    log "No ISS orbit yet - ISS passes not scheduled" "WARN"
+  fi
 fi
 log "Done scheduling jobs!" "INFO"
 

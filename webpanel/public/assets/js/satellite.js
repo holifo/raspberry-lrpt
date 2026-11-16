@@ -93,7 +93,9 @@
   var tr = window.tr || function (k, d) { return d; };
   var infoBody = document.getElementById('si-body');
   var tabs = Array.prototype.slice.call(document.querySelectorAll('.si-tab'));
-  var DOWNLINK = { 'METEOR-M2 3': '137.900 MHz LRPT', 'METEOR-M2 4': '137.900 MHz LRPT' };  // scripts/common.sh
+  var DOWNLINK = { 'METEOR-M2 3': '137.900 MHz LRPT', 'METEOR-M2 4': '137.900 MHz LRPT',
+                   'ISS': '145.800 MHz FM (SSTV, ARISS events)' };  // scripts/common.sh
+  var COLOUR = { 'M2 3': 'm23', 'M2 4': 'm24', 'ISS': 'iss' };
   var lastState = null;
 
   function pick(sat) {
@@ -162,7 +164,7 @@
     });
     if (!s) { return; }
     var o = s.orbit, html = '';
-    html += '<div class="si-name sat-' + (s.short === 'M2 4' ? 'm24' : 'm23') + '"><span class="sat-dot"></span>' + esc(s.name) +
+    html += '<div class="si-name sat-' + (COLOUR[s.short] || 'm23') + '"><span class="sat-dot"></span>' + esc(s.name) +
       (s.inRange ? '<span class="si-badge on">' + esc(T.in_range || 'In range') + '</span>'
                  : '<span class="si-badge">' + esc(T.below || 'Below the horizon') + '</span>') + '</div>';
     html += '<dl>';

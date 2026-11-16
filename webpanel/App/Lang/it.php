@@ -312,5 +312,9 @@ return array(
   "lv_decoding" => "Decodifica",
   "lv_no_signal" => "Non ancora agganciato",
   "lv_peak" => "picco",
+  "iss_sstv_hint" => "Immagini SSTV della ISS, 145,800 MHz FM (eventi ARISS)",
+  "lg_sstv" => "SSTV: immagini TV a scansione lenta che la ISS trasmette su 145,800 MHz FM durante gli eventi ARISS (di solito PD120)",
+  "sstv_note" => "Immagini TV a scansione lenta inviate dalla Stazione spaziale internazionale su 145,800 MHz FM durante un evento ARISS, decodificate da questa stazione.",
+  "recording_hint_wav" => "Audio FM del passaggio, da decodificare di nuovo con qualsiasi programma SSTV",
 );
 ?>

@@ -31,6 +31,11 @@ fi
 if [ "$OBJ_NAME" == "METEOR-M2 4" ]; then
   SAT_MIN_ELEV=$METEOR_M2_4_SAT_MIN_ELEV
 fi
+if [ "$OBJ_NAME" == "ISS" ]; then
+  SAT_MIN_ELEV=$ISS_SSTV_MIN_ELEV
+  # iss_sstv_dates: "YYYY-MM-DD YYYY-MM-DD" (local days, both included); empty = every day
+  read -r iss_from iss_to <<< "${ISS_SSTV_DATES}"
+fi
 
 # come up with prediction start/end timings for pass
 predict_start=$($PREDICT -t $TLE_FILE -p "${OBJ_NAME}" "${START_TIME_MS}" | head -1)
@@ -63,6 +68,13 @@ while [ "$(date --date="@${end_epoch_time}" +"%s")" -le "${END_TIME_MS}" ]; do
         log "Not scheduling Meteor-M2 4 with START TIME $start_epoch_time because $START_SUN_ELEV is below configured minimum sun elevation $METEOR_M2_4_SCHEDULE_SUN_MIN_ELEV" "INFO"
         schedule_enabled_by_sun_elev=0
       fi
+  fi
+
+  if [ "$OBJ_NAME" == "ISS" ] && [ -n "$iss_from" ]; then
+    pass_day=$(date -d "@$start_epoch_time" +%F)
+    if [[ "$pass_day" < "$iss_from" || "$pass_day" > "$iss_to" ]]; then
+      schedule_enabled_by_sun_elev=0       # outside the ARISS event's dates
+    fi
   fi
 
   # schedule capture if elevation is above configured minimum

@@ -54,6 +54,12 @@ METEOR_M2_4_80K_INTERLEAVING={{ meteor_m2_4_80k_interleaving|lower }}
 # Memory and Cleanup
 STORAGE={{ storage }}
 KEEP_RECORDINGS={{ keep_recordings }}
+
+# ISS SSTV (ARISS events)
+ISS_SSTV={{ iss_sstv|default(true)|lower }}
+ISS_SSTV_DATES="{{ iss_sstv_dates|default('') }}"
+ISS_SSTV_MIN_ELEV={{ iss_sstv_min_elevation|default(20)|int }}
+ISS_SSTV_GAIN={{ iss_sstv_gain|default(30) }}
 DAILY_MAP={{ daily_map|lower }}
 MAP_CAPITALS={{ map_capitals|lower }}
 

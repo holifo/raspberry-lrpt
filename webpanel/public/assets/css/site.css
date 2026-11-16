@@ -7,6 +7,9 @@
   --m24: #22a99c;        /* METEOR-M2 4, teal (map: #4fd1c5) */
   --m24-bg: #d9f5f2;
   --m24-text: #0f6b62;
+  --iss: #7c5cd6;        /* ISS SSTV, violet (map: #a78bfa) */
+  --iss-bg: #ece6fb;
+  --iss-text: #4b2fa3;
   --pl-line: #e3e7ec;
   --pl-dim: #6b7785;
   --pl-faint: #9aa5b1;
@@ -235,3 +238,13 @@ html.fs-lock, html.fs-lock body { overflow: hidden; }
   .cap-sum { width: 100%; margin-inline-start: 20px; gap: 10px; }
   .cap-peek img { height: 36px; width: 48px; }
 }
+
+/* ISS SSTV (ARISS events): the same components in violet */
+.sat-iss .sat-chip, .sat-chip.sat-iss { background: var(--iss-bg); color: var(--iss-text); }
+.sat-iss .sat-dot, .sat-dot.sat-iss, .sat-dot.iss { background: var(--iss); }
+.sat-iss .elev-bar span { background: var(--iss); }
+.sat-iss .elev-bar.low span { background: var(--pl-low); }
+a.cap-card.sat-iss:hover { border-color: var(--iss); }
+.sstv-count { color: var(--iss-text); font-weight: 600; }
+.sstv-note { margin: 0 0 12px; padding: 8px 12px; border-radius: 8px; background: var(--iss-bg); color: var(--iss-text); font-size: .9rem; }
+.sstv-note a { color: inherit; text-decoration: underline; }

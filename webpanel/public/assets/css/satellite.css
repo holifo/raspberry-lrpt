@@ -94,3 +94,6 @@ div#meteor-map iframe { border: 0; width: 100%; height: 100%; display: block; }
   div#meteor-map.sat-map { height: clamp(340px, 56vw, 70vh); }
   .sat-passes { overflow: visible; }
 }
+
+.si-tab.sat-iss.active { border-bottom-color: var(--iss); }
+.sat-pass.sat-iss.selected { box-shadow: inset 3px 0 0 var(--iss); }

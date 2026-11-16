@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block body %}
-{% set sat_colours = {'METEOR-M2 3': 'm23', 'METEOR-M2 4': 'm24'} %}
+{% set sat_colours = {'METEOR-M2 3': 'm23', 'METEOR-M2 4': 'm24', 'ISS': 'iss'} %}
 {% set now_s = 'now'|date('U') %}
 {% set today = now_s|date('Y-m-d') %}
 {% set tomorrow = (now_s + 86400)|date('Y-m-d') %}
@@ -35,6 +35,7 @@
     <div class="si-tabs" role="tablist">
       <button type="button" class="si-tab sat-m23" data-sat="METEOR-M2 3" role="tab"><span class="sat-dot"></span>M2 3</button>
       <button type="button" class="si-tab sat-m24" data-sat="METEOR-M2 4" role="tab"><span class="sat-dot"></span>M2 4</button>
+      {% if constant('Config\\Config::ISS_SSTV') %}<button type="button" class="si-tab sat-iss" data-sat="ISS" role="tab"><span class="sat-dot"></span>ISS</button>{% endif %}
     </div>
     <div class="si-body" id="si-body">
       <div class="si-wait">{{ lang['loading_map']|default('Loading map…') }}</div>

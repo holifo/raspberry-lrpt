@@ -170,6 +170,24 @@ top. There are two maps a day:
 - **Passes left out:** a pass with no orbit or corrupt line times (no map drawn) is not added.
 - **Turn it off:** `daily_map: false` in `config/settings.yml`, then run the install.
 
+## ISS SSTV pictures
+
+During ARISS events (a few times a year) the ISS sends slow-scan TV pictures on 145.800 MHz FM.
+Between Meteor passes the station records the ISS's passes above 20° with `rtl_fm` and decodes the
+pictures (`scripts/receive_iss.sh`). Meteor always has priority: an overlapping ISS pass isn't
+scheduled, an ISS recording ends before the next Meteor pass, and a Meteor pass stops an ISS
+recording that is still running. It is on by default
+(`iss_sstv: true`), needs an RTL-SDR, and a pass with no pictures leaves nothing behind.
+
+- **Where to see them:** violet **ISS** cards on the Captures page (filter chip **ISS**), each with
+  its pictures (`SSTV 1`, `SSTV 2`, …), the sky track and the recording (`.wav`). ISS passes are in
+  the pass list in violet, and the Satellites tab shows the ISS on the map with its own tab.
+- **Only during an event:** set `iss_sstv_dates: "2026-12-01 2026-12-04"` (first and last day), run
+  the install, then `./scripts/schedule.sh -x`.
+- **Turn it off:** `iss_sstv: false`, run the install, then `./scripts/schedule.sh -x`.
+
+More in [ISS SSTV](iss_sstv.md).
+
 ## Posting to Discord
 
 The station can post every pass that made images to a Discord channel. It is off until you give it
@@ -276,6 +294,8 @@ web login, Discord webhook) are in `config/settings.local.yml` and win over it. 
 | `sdr_extra_options` | | More SatDump options for every capture, e.g. `--amp` (HackRF) or `--lna_gain 20` (SDRplay) |
 | `station_title` | | Name in the station bar |
 | `lang_setting` | en | Language for visitors who haven't picked one |
+| `iss_sstv` | true | Record the ISS's passes and decode its SSTV pictures (RTL-SDR; [ISS SSTV](iss_sstv.md)) |
+| `iss_sstv_dates`, `iss_sstv_min_elevation`, `iss_sstv_gain` | "", 20, 30 | Only between two dates (empty = always), lowest pass, gain |
 | `discord_webhook` | | Post each pass to Discord: asked by the install, kept in `settings.local.yml`; empty = off ([Discord](discord.md)) |
 | `discord_site_url`, `discord_images`, `discord_sky_track` | , 2, true | Link to the capture in the post, how many images, the sky track |
 

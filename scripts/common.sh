@@ -36,7 +36,7 @@ SOX="/usr/bin/sox"
 GMIC="/usr/bin/gmic"
 IDENTIFY="/usr/bin/identify"
 PREDICT="/usr/bin/predict"
-RTL_FM="/usr/local/bin/rtl_fm"
+RTL_FM="$(command -v rtl_fm || echo /usr/bin/rtl_fm)"
 SQLITE3="/usr/bin/sqlite3"
 METEORDEMOD="/usr/local/bin/meteordemod"
 SATDUMP="/usr/bin/satdump"
@@ -46,10 +46,15 @@ SCRIPTS_DIR="${LRPT_HOME}/scripts"
 AUDIO_PROC_DIR="${SCRIPTS_DIR}/audio_processors"
 IMAGE_PROC_DIR="${SCRIPTS_DIR}/image_processors"
 
+# a capture script that is running (its process, not an editor or a shell that mentions it)
+METEOR_RUNNING='^(/usr)?/bin/bash [^ ]*/receive_meteor\.sh '
+ISS_RUNNING='^(/usr)?/bin/bash [^ ]*/receive_iss\.sh '
+
 # frequency ranges for objects
 METEOR_M2_3_FREQ="137.9000"
 METEOR_M2_4_FREQ="137.9000"
 ELEKTRO_L3_FREQ="1691.0000"
+ISS_FREQ="145.8000"          # ARISS SSTV downlink (FM)
 
 # the pass's start time: set once, by the script that starts the pass (receive_meteor.sh,
 # reprocess_meteor.sh); helpers that source this file later keep it
@@ -114,7 +119,7 @@ work_dir() {
 # and memory a live decode needs.
 pass_clear() {
   local now; now=$(date +%s)
-  pgrep -f "receive_meteor.sh" >/dev/null 2>&1 && return 1
+  pgrep -f "^(/usr)?/bin/bash [^ ]*/receive_(meteor|iss)\.sh " >/dev/null 2>&1 && return 1
   [ -n "$($SQLITE3 "$DB_FILE" "SELECT 1 FROM predict_passes WHERE is_active = 1
         AND pass_start < $((now + ${1:-900})) AND pass_end > $now LIMIT 1;" 2>/dev/null)" ] && return 1
   return 0
@@ -145,7 +150,10 @@ discord_pass() {
   local base=$1 day=$2 sat=$3 start=$4 elev=$5 dir=$6 secs=$7 id=$8 wait=$9
   [ -n "${DISCORD_WEBHOOK}" ] || return 1
   local order day_word name f
-  if [ "$day" == "1" ]; then
+  if [ "$sat" == "ISS" ]; then
+    order=$(cd "${IMAGE_OUTPUT}" && ls "${base}"-SSTV_*.jpg 2>/dev/null | sed "s/^${base}-//; s/\.jpg$//" | sort -t_ -k2n | tr '\n' ' ')
+    day_word="SSTV pictures"
+  elif [ "$day" == "1" ]; then
     order="${METEOR_DAY_THUMBNAIL} ${METEOR_DAY_ENHANCEMENTS}"; day_word="day pass"
   else
     order="${METEOR_NIGHT_THUMBNAIL} ${METEOR_NIGHT_ENHANCEMENTS}"; day_word="night pass"

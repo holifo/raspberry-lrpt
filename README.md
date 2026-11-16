@@ -21,6 +21,9 @@ Made by holifo (SV5QNF).
 - Draws a spectrogram (waterfall, SNR, decoder lock, elevation), a sky track and an
   elevation/azimuth graph for every pass, and keeps the decoded frames (`.cadu`) of the last 5
   passes for offline re-processing.
+- Between Meteor passes, records the **ISS** on 145.800 MHz FM and decodes the **SSTV pictures** it
+  sends during ARISS events (RTL-SDR; on by default; passes with no pictures leave no trace)
+  ([how](docs/iss_sstv.md)).
 - Can post each pass to a Discord channel (message, best images, sky track, link to the
   capture), and earlier captures on request; off until you give it a webhook
   ([how](docs/discord.md)).
@@ -127,7 +130,7 @@ processes number 2. `./scripts/daily_map.sh --all` redraws the daily maps that c
 - [Annotation](docs/annotation.md), [pruning](docs/pruning.md), [database backups](docs/db_backups.md),
   [TLS for the web panel](docs/tls_webserver.md), [posting to Discord](docs/discord.md),
   [receivers](docs/receivers.md), [upgrading from raspberry-noaa-v2](docs/upgrade_from_noaa_v2.md),
-  [Trixie](docs/trixie.md), [the image label](docs/annotation.md),
+  [Trixie](docs/trixie.md), [the image label](docs/annotation.md), [ISS SSTV](docs/iss_sstv.md),
   [troubleshooting](docs/troubleshooting.md)
 
 ## Licence

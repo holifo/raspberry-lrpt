@@ -19,6 +19,8 @@ def delete_job(target_datetime_str):
 
     # Loop through the at jobs and find the ones scheduled around the target datetime
     for line in atq_lines:
+        if not line.strip():
+            continue
         job_id, job_datetime = line.split(None, 1)
 
         # Extract the full date and time string

@@ -312,5 +312,9 @@ return array(
   "lv_decoding" => "正在解码",
   "lv_no_signal" => "尚未锁定",
   "lv_peak" => "峰值",
+  "iss_sstv_hint" => "国际空间站 SSTV 图像，145.800 MHz FM（ARISS 活动）",
+  "lg_sstv" => "SSTV：国际空间站在 ARISS 活动期间于 145.800 MHz FM 发送的慢扫描电视图像（通常为 PD120）",
+  "sstv_note" => "国际空间站在 ARISS 活动期间于 145.800 MHz FM 发送的慢扫描电视图像，由本站解码。",
+  "recording_hint_wav" => "本次过境的 FM 音频，可用任何 SSTV 软件重新解码",
 );
 ?>

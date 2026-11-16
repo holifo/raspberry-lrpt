@@ -312,5 +312,9 @@ return array(
   "lv_decoding" => "Dekodiert",
   "lv_no_signal" => "Noch kein Lock",
   "lv_peak" => "Spitze",
+  "iss_sstv_hint" => "SSTV-Bilder der ISS, 145,800 MHz FM (ARISS-Aktionen)",
+  "lg_sstv" => "SSTV: Slow-Scan-TV-Bilder, die die ISS während ARISS-Aktionen auf 145,800 MHz FM sendet (meist PD120)",
+  "sstv_note" => "Slow-Scan-TV-Bilder der Internationalen Raumstation auf 145,800 MHz FM während einer ARISS-Aktion, von dieser Station dekodiert.",
+  "recording_hint_wav" => "FM-Audio des Überflugs, zum erneuten Dekodieren mit jedem SSTV-Programm",
 );
 ?>

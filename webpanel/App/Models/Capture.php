@@ -19,6 +19,7 @@ class Capture extends \Lib\Model {
                                              file_path,
                                              daylight_pass,
                                              sat_type,
+                                             img_count,
                                              gain,
                                              predict_passes.sat_name,
                                              predict_passes.max_elev,
@@ -83,7 +84,7 @@ class Capture extends \Lib\Model {
       if (in_array($e, $enhancements) || in_array($e, ['-website-thumbnail.jpg', '-polar-azel.jpg', '-histogram.jpg'])) { continue; }
       $others[] = $e;
     }
-    sort($others);
+    sort($others, SORT_NATURAL);    # SSTV_2 before SSTV_10
     $enhancements = array_merge($enhancements, $others);
 
     # capture spectrogram if one exists
@@ -150,6 +151,9 @@ class Capture extends \Lib\Model {
   public $recording = [];
   public function getRecording() {
     $file = Config::RECORDING_PATH . '/' . basename((string)$this->image_path) . '.cadu';
+    if (!is_file($file)) {      # ISS SSTV passes keep their FM audio
+      $file = Config::RECORDING_PATH . '/' . basename((string)$this->image_path) . '.wav';
+    }
     if ($this->image_path && is_file($file)) {
       $this->recording = ['name' => basename($file), 'size' => round(filesize($file) / 1048576, 1)];
     }

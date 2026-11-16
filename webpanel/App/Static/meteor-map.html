@@ -121,8 +121,10 @@
 
   var SATS = [
     { name: 'METEOR-M2 3', short: 'M2 3', id: 57166, color: '#f2b33d' },
-    { name: 'METEOR-M2 4', short: 'M2 4', id: 59051, color: '#4fd1c5' }
-  ];
+    { name: 'METEOR-M2 4', short: 'M2 4', id: 59051, color: '#4fd1c5' },
+    // the ISS for its SSTV pictures (iss_sstv); optional: the map works without its orbit
+    { name: 'ISS', short: 'ISS', id: 25544, color: '#a78bfa', alt: 420, optional: true }
+  ].filter(function (s) { return !s.optional || window.RL1_ISS !== false; });
   var OBS = Object.assign({ lat: 0, lon: 0, min_el: 15 }, window.RL1_OBSERVER || {});
   var PAST_MIN = 30, FUTURE_MIN = 100, STEP_S = 30;   // ground-track window
   var NEXT_PASS_SCAN_H = 24;                          // how far ahead to look for the next pass
@@ -157,7 +159,7 @@
 
   function attachSatrecs(text) {
     var ok = true;
-    SATS.forEach(function (s) { s.satrec = parseTle(text, s.id); if (!s.satrec) { ok = false; } });
+    SATS.forEach(function (s) { s.satrec = parseTle(text, s.id); if (!s.satrec && !s.optional) { ok = false; } });
     return ok;
   }
 
@@ -316,10 +318,11 @@
   }
 
   // ground distance (degrees of arc) at which a satellite is at min_el
-  var RANGE_DEG = (function () {
+  function rangeDeg(alt) {
     var e = OBS.min_el * rad;
-    return (Math.acos(R_EARTH * Math.cos(e) / (R_EARTH + ALT_KM)) - e) / rad;
-  })();
+    return (Math.acos(R_EARTH * Math.cos(e) / (R_EARTH + (alt || ALT_KM))) - e) / rad;
+  }
+  var RANGE_DEG = rangeDeg(ALT_KM);
 
   // sub-solar point (low-precision solar position, good to ~0.1 degree)
   function subSolar(date) {
@@ -520,7 +523,7 @@
       if (!s.satrec) { return; }
       var p = propagate(s.satrec, new Date(now));
       if (!p) { return; }
-      s.footEl.attr('d', path(d3.geoCircle().center([p.lon, p.lat]).radius(RANGE_DEG)()));
+      s.footEl.attr('d', path(d3.geoCircle().center([p.lon, p.lat]).radius(rangeDeg(s.alt))()));
       var xy = toScreen([p.lon, p.lat]);
       var show = xy && xy[0] > -30 && xy[0] < w + 30 && xy[1] > -30 && xy[1] < h + 30;
       [s.dotEl, s.ringEl].forEach(function (el) {

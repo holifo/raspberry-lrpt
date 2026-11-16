@@ -1,5 +1,29 @@
 # Changelog
 
+## Raspberry-LRPT v1.25.0 (2026-11-16)
+
+- **ISS SSTV pictures.** During ARISS events the ISS sends slow-scan TV pictures on 145.800 MHz FM.
+  Between Meteor passes the station now records the ISS's passes (above 20°) with `rtl_fm` and
+  decodes them (`scripts/receive_iss.sh`); a Meteor pass always wins an overlap. On by default;
+  a pass with no pictures leaves nothing behind. RTL-SDR only. See [docs/iss_sstv.md](docs/iss_sstv.md).
+  - **Decoder** (`scripts/image_processors/sstv_decode.py`): for PD120, PD180, PD90 and the other
+    PD modes it locks onto every line's sync pulse and fits their timing, so weak, noisy or
+    drifting passes still give straight, correctly coloured pictures, and a pass that starts
+    mid-picture gives its lower part. Tested through a simulated noisy FM channel with Doppler and
+    clock error. Other modes go to the `sstv` Python package (installed on 64-bit systems).
+  - **Website:** ISS captures are violet cards on the Captures page (filter chip **ISS**, picture
+    count), with the pictures, the sky track, a note about ARISS and the recording (`.wav`). ISS
+    passes are in the pass list in violet; the Satellites tab shows the ISS on the map (its own
+    track and footprint) and has an ISS tab. "Best pass" stays a Meteor pass.
+  - **Settings:** `iss_sstv` (true), `iss_sstv_dates` (only between two dates, e.g. an announced
+    event; empty = every pass), `iss_sstv_min_elevation` (20), `iss_sstv_gain` (30).
+  - **Meteor always has priority:** an overlapping ISS pass is not scheduled (whatever its
+    elevation), an ISS recording ends 20 s before the next Meteor pass (skipped with under a minute
+    left), and a Meteor pass that finds an ISS recording running stops it and takes the SDR.
+  - Discord posts include the ISS's pictures.
+  - `select_best_overlapping_passes.py` no longer fails when `atq` is empty, and the scripts that
+    check for a running capture match only the capture scripts themselves.
+
 ## Raspberry-LRPT v1.24.2 (2026-11-16)
 
 - **Debian-based systems:** the install, the SatDump build script, the upgrade script, the

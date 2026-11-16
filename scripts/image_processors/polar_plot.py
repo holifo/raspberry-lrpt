@@ -44,7 +44,7 @@ TEXT = '#dbe4ee'
 DIM = '#8fa3b8'
 AOS_C = '#5fd38a'
 LOS_C = '#ff6b6b'
-SAT_COLOURS = {'METEOR-M2 3': '#f2b33d', 'METEOR-M2 4': '#4fd1c5'}
+SAT_COLOURS = {'METEOR-M2 3': '#f2b33d', 'METEOR-M2 4': '#4fd1c5', 'ISS': '#a78bfa'}
 DEFAULT_C = '#9fd3ff'
 
 plt.rcParams.update({

@@ -49,6 +49,7 @@ html[data-theme="dark"] .table .thead-light th { background-color: #1c2a3d; colo
 html[data-theme="dark"] {
   --m23: #f2b33d; --m23-bg: rgba(242,179,61,0.16); --m23-text: #f2b33d;
   --m24: #4fd1c5; --m24-bg: rgba(79,209,197,0.16); --m24-text: #4fd1c5;
+  --iss: #a78bfa; --iss-bg: rgba(167,139,250,0.16); --iss-text: #b9a3fb;
   --pl-line: #1f2d40; --pl-dim: #8fa3b8; --pl-faint: #5f7187; --pl-track: #1c2a3d;
   --pl-low: #4a5d74; --pl-hover: #131f30; --pl-card: #0e1826; --rec: #ff6b6b;
 }

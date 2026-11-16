@@ -36,6 +36,8 @@ class Config {
 
   # decoded frames (.cadu) kept for offline re-processing, served at /recordings/
   const RECORDING_PATH = '{{ audio_output }}/meteor';
+  # ISS SSTV (ARISS events): record and show the ISS's passes
+  const ISS_SSTV = {{ 'true' if iss_sstv|default(true) else 'false' }};
 
   # whether to enable satvis visualization
   const ENABLE_SATVIS = '{{ enable_satvis|lower }}';

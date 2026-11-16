@@ -169,6 +169,15 @@ polar_direction=0
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+# Meteor has priority over the ISS (iss_sstv): an ISS recording still holding the SDR is stopped
+# (its pictures so far are still decoded by receive_iss.sh)
+if pgrep -f "$ISS_RUNNING" >/dev/null 2>&1; then
+  log "Stopping the ISS recording: the Meteor pass has priority" "WARN"
+  pkill -f "rtl_fm -f ${ISS_FREQ}M" 2>/dev/null
+  for _ in 1 2 3 4 5 6; do pgrep -f "rtl_fm -f ${ISS_FREQ}M" >/dev/null || break; sleep 0.5; done
+  sleep 1                                  # let the USB device go
+fi
+
 log "Recording ${LRPT_HOME} via $receiver at ${METEOR_FREQUENCY} MHz using SatDump record " "INFO"
 # SatDump's working folder: it writes the frames and ~250 MB of images there while decoding.
 # With storage: sd it is on the RAM disk (when that has room), which spares the SD card.

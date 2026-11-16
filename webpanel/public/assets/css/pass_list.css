@@ -151,3 +151,6 @@ div#satvis { width: 100%; height: 360px; }
 @media (max-width: 575.98px) {
   .live-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+.next-card.sat-iss { border-left-color: var(--iss); }
+.pass-row.sat-iss.selected { box-shadow: inset 3px 0 0 var(--iss); }

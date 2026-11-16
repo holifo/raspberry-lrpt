@@ -133,7 +133,7 @@
     var rowsOfDay = day.querySelectorAll('.pass-row:not(.skipped)'), best = 0, per = {};
     Array.prototype.forEach.call(rowsOfDay, function (r) {
       best = Math.max(best, parseInt(r.dataset.elev, 10) || 0);
-      var c = /sat-(m2[34])/.exec(r.className); c = c ? c[1] : 'other';
+      var c = /sat-(m2[34]|iss)\b/.exec(r.className); c = c ? c[1] : 'other';
       per[c] = (per[c] || 0) + 1;
     });
     var html = rowsOfDay.length + ' ' + tr('passes_lower', 'passes');
@@ -173,7 +173,7 @@
     }
     if (!show) { card.hidden = true; return; }
     card.hidden = false;
-    card.className = 'next-card sat-' + (show.el.classList.contains('sat-m24') ? 'm24' : 'm23') + (live ? ' rec' : '');
+    card.className = 'next-card sat-' + (show.el.classList.contains('sat-m24') ? 'm24' : show.el.classList.contains('sat-iss') ? 'iss' : 'm23') + (live ? ' rec' : '');
     el('next-label').textContent = live ? T.recording : T.next;
     el('next-count').textContent = live ? duration(show.end - now, true) + ' ' + T.left
                                         : tr('in_time', 'in') + ' ' + duration(show.start - now, false);

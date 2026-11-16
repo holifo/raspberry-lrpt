@@ -98,7 +98,8 @@ srv = os.path.join(work, 'srv')
 v = yaml.safe_load(open(os.path.join(repo, 'config/settings.yml')))
 v.update(yaml.safe_load(open(os.path.join(repo, 'ansible/group_vars/all.yml'))))
 v.update(target_user='tester', system_timezone={'stdout': 'Europe/Athens'},
-         raspbian_version={'stdout': os.environ.get('TEST_CODENAME', 'bookworm')})
+         raspbian_version={'stdout': os.environ.get('TEST_CODENAME', 'bookworm')},
+         system_architecture='arm64')
 env = jinja2.Environment(undefined=jinja2.StrictUndefined)
 for _ in range(3):
     for k, val in list(v.items()):
@@ -148,7 +149,26 @@ for i in range(10):
                'pass_start_azimuth, direction, azimuth_at_max) VALUES (?,?,?,?,?,?,?,?)',
                (sat, s, s + 780, [34, 61, 22, 47, 18, 72, 29, 55, 40, 25][i], 1,
                 [12, 190, 340, 165, 20, 200, 350, 170, 15, 185][i], ['Southbound', 'Northbound'][i % 2], [101, 260][i % 2]))
+# ISS SSTV (iss_sstv): two coming ISS passes, and yesterday's pass with two SSTV pictures
+for k, s in enumerate((now + 2 * 3600 + 1200, now + 26 * 3600)):
+    db.execute('INSERT INTO predict_passes (sat_name, pass_start, pass_end, max_elev, is_active, '
+               'pass_start_azimuth, direction, azimuth_at_max) VALUES (?,?,?,?,?,?,?,?)',
+               ('ISS', s, s + 600, [52, 31][k], 1, [240, 300][k], 'Northbound', 180))
 os.makedirs(os.path.join(srv, 'images/thumb'), exist_ok=True)
+iss_ps = now - 86400 - 5000
+db.execute('INSERT INTO predict_passes (sat_name, pass_start, pass_end, max_elev, is_active, '
+           'pass_start_azimuth, direction, azimuth_at_max) VALUES (?,?,?,?,?,?,?,?)',
+           ('ISS', iss_ps, iss_ps + 610, 63, 0, 250, 'Northbound', 170))
+db.execute('INSERT INTO decoded_passes (pass_start, file_path, daylight_pass, sat_type, img_count, gain, '
+           'has_spectrogram, has_pristine, has_polar_az_el, has_polar_direction, has_histogram) '
+           'VALUES (?,?,1,3,2,30,0,0,0,0,0)', (iss_ps, 'ISS-sample'))
+if have_im:
+    for n, grad in ((1, 'gradient:navy-orange'), (2, 'gradient:darkgreen-skyblue')):
+        img = os.path.join(srv, 'images', 'ISS-sample-SSTV_%d.jpg' % n)
+        subprocess.run(['convert', '-size', '640x496', grad, '-gravity', 'north', '-fill', 'white',
+                        '-pointsize', '36', '-annotate', '+0+20', 'ARISS SSTV %d/12' % n, img], check=False)
+        for suffix in ('-SSTV_%d.jpg' % n,) + (('-website-thumbnail.jpg',) if n == 1 else ()):
+            subprocess.run(['convert', img, '-resize', '300x', os.path.join(srv, 'images/thumb', 'ISS-sample' + suffix)], check=False)
 for i in range(6):
     fp = 'METEOR-M2-%d-sample%d' % (3 + i % 2, i)
     ps = now - 86400 * (i + 1)
