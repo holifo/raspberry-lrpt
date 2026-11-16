@@ -42,6 +42,15 @@
           <li class="nav-item {% if page == 'passes' %} active {% endif %}">
             <a class="nav-link" href="/passes">{{ lang['passes'] }}</a>
           </li>
+          {# order (v1.30.3): what's next, the results, the satellites, then the station log #}
+          <li class="nav-item {% if page == 'captures' or page == 'capture'  %} active {% endif %}">
+            <a class="nav-link" href="/captures?page_no=1">{{ lang['captures'] }}</a>
+          </li>
+          {% if constant('Config\\Config::ENABLE_DAILY_MAP') is defined and constant('Config\\Config::ENABLE_DAILY_MAP') == 'true' %}
+          <li class="nav-item {% if page == 'daily' %} active {% endif %}">
+            <a class="nav-link" href="/daily"><span class="nav-long">{{ lang['daily_map']|default('Daily map') }}</span><span class="nav-short">{{ lang['daily_map_short']|default('Map') }}</span></a>
+          </li>
+          {% endif %}
           {% if constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') is defined
               and constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') == 'true' %}
           <li class="nav-item {% if page == 'satellite' %} active {% endif %}">
@@ -51,14 +60,6 @@
           <li class="nav-item {% if page == 'meteor' %} active {% endif %}">
             <a class="nav-link" href="/meteor"><span class="nav-long">{{ lang['nav_meteor']|default('Sat info') }}</span><span class="nav-short">{{ lang['nav_meteor_short']|default('Info') }}</span></a>
           </li>
-          <li class="nav-item {% if page == 'captures' or page == 'capture'  %} active {% endif %}">
-            <a class="nav-link" href="/captures?page_no=1">{{ lang['captures'] }}</a>
-          </li>
-          {% if constant('Config\\Config::ENABLE_DAILY_MAP') is defined and constant('Config\\Config::ENABLE_DAILY_MAP') == 'true' %}
-          <li class="nav-item {% if page == 'daily' %} active {% endif %}">
-            <a class="nav-link" href="/daily"><span class="nav-long">{{ lang['daily_map']|default('Daily map') }}</span><span class="nav-short">{{ lang['daily_map_short']|default('Map') }}</span></a>
-          </li>
-          {% endif %}
           <li class="nav-item {% if page == 'log' %} active {% endif %}">
             <a class="nav-link" href="/log"><span class="nav-long">{{ lang['live_log']|default('Live log') }}</span><span class="nav-short">{{ lang['live_log_short']|default('Log') }}</span></a>
           </li>

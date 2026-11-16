@@ -1,5 +1,12 @@
 # Changelog
 
+## Raspberry-LRPT v1.30.3 (2026-11-17)
+
+- **New top menu order:** Passes · Captures · Daily map · Satellites · Sat info · Live log. What
+  comes next first, then the station's pictures, then the satellites, and the station log last
+  (Captures and Daily map used to come after Satellites and Sat info). On phones the short labels
+  follow the same order: Passes · Captures · Map · Sats · Info · Log.
+
 ## Raspberry-LRPT v1.30.2 (2026-11-16)
 
 - **The checks after a first install no longer report hundreds of false failures.** On a new
