@@ -89,6 +89,8 @@ make package > "$WORK/package.log" 2>&1 || die "make package failed: $WORK/packa
 deb=$(ls "$WORK"/build/satdump*.deb | head -1)
 [ -n "$deb" ] || die "no .deb was made"
 cp "$deb" "$out"
+# SatDump's own dependency list is for older Debian releases (on Trixie apt refuses it)
+"$REPO/scripts/tools/fix_satdump_deb_depends.sh" "$out" > /dev/null || die "could not fix the package's dependencies"
 echo
 echo "Done: $out ($(du -h "$out" | cut -f1))"
 echo "  Package: $(dpkg-deb -f "$out" Package) $(dpkg-deb -f "$out" Version) $(dpkg-deb -f "$out" Architecture)"

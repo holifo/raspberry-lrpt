@@ -28,7 +28,9 @@ cd ~/raspberry-lrpt && ./install_and_upgrade.sh
 ```
 
 `build_satdump_deb.sh` installs the build tools, builds and installs the RTL-SDR Blog driver
-packages, then builds SatDump the way SatDump's own CI does and writes
+packages, then builds SatDump the way SatDump's own CI does, fixes the package's dependency list
+for the release it was built on (`fix_satdump_deb_depends.sh`: SatDump's own list names older HDF5
+packages, which apt refuses on Trixie) and writes
 `software/satdump_1.2.3-0b654b4ec_trixie_arm64.deb`. It takes about an hour on a Raspberry Pi 4 or
 5 and needs about 4 GB of free disk. It builds in `/tmp`, or in `~/.cache` when `/tmp` is a small RAM
 disk (set `TMPDIR` to choose another folder). With less than 8 GB of RAM it builds with 2 jobs; if

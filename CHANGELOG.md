@@ -1,5 +1,17 @@
 # Changelog
 
+## Raspberry-LRPT v1.29.2 (2026-11-16)
+
+- **Fix: the install failed on Trixie** at "Packages and SatDump" with *Dependency is not
+  satisfiable: libhdf5-hl-100t64|libhdf5-hl-100|libhdf5-103|libhdf5-100*. Both Trixie SatDump
+  packages (arm64 and amd64) link to HDF5 1.14, which Trixie ships as `libhdf5-310` and
+  `libhdf5-hl-310`, but their dependency list (copied by SatDump's build from its settings for
+  older releases) named the older packages. The list now names the Trixie ones, plus four
+  libraries SatDump's core links to and the list left out (TIFF, curl, OpenCL, OpenMP). The
+  programs inside the packages are unchanged.
+- `scripts/tools/fix_satdump_deb_depends.sh FILE.deb` does this fix, and `build_satdump_deb.sh`
+  now runs it after building, so a package you build yourself installs too.
+
 ## Raspberry-LRPT v1.29.1 (2026-11-16)
 
 - **Trixie on a Raspberry Pi now installs straight away:** the SatDump 1.2.3 package for Trixie on
