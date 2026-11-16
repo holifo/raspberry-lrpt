@@ -1,5 +1,19 @@
 # Changelog
 
+## Raspberry-LRPT v1.26.0 (2026-11-16)
+
+- **ISS SSTV on 70 cm, in Robot 36.** ARISS's 2026 events (April, May, October) sent their pictures
+  on 437.550 MHz FM in Robot 36, not on 145.800 MHz in PD120. New setting `iss_sstv_frequency`
+  (437.550 by default; 145.800 for a 2 m event); the gain default is now 40.
+- **Robot 36 decoder:** `sstv_decode.py` now also locks onto Robot 36's 9 ms line syncs, tells
+  its alternating colour lines apart by their separator tone (by majority, so a noisy line can't
+  swap the colours), and straightens the slant like the PD decoder. Tested through a simulated
+  70 cm FM channel with ±9 kHz Doppler and clock error: full, correctly coloured pictures down to
+  weak signals, and two pictures two minutes apart in one pass. One recording can hold both
+  families; the decoder finds the mode itself.
+- The website's ISS texts (Passes legend, capture page note, image legend, Satellites details) show
+  the frequency in use.
+
 ## Raspberry-LRPT v1.25.1 (2026-11-16)
 
 - **SatDump for Trixie PCs:** `software/` now has the SatDump 1.2.3 package for Trixie on 64-bit

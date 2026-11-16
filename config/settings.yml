@@ -111,18 +111,21 @@ delete_older_than_n: 30
 keep_recordings: 5
 
 # ISS SSTV: during ARISS events the International Space Station sends slow-scan TV pictures on
-# 145.800 MHz FM. Between Meteor passes the station records the ISS's passes with rtl_fm (RTL-SDR
+# 437.550 MHz FM in Robot 36 (2026's events) or 145.800 MHz FM in PD120. Between Meteor passes the station records the ISS's passes with rtl_fm (RTL-SDR
 # only) and decodes them (scripts/receive_iss.sh); a Meteor pass always wins an overlap. Passes
 # with no pictures (most of the year) leave nothing behind. See docs/iss_sstv.md.
 #   iss_sstv - record the ISS's passes
 #   iss_sstv_dates - only between these dates, "YYYY-MM-DD YYYY-MM-DD" (an ARISS event's dates;
 #                    empty = every pass)
 #   iss_sstv_min_elevation - lowest maximum elevation of a pass worth recording (degrees)
-#   iss_sstv_gain - the RTL-SDR's gain for the ISS (dB; its FM signal is strong)
+#   iss_sstv_frequency - the ISS downlink to record, MHz: 437.550 (70 cm, ARISS's 2026 events) or
+#                        145.800 (2 m, earlier events); the decoder finds the mode itself
+#   iss_sstv_gain - the RTL-SDR's gain for the ISS (dB)
 iss_sstv: true
 iss_sstv_dates: ""
 iss_sstv_min_elevation: 20
-iss_sstv_gain: 30
+iss_sstv_frequency: 437.550
+iss_sstv_gain: 40
 
 # Daily map: every pass of a day projected onto one map of the region around the station,
 # one for daytime passes and one for night-time passes (Daily map page)

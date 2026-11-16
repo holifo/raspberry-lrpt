@@ -1,6 +1,7 @@
 #!/bin/bash
 #
-# Purpose: Record an ISS pass on 145.800 MHz FM and decode the SSTV pictures the ISS sends
+# Purpose: Record an ISS pass on iss_sstv_frequency (437.550 or 145.800 MHz FM) and decode the SSTV
+#          pictures (Robot 36, PD120, …) the ISS sends
 #          during ARISS events (iss_sstv in settings.yml). Scheduled like the Meteor passes
 #          (schedule_captures.sh), with the same arguments:
 #
@@ -67,7 +68,7 @@ bias_args=""
 [ "$METEOR_M2_3_ENABLE_BIAS_TEE" == "-T" ] && bias_args="-T"
 
 log "Recording ISS ${ISS_FREQ} MHz FM for ${CAPTURE_TIME} s (max elevation ${SAT_MAX_ELEVATION}°)" "INFO"
-# 48 kHz wide enough for the FM signal and the ISS's ±3.5 kHz Doppler shift; audio at 11025 Hz
+# 48 kHz: room for the FM signal plus the Doppler shift (±3.5 kHz on 2 m, ±10 kHz on 70 cm); audio 11025 Hz
 timeout "$CAPTURE_TIME" $RTL_FM -f "${ISS_FREQ}M" -M fm -s 48000 -r $RATE -g "$ISS_SSTV_GAIN" -E dc \
   $dev_args $ppm_args $bias_args - > "$RAW" 2>> "$LRPT_LOG"
 size=$(stat -c %s "$RAW" 2>/dev/null || echo 0)

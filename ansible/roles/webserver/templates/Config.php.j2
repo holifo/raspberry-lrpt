@@ -38,6 +38,7 @@ class Config {
   const RECORDING_PATH = '{{ audio_output }}/meteor';
   # ISS SSTV (ARISS events): record and show the ISS's passes
   const ISS_SSTV = {{ 'true' if iss_sstv|default(true) else 'false' }};
+  const ISS_SSTV_FREQ = '{{ '%.3f'|format(iss_sstv_frequency|default(437.55)|float) }}';
 
   # whether to enable satvis visualization
   const ENABLE_SATVIS = '{{ enable_satvis|lower }}';

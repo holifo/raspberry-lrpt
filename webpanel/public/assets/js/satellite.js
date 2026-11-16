@@ -94,7 +94,7 @@
   var infoBody = document.getElementById('si-body');
   var tabs = Array.prototype.slice.call(document.querySelectorAll('.si-tab'));
   var DOWNLINK = { 'METEOR-M2 3': '137.900 MHz LRPT', 'METEOR-M2 4': '137.900 MHz LRPT',
-                   'ISS': '145.800 MHz FM (SSTV, ARISS events)' };  // scripts/common.sh
+                   'ISS': (window.RL1_ISS_FREQ || '437.550') + ' MHz FM (SSTV, ARISS events)' };  // iss_sstv_frequency
   var COLOUR = { 'M2 3': 'm23', 'M2 4': 'm24', 'ISS': 'iss' };
   var lastState = null;
 

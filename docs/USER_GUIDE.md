@@ -172,7 +172,9 @@ top. There are two maps a day:
 
 ## ISS SSTV pictures
 
-During ARISS events (a few times a year) the ISS sends slow-scan TV pictures on 145.800 MHz FM.
+During ARISS events (a few times a year) the ISS sends slow-scan TV pictures: in 2026 on
+437.550 MHz FM in Robot 36, before that on 145.800 MHz FM in PD120. `iss_sstv_frequency` sets
+which one is recorded (437.550 by default); the decoder finds the mode itself.
 Between Meteor passes the station records the ISS's passes above 20° with `rtl_fm` and decodes the
 pictures (`scripts/receive_iss.sh`). Meteor always has priority: an overlapping ISS pass isn't
 scheduled, an ISS recording ends before the next Meteor pass, and a Meteor pass stops an ISS
@@ -295,7 +297,8 @@ web login, Discord webhook) are in `config/settings.local.yml` and win over it. 
 | `station_title` | | Name in the station bar |
 | `lang_setting` | en | Language for visitors who haven't picked one |
 | `iss_sstv` | true | Record the ISS's passes and decode its SSTV pictures (RTL-SDR; [ISS SSTV](iss_sstv.md)) |
-| `iss_sstv_dates`, `iss_sstv_min_elevation`, `iss_sstv_gain` | "", 20, 30 | Only between two dates (empty = always), lowest pass, gain |
+| `iss_sstv_frequency` | 437.550 | ISS downlink to record: 437.550 (70 cm, 2026's events) or 145.800 (2 m) |
+| `iss_sstv_dates`, `iss_sstv_min_elevation`, `iss_sstv_gain` | "", 20, 40 | Only between two dates (empty = always), lowest pass, gain |
 | `discord_webhook` | | Post each pass to Discord: asked by the install, kept in `settings.local.yml`; empty = off ([Discord](discord.md)) |
 | `discord_site_url`, `discord_images`, `discord_sky_track` | , 2, true | Link to the capture in the post, how many images, the sky track |
 

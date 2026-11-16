@@ -50,6 +50,11 @@ class Lang {
       $dir = dirname(__DIR__) . '/App/Lang/';
       $en = include($dir . 'en.php');
       $cache[$c] = ($c === 'en' || !is_file($dir . $c . '.php')) ? $en : array_merge($en, include($dir . $c . '.php'));
+      # {freq}: the ISS SSTV frequency this station records (iss_sstv_frequency)
+      $freq = defined('Config\Config::ISS_SSTV_FREQ') ? \Config\Config::ISS_SSTV_FREQ : '437.550';
+      foreach ($cache[$c] as $k => $v) {
+        if (is_string($v) && strpos($v, '{freq}') !== false) { $cache[$c][$k] = str_replace('{freq}', $freq, $v); }
+      }
     }
     return $cache[$c];
   }

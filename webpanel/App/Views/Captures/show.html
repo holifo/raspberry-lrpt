@@ -41,7 +41,7 @@
 </div>
 
 {% if info.sat_name|default('') == 'ISS' %}
-<p class="sstv-note"><i class="fas fa-tv"></i> {{ lang['sstv_note']|default('Slow-scan TV pictures sent by the International Space Station on 145.800 MHz FM during an ARISS event, decoded by this station.') }}
+<p class="sstv-note"><i class="fas fa-tv"></i> {{ lang['sstv_note']|default('Slow-scan TV pictures sent by the International Space Station during an ARISS event, decoded by this station.') }}
   <a href="https://www.ariss.org/" target="_blank" rel="noopener">ARISS</a></p>
 {% endif %}
 {% include "Captures/legend.html" with {have: capture.enhancements|join('|')|lower} %}

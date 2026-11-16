@@ -54,7 +54,7 @@ ISS_RUNNING='^(/usr)?/bin/bash [^ ]*/receive_iss\.sh '
 METEOR_M2_3_FREQ="137.9000"
 METEOR_M2_4_FREQ="137.9000"
 ELEKTRO_L3_FREQ="1691.0000"
-ISS_FREQ="145.8000"          # ARISS SSTV downlink (FM)
+ISS_FREQ="${ISS_SSTV_FREQ:-437.5500}"   # ARISS SSTV downlink (FM): iss_sstv_frequency
 
 # the pass's start time: set once, by the script that starts the pass (receive_meteor.sh,
 # reprocess_meteor.sh); helpers that source this file later keep it

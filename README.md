@@ -21,7 +21,7 @@ Made by holifo (SV5QNF).
 - Draws a spectrogram (waterfall, SNR, decoder lock, elevation), a sky track and an
   elevation/azimuth graph for every pass, and keeps the decoded frames (`.cadu`) of the last 5
   passes for offline re-processing.
-- Between Meteor passes, records the **ISS** on 145.800 MHz FM and decodes the **SSTV pictures** it
+- Between Meteor passes, records the **ISS** on 437.550 MHz (or 145.800 MHz) FM and decodes the **SSTV pictures** it
   sends during ARISS events (RTL-SDR; on by default; passes with no pictures leave no trace)
   ([how](docs/iss_sstv.md)).
 - Can post each pass to a Discord channel (message, best images, sky track, link to the

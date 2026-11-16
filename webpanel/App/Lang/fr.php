@@ -312,9 +312,9 @@ return array(
   "lv_decoding" => "Décodage",
   "lv_no_signal" => "Pas encore verrouillé",
   "lv_peak" => "pic",
-  "iss_sstv_hint" => "Images SSTV de l'ISS, 145,800 MHz FM (événements ARISS)",
-  "lg_sstv" => "SSTV : images de télévision à balayage lent envoyées par l'ISS sur 145,800 MHz FM pendant les événements ARISS (généralement PD120)",
-  "sstv_note" => "Images de télévision à balayage lent envoyées par la Station spatiale internationale sur 145,800 MHz FM lors d'un événement ARISS, décodées par cette station.",
+  "iss_sstv_hint" => "Images SSTV de l'ISS, {freq} MHz FM (événements ARISS)",
+  "lg_sstv" => "SSTV : images de télévision à balayage lent envoyées par l'ISS lors des événements ARISS ({freq} MHz FM ; Robot 36 sur 437,550 MHz, PD120 sur 145,800 MHz)",
+  "sstv_note" => "Images de télévision à balayage lent envoyées par la Station spatiale internationale sur {freq} MHz FM lors d'un événement ARISS, décodées par cette station.",
   "recording_hint_wav" => "Audio FM du passage, à décoder à nouveau avec n'importe quel logiciel SSTV",
 );
 ?>

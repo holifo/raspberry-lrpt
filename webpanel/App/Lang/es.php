@@ -312,9 +312,9 @@ return array(
   "lv_decoding" => "Decodificando",
   "lv_no_signal" => "Aún sin enganche",
   "lv_peak" => "pico",
-  "iss_sstv_hint" => "Imágenes SSTV de la ISS, 145,800 MHz FM (eventos ARISS)",
-  "lg_sstv" => "SSTV: imágenes de televisión de barrido lento que la ISS emite en 145,800 MHz FM durante los eventos ARISS (normalmente PD120)",
-  "sstv_note" => "Imágenes de televisión de barrido lento enviadas por la Estación Espacial Internacional en 145,800 MHz FM durante un evento ARISS, decodificadas por esta estación.",
+  "iss_sstv_hint" => "Imágenes SSTV de la ISS, {freq} MHz FM (eventos ARISS)",
+  "lg_sstv" => "SSTV: imágenes de televisión de barrido lento que la ISS emite durante los eventos ARISS ({freq} MHz FM; Robot 36 en 437,550 MHz, PD120 en 145,800 MHz)",
+  "sstv_note" => "Imágenes de televisión de barrido lento enviadas por la Estación Espacial Internacional en {freq} MHz FM durante un evento ARISS, decodificadas por esta estación.",
   "recording_hint_wav" => "Audio FM del pase, para decodificarlo de nuevo con cualquier programa SSTV",
 );
 ?>
