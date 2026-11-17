@@ -151,35 +151,33 @@ GPL-3.0, as the project it is based on. See [LICENSE](LICENSE).
 
 ## Credits
 
-* **holifo (SV5QNF)**: Raspberry-LRPT v1, the LRPT-only rework of raspberry-noaa-v2.
+* **holifo (SV5QNF)**: Raspberry-LRPT v1, the LRPT-only rework of raspberry-noaa-v2. Much of the code,
+  documentation and translations was written with the help of AI ([Claude](https://www.anthropic.com/claude)
+  by Anthropic), to holifo's instructions and tested on a working station.
 
+### The projects it grew from
 
-The NOAA/METEOR image capture community is a group of fantastic, experienced engineers, radio operators, and tinkerers that all contributed in some way, shape,
-or form to the success of this repository/framework. Below are some direct contributions and call-outs to the significant efforts made:
+* **[jekhokie](https://github.com/jekhokie/raspberry-noaa-v2)**: raspberry-noaa-v2, the project Raspberry-LRPT is built on.
+* **[MihajloPi](https://github.com/MihajloPi/raspberry-noaa-v2)**: the raspberry-noaa-v2 fork it started from. Brought in SatDump
+  for live Meteor decoding and support for Airspy, HackRF and SDRplay receivers.
+* **[Richard AI4Y](https://www.qrz.com/db/AI4Y)**: Debian 12 (Bookworm) and 64-bit Raspberry Pi OS support, the verification
+  tool, the backup/restore and uninstall utilities, and SatDump/predict packages for the Pi.
+* **[Dom Robinson](https://github.com/dom-robinson)**: Meteor enhancements and the Satvis view on the Passes page.
+* **[Nico Rey](https://github.com/reynico/raspberry-noaa)** and **[haslettj](https://www.instructables.com/id/Raspberry-Pi-NOAA-Weather-Satellite-Receiver/)**:
+  raspberry-noaa and the original Raspberry Pi weather-satellite receiver guide that started it all.
+* **[Silvio I6CBI](https://www.qrz.com/db/I6CBI)**: testing of the SDRplay and MiriSDR receivers.
 
-* **[jekhokie](https://github.com/jekhokie/raspberry-noaa-v2)**: the project Raspberry-LRPT is built on.
-* **[MihajloPi](https://github.com/MihajloPi/raspberry-noaa-v2)**: the project fork Raspberry-LRPT is built on.
-* **[haslettj](https://www.instructables.com/member/haslettj/)**: Did the hard initial work and created the post to instruct on how to build the base of this framework.
-    * [Instructables](https://www.instructables.com/id/Raspberry-Pi-NOAA-Weather-Satellite-Receiver/) post had much of the content needed to kick this work off.
-* **[Nico Rey](https://github.com/reynico)**: Initial creator of the [raspberry-noaa](https://github.com/reynico/raspberry-noaa) starting point for this repository.
+### Reception testing scripts (`scripts/testing/`)
+
+* **[Kyle Keen](http://kmkeen.com/rtl-power/)**: rtl_power and the heat map behind the spectrum scans.
+* **[Pascal P.](https://github.com/Cirromulus)**: the frequency/spectrum scan scripts.
+* **[Socowi](https://stackoverflow.com/a/50434292)**: the time parser in `t2sec.sh`.
+
+### Software it uses
+
+* **[SatDump](https://github.com/SatDump/SatDump)**: records and decodes the Meteor LRPT passes and makes the images and maps.
+* **[predict](https://github.com/kd2bd/predict)** by John Magliacane, KD2BD: pass predictions.
+* **[RTL-SDR Blog drivers](https://github.com/rtlsdrblog/rtl-sdr-blog)**: the RTL-SDR driver the install builds.
+* **[d3](https://d3js.org)** and **[satellite.js](https://github.com/shashwatak/satellite-js)**: the live map on the Satellites page.
+* **[sstv](https://github.com/colaclanth/sstv)**: SSTV decoding for the ISS extra (besides the station's own decoder).
 * **[flag-icons](https://github.com/lipis/flag-icons)** (MIT): the flags in the language menu.
-* **[otti-soft](https://github.com/otti-soft/meteor-m2-lrpt)**: Meteor-M 2 python functionality for image processing.
-* **[NateDN10](https://www.instructables.com/member/NateDN10/)**: Came up with the major enhancements to the Meteor-M 2 receiver image processing in "otti-soft"s repo above.
-    * [Instructables](https://www.instructables.com/Raspberry-Pi-NOAA-and-Meteor-M-2-Receiver/) post had the details behind creating the advanced functionality.
-* **[Dom Robinson](https://github.com/dom-robinson)**: Meteor enhancements, Satvis visualizations, and overall great code written that were incorporated into the repo.
-    * Merge of functionality into this repo was partially created using his excellent fork of the original raspberry-noaa repo [here](https://github.com/dom-robinson/raspberry-noaa).
-    * Continued pushing the boundaries on the framework capabilities.
-* **[Colin Kaminski](https://www.facebook.com/holography)**: MAJOR testing assistance and submission of various enhancements and documentation.
-    * Continuous assistance of community members in their search for perfect imagery.
-* **[Mohamed Anjum Abdullah](https://www.facebook.com/MohamedAnjum9694/)**: Initial testing of the first release.
-* **[Kyle Keen](http://kmkeen.com/rtl-power/)**: Programming a lot of features for our RTL-SDR Drivers.
-* **[Pascal P.](https://github.com/Cirromulus)**: Frequency/spectrum analysis test scripts for visualizing the frequency spectrum of the environment.
-* **[Socowi's Time Functionality](https://stackoverflow.com/a/50434292)**: Time parser to calculate end date for scanner scripts.
-* **[Vince VE3ELB](https://github.com/ve3elb)**: Took on the invaluable task of creating fully working images of RN2 for the PI and maintains [https://qsl.net/ve3elb/RaspiNOAA/](https://qsl.net/ve3elb/RaspiNOAA/).
-* **[mihajlo2003petkovic/MihajloPi](https://github.com/mihajlo2003petkovic)**: Integrated MeteorDemod for Meteor decoding and building it via Ansible, and also the awesome SatDump (option satdump_live) for both NOAA and Meteor live decoding. Shrunk and optimised both NOAA and Meteor receive scripts by quite much! Implemented Facebook and Instagram posting scripts and fixed Twitter posting script due to the API 2.0 error. Made the localisation option redundant (automatically handled by the computer itself). Provided support for Airspy, HackRF and SDRPlay devices. Implemented website compression, edited the website landing page and improved the perceived image loading speed by using progressive JPEGs. Created [image](https://drive.google.com/drive/folders/1acaZ78VEROc7BWVtJ82C6qVrccA9CkR6) with Gary Day's help. Removed RTL-FM and GNU Radio and simplified workflow by quite a lot using exclusively SatDump for recording and demodulating signals live to wav/S files, then processing them later with WXtoImg or SatDump for NOAA, and MeteorDemod or SatDump for Meteor.
-* **[Silvio I6CBI](https://www.qrz.com/db/I6CBI)**: General testing on Pi and PC running LMDE 5, helped debug WKHTMLTOPDF and integrate SDR Play devices for GNU Radio. Tested MiriSDR.
-* **[Nicolas Delestre](https://twitter.com/DELESTRENicola2?t=NHkKPKWMsVQaeNv9vutYMA&s=09)**: General testing on Pi and PC running LMDE 5, lending his Pi and PC to MihajloPi virtually over SSH, VMC and TeamViewer for testing.
-* **[Gary Day](https://www.facebook.com/profile.php?id=100068381156913&mibextid=ZbWKwL)**: Helped by lending his Raspberry Pis virtually over SSH, VNC and TeamViewer to MihajloPi for testing and creating an image.
-* **[Jérôme jp112sdl](https://github.com/jp112sdl)**: Implemented automatic discarding of Meteor M2-3 night passes since they give no visible image when it's in RGB123 mode.
-* **[patrice7560](https://meteo-schaltin.duckdns.org)**: Beta tester, helped in detecting and reporting errors ASAP for debugging.
-* **[Richard AI4Y](https://www.qrz.com/db/AI4Y)**: Provided Debian 12 (Bookworm) support for Raspberry Pi, 64-bit Raspberry OS support, discovered the FFMPEG bug when creating spectrograms, solved atrm errors on the website, and several NTP and timezone issues in PHP, developed Verification Tool, Developed In-Situ Upgrade for switching repo's/branches, developed RN2 Utilities for backup/restore/stage, uninstall and upgrading, general warning cleanup of scripts, Made 32-bit wxtoimg run on 64-bit Debian, creates satdump/predict DEB files for armhf & arm64, general alpha and beta testing.
