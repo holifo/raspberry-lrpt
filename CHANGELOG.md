@@ -1,5 +1,13 @@
 # Changelog
 
+## Raspberry-LRPT v1.31.3 (2026-11-19)
+
+- **Docs: troubleshooting for SDRplay receivers** in `docs/receivers.md`: how to check that the
+  receiver is seen (USB, SDRplay's service, the plugin, a probe), whether a pass recorded a signal
+  (SNR and sync in the log), a 10-second test recording that shows whether the receiver delivers
+  samples or is overloaded, and the antenna-side causes (an LNA that needs the bias tee, the antenna
+  socket, gain). Learned from the first RSP1A stations.
+
 ## Raspberry-LRPT v1.31.2 (2026-11-19)
 
 - **Live log: the SDR card now finds every supported receiver.** It only looked for an RTL-SDR,

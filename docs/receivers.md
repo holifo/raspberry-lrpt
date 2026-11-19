@@ -63,10 +63,53 @@ The gain setting is the IF gain (20–59). The LNA state is 5, which suits the R
 and RSPduo. An RSPdx has more LNA states; give it more LNA gain with
 `sdr_extra_options: '--lna_gain 20'` in `config/settings.yml`.
 
-> SDRplay support was built and tested without an SDRplay receiver: the plugin builds and SatDump
-> loads it, but the first real pass will be its first test. If it doesn't work, run
-> `./scripts/tools/verification_tool/verification.sh quick`, check `sudo systemctl status sdrplay`
-> and open an issue with the log.
+### When an SDRplay receiver gets no pictures
+
+Users have run the RSP1A with this station: SatDump finds it and records from it. When passes
+still come out empty, go through these in order.
+
+1. **Is it seen?** The Live log's SDR card should show it as connected (since v1.31.2). Then:
+
+   ```bash
+   lsusb | grep -i 1df7                       # the receiver on USB (e.g. "1df7:3000 SDRplay RSP1a")
+   systemctl status sdrplay --no-pager | head -5
+   ls /usr/lib/*-linux-gnu/satdump/plugins/ | grep -i sdrplay
+   satdump sdr_probe 2>&1 | grep -i -E "sdrplay|rsp"
+   ```
+
+   The probe should list it (e.g. `RSP1A 2103…`). If it doesn't, restart SDRplay's service; it can
+   miss a receiver that was plugged in after it started: `sudo systemctl restart sdrplay` (or
+   reboot). If the plugin is missing, run `./install_and_upgrade.sh` again.
+
+2. **Did the pass record?** In the Live log, or with
+   `grep -E "SNR|Viterbi" /var/log/raspberry-lrpt/output.log | tail`, a pass with a signal shows an
+   SNR above about 2 dB and `Viterbi : SYNCED`. **SNR 0.0 dB and `NOSYNC` for the whole pass**
+   means the receiver recorded but no satellite signal reached it.
+
+3. **Does the receiver deliver samples?** A 10-second test on the Meteor frequency (no pass needed):
+
+   ```bash
+   cd /tmp && satdump record /tmp/rsp_test --source sdrplay --samplerate 2e6 --frequency 137.9e6 \
+     --if_gain 40 --lna_gain 5 --baseband_format cs16 --timeout 10
+   python3 -c "import numpy as n,glob; d=n.fromfile(glob.glob('/tmp/rsp_test*')[0],n.int16).astype(float); print('samples',len(d)//2,'rms',round(n.sqrt((d**2).mean()),1),'max',int(abs(d).max()))"
+   ```
+
+   About 20 million samples and an RMS well above 0 mean the receiver works; the problem is the
+   antenna side (step 4). An RMS of 0 or few samples means it isn't streaming: go back to step 1.
+   A `max` close to 32767 means something strong is overloading it: lower the gain, or try
+   `--fm_notch` / `--dab_notch` in `sdr_extra_options` (the broadcast-band notch filters).
+
+4. **The antenna side.** The usual causes, most common first:
+   - **An LNA at the antenna that the RTL-SDR used to power.** The SDRplay must power it too: set
+     the bias tee on (`meteor_m2_3_enable_bias_tee: true` and `meteor_m2_4_enable_bias_tee: true`,
+     or answer "yes" in the setup questions) and run the install. Only some models have a bias tee
+     (the RSP1A, RSP1B, RSP2, RSPduo and RSPdx do).
+   - **The cable on the wrong socket** (RSP2, RSPduo and RSPdx have more than one antenna input;
+     choose it with `--antenna_input`, see below).
+   - **Gain.** The setting is SDRplay's IF gain, 20 to 59, where 59 is the most gain. 40 is a
+     reasonable start; try 45 to 50 on a quiet site.
+
+   Adding `--bias` to the test in step 3 powers an LNA for that test only.
 
 ## Extra SatDump options
 
