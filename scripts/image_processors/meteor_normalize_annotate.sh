@@ -57,8 +57,8 @@ panel_key=$( { cat "$settings_file"; printf '%s\n' "${pass_values[@]}"; cat "${L
 panel="${cache_dir}/${panel_key}.png"
 
 if [ ! -s "$panel" ]; then
-  # the panel: drawn with Pillow (annotation.yml), light grey and 70% transparent with a dark
-  # border and rounded corners; text and logo opaque
+  # the panel: drawn with Pillow (annotation.yml); its colours and transparency come from the
+  # annotation_style / annotation_transparency / annotation_*_colour settings; text and logo opaque
   if ! python3 "$SCRIPTS_DIR/image_processors/annotation_panel.py" "$settings_file" "$layout_file" \
        "${annotation}" "${pass_values[@]}"; then
     log "Could not draw the annotation for ${INPUT_JPG}; the image is kept without it" "WARN"

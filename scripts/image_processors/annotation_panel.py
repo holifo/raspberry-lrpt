@@ -2,8 +2,10 @@
 #
 # Draws the station label put on every capture image (called by meteor_normalize_annotate.sh).
 # The layout is config/annotation/annotation.yml: a logo (or a short text) on the left, then two
-# columns of centred text lines. The panel is light grey and 70% transparent, with a dark border
-# and rounded corners; text and logo stay opaque.
+# columns of centred text lines, on a panel with rounded corners. Its look comes from the settings
+# annotation_style (a preset: STYLES below), annotation_transparency (0-100 % see-through) and,
+# optionally, annotation_background / annotation_text_colour / annotation_border_colour (#rrggbb).
+# Text and logo stay opaque.
 #
 #   annotation_panel.py SETTINGS.yml LAYOUT.yml OUT.png [key=value ...]
 #
@@ -32,6 +34,54 @@ DEFAULT_LAYOUT = {
     'bold_font': 'DejaVuSans-Bold.ttf',
     'font_size': 15,
 }
+
+
+# preset colours: panel, text, border; 'auto' is light for daytime passes and dark at night
+STYLES = {
+    'light': ('#cacaca', '#000000', '#333333'),   # the classic grey label, for daytime colour images
+    'dark':  ('#0b1220', '#ffffff', '#4b5563'),   # the web panel's navy, for night / IR images
+    'white': ('#ffffff', '#000000', '#999999'),   # clean white card, for sharing and printing
+    'black': ('#000000', '#ffffff', '#555555'),   # plain black, for the black band (extend_for_annotation)
+    'clear': (None,      '#ffffff', None),        # no panel: white text with a black outline
+}
+DEFAULT_TRANSPARENCY = 70
+
+
+def colour(text, fallback):
+    text = str(text or '').strip()
+    if len(text) == 7 and text.startswith('#'):
+        try:
+            return tuple(int(text[i:i + 2], 16) for i in (1, 3, 5))
+        except ValueError:
+            pass
+    return colour(fallback, None) if fallback else None
+
+
+def look(values):
+    """The panel's fill, text, border and outline colours as RGBA tuples (None = not drawn)."""
+    style = str(values.get('annotation_style') or 'light').strip().lower()
+    if style == 'auto':
+        try:
+            day = float(values.get('sun_elevation')) > float(values.get('meteor_m2_3_sun_min_elevation') or 0)
+        except (TypeError, ValueError):
+            day = True
+        style = 'light' if day else 'dark'
+    bg, fg, edge = STYLES.get(style, STYLES['light'])
+    try:
+        clear = int(float(values.get('annotation_transparency')))
+    except (TypeError, ValueError):
+        clear = DEFAULT_TRANSPARENCY
+    alpha = round(255 * (100 - max(0, min(100, clear))) / 100)
+    bg = colour(values.get('annotation_background'), bg)
+    edge = colour(values.get('annotation_border_colour'), edge)
+    fg = colour(values.get('annotation_text_colour'), fg)
+    fill = bg + (alpha,) if bg else None
+    border = edge + (255,) if edge else None
+    # text with no panel behind it (style clear, or 100 % transparent) gets an outline to stay readable
+    outline = None
+    if fill is None or alpha < 40:
+        outline = (0, 0, 0, 255) if sum(fg) > 382 else (255, 255, 255, 255)
+    return fill, fg + (255,), border, outline
 
 
 class Blank(dict):
@@ -98,9 +148,11 @@ def main(settings_path, layout_path, out_path, pairs):
 
     img = Image.new('RGBA', (width, height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    # the panel: #cacaca at 30% opacity, opaque #333333 border, rounded corners
-    draw.rounded_rectangle([0, 0, width - 1, height - 1], radius=radius,
-                           fill=(202, 202, 202, 77), outline=(51, 51, 51, 255), width=border)
+    panel, ink, edge, halo = look(values)
+    stroke = {'stroke_width': s, 'stroke_fill': halo} if halo else {}
+    if panel or edge:
+        draw.rounded_rectangle([0, 0, width - 1, height - 1], radius=radius,
+                               fill=panel, outline=edge, width=border if edge else 0)
     x = pad + border
     top = pad + border
     if logo_w:
@@ -108,12 +160,12 @@ def main(settings_path, layout_path, out_path, pairs):
             img.alpha_composite(logo, (x, top + (content_h - logo_box) // 2))
         else:
             draw.text((x + logo_w // 2, top + content_h // 2), logo_text, font=bold,
-                      fill=(0, 0, 0, 255), anchor='mm')
+                      fill=ink, anchor='mm', **stroke)
         x += logo_w + gap
     for col, w in zip(columns, widths):
         y = top + (content_h - len(col) * line_h) // 2
         for t in col:
-            draw.text((x + w // 2, y + line_h // 2), t, font=regular, fill=(0, 0, 0, 255), anchor='mm')
+            draw.text((x + w // 2, y + line_h // 2), t, font=regular, fill=ink, anchor='mm', **stroke)
             y += line_h
         x += w + gap
     img.save(out_path)

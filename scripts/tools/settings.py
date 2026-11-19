@@ -283,11 +283,24 @@ def set_value(key, raw):
         prop = json.load(f)['properties'].get(key)
     if prop is None:
         sys.exit('Unknown setting: ' + key)
-    value = yaml.safe_load(raw)
-    if prop.get('type') == 'boolean':
+    kind = prop.get('type')
+    if kind == 'string':
+        value = str(raw)                  # as typed: '#3a2600' would read as a YAML comment
+    else:
+        value = yaml.safe_load(raw)
+    if kind == 'boolean':
         if str(raw).lower() not in ('on', 'off', 'yes', 'no', 'true', 'false'):
             sys.exit('%s takes on or off' % key)
         value = str(raw).lower() in ('on', 'yes', 'true')
+    elif kind in ('number', 'integer'):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            sys.exit('%s takes a number' % key)
+        if value < prop.get('minimum', value) or value > prop.get('maximum', value):
+            sys.exit('%s takes %s to %s' % (key, prop.get('minimum'), prop.get('maximum')))
+    if 'enum' in prop and value not in prop['enum']:
+        sys.exit('%s takes one of: %s' % (key, ', '.join(str(v) for v in prop['enum'])))
+    if prop.get('pattern') and not re.search(prop['pattern'], str(value)):
+        sys.exit('%s: %r is not valid' % (key, value))
     answers = load(LOCAL)
     answers[key] = value
     save_local(answers)

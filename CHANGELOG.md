@@ -1,5 +1,25 @@
 # Changelog
 
+## Raspberry-LRPT v1.32.0 (2026-11-19)
+
+- **Image label: choose its look.** The station label on capture images was always light grey and
+  70% see-through. Now you can set:
+  - `annotation_style`, a look for each purpose: `light` (the classic, for daytime colour images),
+    `dark` (navy with white text, for night and IR images), `auto` (light for daytime passes, dark
+    at night), `white` (a clean card for sharing and printing), `black` (to match the black band of
+    `extend_for_annotation`) or `clear` (no panel, outlined text, covering as little of the picture
+    as possible)
+  - `annotation_transparency`: 0 (solid) to 100 (no panel); text and logo stay solid
+  - `annotation_background`, `annotation_text_colour`, `annotation_border_colour`: your own
+    `#rrggbb` colours over the style's
+
+  The quickest way is the new `scripts/label.sh` (e.g. `scripts/label.sh auto 60`,
+  `scripts/label.sh text '#f2b33d'`, `scripts/label.sh preview`); it keeps the choice in
+  `config/settings.local.yml`. Nothing changes until you choose: the default is the classic label.
+  See [the label docs](docs/annotation.md#choosing-a-look).
+- `scripts/tools/settings.py set` keeps text settings as typed (a colour like `#3a2600` was read as
+  a YAML comment) and checks values against the settings schema before saving them.
+
 ## Raspberry-LRPT v1.31.7 (2026-11-19)
 
 - **Image label: no empty field.** The third line of the label on every image read

@@ -300,6 +300,9 @@ web login, Discord webhook) are in `config/settings.local.yml` and win over it. 
 | `delete_older_than_n` | 30 | Captures older than this many days are deleted |
 | `flip_meteor_image` | true | Turn northbound passes the right way up |
 | `annotation_width_percent` | 50 | Width of the station label, as a share of the image; its text is in `config/annotation/annotation.yml` ([label](annotation.md)) |
+| `annotation_style` | light | The label's look: `light`, `dark`, `auto` (light by day, dark at night), `white`, `black` or `clear` ([label](annotation.md#choosing-a-look)) |
+| `annotation_transparency` | 70 | How see-through the label's panel is, 0 (solid) to 100 |
+| `annotation_background` / `…text_colour` / `…border_colour` | (style's) | `'#rrggbb'` to set the label's colours yourself |
 | `meteor_daytime_enhancements` / `…nighttime…` | (lists) | Order of the images on a capture's page |
 | `meteor_daytime_thumbnail` / `…nighttime…` | MSA / MCIR | Which image becomes the capture's card |
 | `produce_spectrogram` | true | The spectrogram per pass |

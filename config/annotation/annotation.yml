@@ -2,8 +2,9 @@
 # Edit it to suit your station.
 #
 # Layout: the logo (or logo_text) on the left, then the "station" lines, then the "pass" lines,
-# each centred in its column, on a light grey 70% transparent panel with rounded corners.
-# annotation_width_percent in settings.yml sets its size on the image.
+# each centred in its column, on a panel with rounded corners. In settings.yml,
+# annotation_width_percent sets its size on the image, and annotation_style, annotation_transparency
+# and the annotation_*_colour settings set its look (docs/annotation.md).
 #
 # Lines can use {key} for any setting in config/settings.yml (station_title,
 # ground_station_location, antenna_information, …) and for these, filled in for each image:

@@ -1,7 +1,7 @@
 # The image label
 
-Every capture image gets a label: your station on the left, the pass on the right, on a light grey
-70% transparent panel with rounded corners. It is drawn with Python Pillow by
+Every capture image gets a label: your station on the left, the pass on the right, on a panel
+with rounded corners (light grey and 70% see-through unless you choose another look, below). It is drawn with Python Pillow by
 `scripts/image_processors/annotation_panel.py`, from `config/annotation/annotation.yml`.
 
 ```yaml
@@ -32,6 +32,54 @@ Settings in `config/settings.yml` place it on the image:
 | `image_annotation_location` | Where: `NorthWest`, `North`, `NorthEast`, `West`, `Center`, `East`, `SouthWest`, `South`, `SouthEast` |
 | `annotation_width_percent` | Its width as a share of the image's (50 = half); 0 = as drawn |
 | `extend_for_annotation` | Add a black band above or below the image for it, instead of covering the picture |
+| `annotation_style` | Its look, see below (default `light`) |
+| `annotation_transparency` | How see-through the panel is: 0 = solid, 100 = no panel at all (default 70). Text and logo stay solid |
+| `annotation_background`, `annotation_text_colour`, `annotation_border_colour` | `'#rrggbb'` to replace one of the style's colours; `''` keeps the style's |
+
+### Choosing a look
+
+| `annotation_style` | Looks like | Good for |
+|---|---|---|
+| `light` | Light grey panel, black text (the classic label) | Daytime colour images (MSA, 221, Natural Color) |
+| `dark` | Navy panel (the web panel's colour), white text | Night and IR images (MCIR, thermal), which are mostly dark |
+| `auto` | `light` for daytime passes, `dark` at night (by the sun at the station, as for the day/night lists) | A station that records day and night: always the right one |
+| `white` | White panel, black text | Sharing and printing: with a low transparency (0–20) it reads like a caption card |
+| `black` | Black panel, white text | Matching the black band of `extend_for_annotation`, or a solid bar (transparency 0) |
+| `clear` | No panel or border: white text with a black outline | Covering as little of the picture as possible |
+
+The quickest way to change it on the Pi is `scripts/label.sh` (it keeps your choice in
+`config/settings.local.yml`, so `git pull` and the next install leave it alone):
+
+```bash
+cd ~/raspberry-lrpt
+scripts/label.sh                         # the current look and the styles
+scripts/label.sh auto 60                 # style auto, 60 % see-through
+scripts/label.sh transparency 30         # only the transparency
+scripts/label.sh text '#f2b33d'          # one colour (background, text or border); 'default' = the style's
+scripts/label.sh reset                   # back to the classic light grey, 70 %
+scripts/label.sh preview                 # draw it to tmp/label-preview.png (auto: a day and a night one)
+```
+
+The same settings in a settings file:
+
+```yaml
+# readable on every pass, day or night
+annotation_style: 'auto'
+annotation_transparency: 60
+
+# a solid caption for social media
+annotation_style: 'white'
+annotation_transparency: 0
+
+# your own colours: amber text on a dark brown panel
+annotation_style: 'dark'
+annotation_transparency: 40
+annotation_background: '#3a2600'
+annotation_text_colour: '#f2b33d'
+annotation_border_colour: '#f2b33d'
+```
+
+A change applies to the next pass (and to `reprocess_meteor.sh`); images already made keep their label.
 
 ## Trying it out
 

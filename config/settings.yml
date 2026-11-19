@@ -158,6 +158,18 @@ extend_for_annotation: false
 image_annotation_location: 'South'
 # annotation width as a percentage of the image width (0 = old behaviour: double the rendered size)
 annotation_width_percent: 50
+# the label's look (docs/annotation.md):
+#   annotation_style: light (grey, the classic), dark (navy, for night/IR images), auto (light for
+#     daytime passes, dark at night), white (clean card, for sharing/printing), black (for the black
+#     band of extend_for_annotation) or clear (no panel, outlined text, hides the least of the image)
+#   annotation_transparency: how see-through the panel is, 0 (solid) to 100 (invisible); text stays solid
+#   annotation_background / annotation_text_colour / annotation_border_colour: '#rrggbb' to
+#     override the style's colour, '' = the style's
+annotation_style: 'light'
+annotation_transparency: 70
+annotation_background: ''
+annotation_text_colour: ''
+annotation_border_colour: ''
 produce_polar_az_el_graph: true
 produce_polar_direction_graph: true
 ground_station_location: 'Athens, GR'

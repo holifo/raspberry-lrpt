@@ -87,6 +87,11 @@ SDR_EXTRA_OPTIONS={{ sdr_extra_options|default('') | quote }}
 # Telemetry and Annotations
 IMAGE_ANNOTATION_LOCATION={{ image_annotation_location }}
 ANNOTATION_WIDTH_PERCENT={{ annotation_width_percent|default(0) }}
+ANNOTATION_STYLE={{ annotation_style|default('light') }}
+ANNOTATION_TRANSPARENCY={{ annotation_transparency|default(70) }}
+ANNOTATION_BACKGROUND={{ annotation_background|default('') | quote }}
+ANNOTATION_TEXT_COLOUR={{ annotation_text_colour|default('') | quote }}
+ANNOTATION_BORDER_COLOUR={{ annotation_border_colour|default('') | quote }}
 EXTEND_FOR_ANNOTATION={{ extend_for_annotation|lower }}
 
 # Ground Station and Enhancements
