@@ -1,5 +1,14 @@
 # Changelog
 
+## Raspberry-LRPT v1.31.6 (2026-11-19)
+
+- **Satellites map: a pass now ends when the recording ends.** The Passes tab and the recording
+  use the pass from horizon to horizon (as the schedule predicts it), but the map's progress panel
+  only counted the part above the minimum elevation (15°), so it showed a pass as finished a few
+  minutes early while the Passes tab still counted down. The map now uses the same horizon-to-horizon
+  window for the progress panel, "In range", the satellite details and "Next pass"; passes that never
+  reach the minimum elevation (which the station doesn't record) are still left out.
+
 ## Raspberry-LRPT v1.31.5 (2026-11-19)
 
 - **ISS APRS: every packet in the Live log.** While an ISS APRS pass is recorded, each packet
