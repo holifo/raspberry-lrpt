@@ -1,5 +1,13 @@
 # Changelog
 
+## Raspberry-LRPT v1.31.7 (2026-11-19)
+
+- **Image label: no empty field.** The third line of the label on every image read
+  `Direction: Northbound |  | Gain: 48`: the `{enhancement}` value between the two bars was a
+  leftover from raspberry-noaa-v2 that the Meteor scripts never fill in. It is gone from the label
+  (`annotation.yml`), the docs and the annotation script, so the line now reads
+  `Direction: Northbound | Gain: 48`. If you keep your own `annotation.yml`, remove `| {enhancement}` from it.
+
 ## Raspberry-LRPT v1.31.6 (2026-11-19)
 
 - **Satellites map: a pass now ends when the recording ends.** The Passes tab and the recording

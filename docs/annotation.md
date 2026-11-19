@@ -14,7 +14,7 @@ station:                 # the middle column
 pass:                    # the right column
   - "Satellite: {sat_name} | {capture_start}"
   - "Max Elevation: {sat_max_elevation}° {pass_side_long} | Sun Elevation: {sun_elevation}°"
-  - "Direction: {pass_direction} | {enhancement} | Gain: {gain}"
+  - "Direction: {pass_direction} | Gain: {gain}"
 font: DejaVuSans.ttf     # any TrueType font in /usr/share/fonts
 bold_font: DejaVuSans-Bold.ttf
 font_size: 15
@@ -22,7 +22,7 @@ font_size: 15
 
 Each line can use `{key}` for any setting in `config/settings.yml` and for these, filled in for each
 image: `sat_name`, `capture_start`, `sat_max_elevation`, `sun_elevation`, `pass_direction`,
-`pass_side` (E/W), `pass_side_long` (East/West), `enhancement` and `gain`. Add or remove lines as
+`pass_side` (E/W), `pass_side_long` (East/West) and `gain`. Add or remove lines as
 you like; each column is centred.
 
 Settings in `config/settings.yml` place it on the image:

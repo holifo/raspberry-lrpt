@@ -37,7 +37,7 @@ fi
 settings_file="${LRPT_HOME}/config/.settings.merged.yml"
 [ -f "$settings_file" ] || settings_file="${LRPT_HOME}/config/settings.yml"
 layout_file="${LRPT_HOME}/config/annotation/annotation.yml"
-pass_values=("sat_name=$SAT_NAME" "capture_start=$START_DATE" "enhancement=$ENHANCEMENT"
+pass_values=("sat_name=$SAT_NAME" "capture_start=$START_DATE"
              "sat_max_elevation=$SAT_MAX_ELEVATION" "sun_elevation=$SUN_ELEV"
              "pass_direction=$PASS_DIRECTION" "pass_side=$PASS_SIDE" "pass_side_long=$pass_side_long"
              "gain=$gain")

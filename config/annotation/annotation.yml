@@ -8,7 +8,7 @@
 # Lines can use {key} for any setting in config/settings.yml (station_title,
 # ground_station_location, antenna_information, …) and for these, filled in for each image:
 #   sat_name, capture_start, sat_max_elevation, sun_elevation, pass_direction,
-#   pass_side ("E"/"W"), pass_side_long ("East"/"West"), enhancement, gain
+#   pass_side ("E"/"W"), pass_side_long ("East"/"West"), gain
 #
 # logo: a square PNG in this folder (e.g. logo.png, 256 px), drawn at 64 px; empty = logo_text.
 # font / bold_font / font_size: a TrueType font name (looked up in /usr/share/fonts) and size.
@@ -22,7 +22,7 @@ station:
 pass:
   - "Satellite: {sat_name} | {capture_start}"
   - "Max Elevation: {sat_max_elevation}° {pass_side_long} | Sun Elevation: {sun_elevation}°"
-  - "Direction: {pass_direction} | {enhancement} | Gain: {gain}"
+  - "Direction: {pass_direction} | Gain: {gain}"
 font: DejaVuSans.ttf
 bold_font: DejaVuSans-Bold.ttf
 font_size: 15

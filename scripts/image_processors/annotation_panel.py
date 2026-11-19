@@ -27,7 +27,7 @@ DEFAULT_LAYOUT = {
     'station': ['{station_title}', '{ground_station_location}', '137 MHz {antenna_information} antenna'],
     'pass': ['Satellite: {sat_name} | {capture_start}',
              'Max Elevation: {sat_max_elevation}° {pass_side_long} | Sun Elevation: {sun_elevation}°',
-             'Direction: {pass_direction} | {enhancement} | Gain: {gain}'],
+             'Direction: {pass_direction} | Gain: {gain}'],
     'font': 'DejaVuSans.ttf',
     'bold_font': 'DejaVuSans-Bold.ttf',
     'font_size': 15,
