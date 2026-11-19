@@ -1,5 +1,10 @@
 # Changelog
 
+## Raspberry-LRPT v1.32.2 (2026-11-19)
+
+- Removed the `enable_coronal` setting that v1.32.1 left behind in `config/settings.yml`; it no
+  longer did anything.
+
 ## Raspberry-LRPT v1.32.1 (2026-11-19)
 
 - **Removed two leftovers from raspberry-noaa-v2 on the Passes page:** the satvis 3D globe

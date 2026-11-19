@@ -250,11 +250,6 @@ log_level: DEBUG
 
 experimental_features: true
 
-# whether to enable the "Coronal mass ejection activity" display
-# in the passes view - note that the GIFs can be ~70 MiB and not cached
-# thus they slow down the page & can lead to quite big data usage
-enable_coronal: false
-
 # animation: a time-lapse of each day's passes (00:00-24:00 local time) over one area, shown
 # with that day's maps on the Daily map page (scripts/animation.sh, run after each pass's daily
 # map; needs daily_map: true)
