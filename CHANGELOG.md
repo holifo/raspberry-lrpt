@@ -1,5 +1,18 @@
 # Changelog
 
+## Raspberry-LRPT v1.31.4 (2026-11-19)
+
+- **Orbits: the SatNOGS DB is the backup when CelesTrak can't be reached.** `schedule.sh` still
+  downloads the Meteor and ISS orbits (TLEs) from CelesTrak first. If that fails after its tries,
+  it now asks the SatNOGS DB (Libre Space Foundation; no account needed), and only keeps
+  yesterday's orbits when both fail. The log says which source was used.
+- **SatDump no longer downloads its own orbits at every start.** Once its copy was a day old,
+  SatDump 1.2.3 tried to download CelesTrak's whole satellite list when a recording started, and
+  when CelesTrak couldn't be reached it retried 10 times, about 2 minutes each. That could hold a
+  pass's recording back by up to 20 minutes, so the satellite was gone by the time it started. The
+  station already gives SatDump its orbits, so the install now turns SatDump's own download off
+  (`~/.config/satdump/settings.json`). Run the install to get this.
+
 ## Raspberry-LRPT v1.31.3 (2026-11-19)
 
 - **Docs: troubleshooting for SDRplay receivers** in `docs/receivers.md`: how to check that the

@@ -21,7 +21,7 @@ site when something was received.
 
 ## How it works
 
-1. **Orbit:** `schedule.sh` downloads the ISS's orbit from CelesTrak (NORAD 25544) with the Meteor
+1. **Orbit:** `schedule.sh` downloads the ISS's orbit from CelesTrak (NORAD 25544; the SatNOGS DB if CelesTrak fails) with the Meteor
    orbits, into `tmp/iss.tle`. A failed download keeps the previous one.
 2. **Scheduling:** every ISS pass whose highest point is above `iss_sstv_min_elevation` (20°) is
    scheduled with `at`, like the Meteor passes, and shows in the pass list in violet. With

@@ -84,6 +84,14 @@ if [ "${update_tle}" == "1" ]; then
       sleep 20
     done
   done
+  # backup: the SatNOGS DB (Libre Space Foundation), when CelesTrak can't be reached
+  if [ "$got_tle" = 0 ]; then
+    if python3 "$LRPT_HOME/scripts/tools/satnogs_tle.py" "$tle_tmp" 57166="METEOR-M2 3" 59051="METEOR-M2 4" >> $LRPT_LOG 2>&1 &&
+       tle_file_ok "$tle_tmp"; then
+      got_tle=1
+      log "CelesTrak failed - TLEs from the SatNOGS DB instead" "WARN"
+    fi
+  fi
 
   if [ "$got_tle" = 1 ]; then
     mv "$tle_tmp" "${WEATHER_TXT}"
@@ -100,12 +108,12 @@ if [ "${update_tle}" == "1" ]; then
   else
     rm -f "$tle_tmp"
     if tle_file_ok "$WEATHER_TXT"; then
-      log "CelesTrak sent no valid TLEs - keeping the previous ones ($(date -r "$WEATHER_TXT" '+%d-%m-%Y %H:%M'))" "WARN"
+      log "CelesTrak and SatNOGS sent no valid TLEs - keeping the previous ones ($(date -r "$WEATHER_TXT" '+%d-%m-%Y %H:%M'))" "WARN"
       # put them back for SatDump too, in case its own copy was emptied
       tle_file_ok "/home/$TARGET_USER/.config/satdump/satdump_tles.txt" ||
         cp "${WEATHER_TXT}" "/home/$TARGET_USER/.config/satdump/satdump_tles.txt"
     else
-      log "CelesTrak sent no valid TLEs and there are no previous ones - nothing scheduled" "ERROR"
+      log "CelesTrak and SatNOGS sent no valid TLEs and there are no previous ones - nothing scheduled" "ERROR"
       exit 1
     fi
   fi
@@ -126,6 +134,10 @@ if [ "$ISS_SSTV" == "true" ] && { [ "${update_tle}" == "1" ] || [ ! -s "$ISS_TLE
      sed -n '2p' "$iss_tmp" | grep -q '^1 25544'; then
     { echo "ISS"; sed -n '2,3p' "$iss_tmp"; } | tr -d '\r' > "$ISS_TLE"
     log "ISS orbit updated" "INFO"
+  elif python3 "$LRPT_HOME/scripts/tools/satnogs_tle.py" "$iss_tmp" 25544="ISS" >> $LRPT_LOG 2>&1 &&
+       sed -n '2p' "$iss_tmp" | grep -q '^1 25544'; then
+    tr -d '\r' < "$iss_tmp" > "$ISS_TLE"
+    log "ISS orbit from the SatNOGS DB (CelesTrak failed)" "WARN"
   else
     log "ISS orbit download failed - keeping the previous one" "WARN"
   fi

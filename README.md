@@ -15,7 +15,7 @@ ARISS events, and between events the APRS stations it relays, live on a map. Mad
 
 ## What it does
 
-- Schedules every METEOR-M2 3 / M2 4 pass above 15° with `at`, from CelesTrak orbits.
+- Schedules every METEOR-M2 3 / M2 4 pass above 15° with `at`, from CelesTrak orbits (the SatNOGS DB as the backup).
 - Records and decodes each pass live with SatDump and makes every composite the satellite's
   channels allow (MSA, AVHRR 221, Natural Color, MCIR, 10.8 µm and 3.9 µm IR, …), annotated with the
   station's details.
@@ -179,6 +179,7 @@ GPL-3.0, as the project it is based on. See [LICENSE](LICENSE).
 ### Software it uses
 
 * **[SatDump](https://github.com/SatDump/SatDump)**: records and decodes the Meteor LRPT passes and makes the images and maps.
+* **[SatNOGS DB](https://db.satnogs.org)** (Libre Space Foundation): the backup source of orbits (TLEs) when CelesTrak can't be reached.
 * **[predict](https://github.com/kd2bd/predict)** by John Magliacane, KD2BD: pass predictions.
 * **[RTL-SDR Blog drivers](https://github.com/rtlsdrblog/rtl-sdr-blog)**: the RTL-SDR driver the install builds.
 * **[d3](https://d3js.org)** and **[satellite.js](https://github.com/shashwatak/satellite-js)**: the live map on the Satellites page.

@@ -88,6 +88,36 @@
   loop_control:
     label: "{{ 'remove v1.9 names' if item.add == 'any' else ('add' if item.add else 'remove') }}"
 
+# SatDump updates its own TLEs at every start once they are a day old: it downloads CelesTrak's
+# whole "active" list and, when CelesTrak can't be reached, retries 10 times (about 2 min each),
+# which held a pass's recording back by up to 20 minutes. schedule.sh already writes SatDump's
+# satdump_tles.txt (CelesTrak, else the SatNOGS DB), so SatDump's own update is turned off.
+- name: SatDump's own TLE download off (the station gives it TLEs)
+  become: yes
+  become_user: "{{ target_user }}"
+  shell: |
+    python3 - <<'EOF'
+    import json, os
+    p = os.path.expanduser('~/.config/satdump/settings.json')
+    os.makedirs(os.path.dirname(p), exist_ok=True)
+    try:
+        cfg = json.load(open(p))
+    except Exception:
+        cfg = {}
+    if not isinstance(cfg, dict):
+        cfg = {}
+    g = cfg.setdefault('satdump_general', {})
+    t = g.get('tle_update_interval')
+    if isinstance(t, dict) and t.get('value') == 'Never':
+        print('unchanged')
+    else:
+        g['tle_update_interval'] = {'value': 'Never'}
+        json.dump(cfg, open(p, 'w'), indent=4)
+        print('changed')
+    EOF
+  register: satdump_tle_off
+  changed_when: "'changed' in satdump_tle_off.stdout"
+
 - name: Log folder
   become: yes
   file:
