@@ -90,6 +90,9 @@ and the ISS repeats them on the same frequency (via `RS0ISS` / `ARISS`). With `i
 - **Live map:** while a pass is recorded, the **Satellites** map shows each station heard so far as
   a violet dot with its call sign (grey: heard directly, not through the ISS), and a box at the
   bottom left counts them. The map asks the station (`/passes/aprs`) every 5 seconds.
+- **Live log:** each packet is also written to the station log as it is decoded, e.g.
+  `APRS heard N0CALL-7 via RS0ISS · 38.25 N 21.73 E · "Mobile via ARISS"` (`(direct)` when it
+  wasn't relayed by the ISS), so the Live log follows the pass too.
 - **After the pass:** a capture with a map of the stations and the ISS's track, a table of the
   stations (call sign linked to aprs.fi, time, packets, distance, comment) and the packets as
   received. The Captures card says "N APRS". Discord posts the map. The 2 m audio is kept as a

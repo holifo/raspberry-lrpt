@@ -82,17 +82,22 @@ fi
 if [ "$mode" == "aprs" ]; then
   LIVE_JSON="${IMAGE_OUTPUT}/aprs-live.json"
   LIVE_CSV="${IMAGE_OUTPUT}/aprs-live.csv"
-  trap 'cd "$LRPT_HOME"; rm -rf "$WORK_DIR"; rm -f "$LIVE_JSON" "$LIVE_CSV"' EXIT
+  trap 'pkill -f "tail -n +1 -F $LIVE_CSV" 2>/dev/null; cd "$LRPT_HOME"; rm -rf "$WORK_DIR"; rm -f "$LIVE_JSON" "$LIVE_CSV"' EXIT
   ARATE=22050
   printf 'ADEVICE stdin null\nCHANNEL 0\nMODEM 1200\n' > "$WORK_DIR/direwolf.conf"
   rm -f "$LIVE_CSV"
   printf '{"base":"%s","start":%s,"end":%s,"frequency":%s}\n' "$FILENAME_BASE" "$(date +%s)" \
     "$(( $(date +%s) + CAPTURE_TIME ))" "$ISS_APRS_FREQ" > "$LIVE_JSON"
   log "Recording ISS APRS ${ISS_APRS_FREQ} MHz for ${CAPTURE_TIME} s (max elevation ${SAT_MAX_ELEVATION}°), decoding live" "INFO"
+  # one log line per packet as Dire Wolf decodes it (the Live log follows the pass too)
+  ( tail -n +1 -F "$LIVE_CSV" 2>/dev/null | python3 -u "$IMAGE_PROC_DIR/aprs_pass.py" --follow 2>/dev/null |
+      while IFS= read -r heard; do log "APRS heard $heard" "INFO"; done ) &
   timeout "$CAPTURE_TIME" $RTL_FM -f "${ISS_APRS_FREQ}M" -M fm -s 48000 -r $ARATE -g "$ISS_SSTV_GAIN" -E dc \
     $dev_args $ppm_args $bias_args - 2>> "$LRPT_LOG" | tee "$RAW" | \
     direwolf -c "$WORK_DIR/direwolf.conf" -r $ARATE -b 16 -n 1 -t 0 -a 0 -q hd -L "$LIVE_CSV" - \
     > "$WORK_DIR/direwolf.out" 2>&1
+  sleep 1                                   # let the last packet reach the log
+  pkill -f "tail -n +1 -F $LIVE_CSV" 2>/dev/null
   rm -f "$LIVE_JSON"
 
   stations=$(python3 "$IMAGE_PROC_DIR/aprs_pass.py" "$LIVE_CSV" "$WORK_DIR/direwolf.out" "$TLE_FILE" "$SAT_NAME" \

@@ -1,5 +1,13 @@
 # Changelog
 
+## Raspberry-LRPT v1.31.5 (2026-11-19)
+
+- **ISS APRS: every packet in the Live log.** While an ISS APRS pass is recorded, each packet
+  Dire Wolf decodes is now written to the station log straight away, so the Live log follows the
+  pass as well as the Satellites map: call sign, whether it came through the ISS (or was heard
+  directly), its position and its comment, e.g.
+  `APRS heard N0CALL-7 via RS0ISS · 38.25 N 21.73 E · "Mobile via ARISS"`.
+
 ## Raspberry-LRPT v1.31.4 (2026-11-19)
 
 - **Orbits: the SatNOGS DB is the backup when CelesTrak can't be reached.** `schedule.sh` still

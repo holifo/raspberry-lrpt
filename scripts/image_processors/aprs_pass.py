@@ -4,6 +4,7 @@ APRS heard through the ISS during one pass (iss_aprs): turns direwolf's packet l
 data file and map picture.
 
   aprs_pass.py CSV PACKETS TLE SAT START END LAT LON OUT_PREFIX
+  aprs_pass.py --follow      (stdin: the -L log as it grows; prints one line per packet)
 
   CSV        direwolf's -L log (one row per decoded packet: time, source, position, comment, ...)
   PACKETS    direwolf's own output, for the packets as sent ("[0.3] SRC>DEST,PATH:info" lines)
@@ -178,7 +179,41 @@ def draw_map(out_file, stations, track, lat, lon, start, n_packets):
   pp.save(fig, out_file, png)
 
 
+def follow():
+  """--follow: read direwolf's -L log as it grows (tail -F on stdin) and print one line per packet
+  for the station log: "N0CALL-7 via RS0ISS · 38.25 N 21.73 E · \"comment\"" """
+  head = None
+  for line in sys.stdin:
+    line = line.rstrip('\r\n')
+    if not line:
+      continue
+    row = next(csv.reader([line]), [])
+    if row and row[0] == 'chan':
+      head = row
+      continue
+    if not head or len(row) != len(head):
+      continue
+    r = dict(zip(head, row))
+    call = (r.get('source') or '').strip()
+    if not call:
+      continue
+    heard = (r.get('heard') or '').strip()
+    out = call + (' via ' + heard if ISS_DIGI.search(heard) else ' (direct)')
+    try:
+      la, lo = float(r.get('latitude') or ''), float(r.get('longitude') or '')
+      out += ' · {:.2f} {} {:.2f} {}'.format(abs(la), 'N' if la >= 0 else 'S', abs(lo), 'E' if lo >= 0 else 'W')
+    except ValueError:
+      pass
+    text = ((r.get('comment') or '') or (r.get('status') or '')).strip().replace('\n', ' ')[:80]
+    if text:
+      out += ' · "' + text + '"'
+    print(out, flush=True)
+
+
 def main():
+  if len(sys.argv) == 2 and sys.argv[1] == '--follow':
+    follow()
+    return
   if len(sys.argv) != 10:
     print(__doc__)
     sys.exit(1)
