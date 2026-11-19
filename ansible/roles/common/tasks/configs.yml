@@ -23,15 +23,6 @@
     group: "{{ target_user }}"
     mode: 0644
 
-- name: MeteorDemod settings.ini
-  template:
-    src: settings.ini.j2
-    dest: /home/{{ target_user }}/.config/meteordemod/settings.ini
-    owner: "{{ target_user }}"
-    group: "{{ target_user }}"
-    mode: 0644
-  when: meteor_decoder == 'meteordemod'
-
 # SatDump's own config must match its version: it holds the instrument and composite
 # definitions the products step needs. The old template (written for SatDump 2.x) left those
 # out, so SatDump 1.2.3 stopped with "type must be array, but is null" and made no images.

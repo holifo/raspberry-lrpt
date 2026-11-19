@@ -134,46 +134,17 @@
     group: "{{ target_user }}"
     mode: 0700
 
-# MeteorDemod is only built when it is the Meteor decoder (meteor_decoder: 'meteordemod').
-# This station uses SatDump, so the long source build and its OpenCV/LAPACK deps are skipped.
-- name: MeteorDemod check
-  stat:
-    path: /usr/local/bin/meteordemod
-  register: meteor_demod_installed
-  when: meteor_decoder == 'meteordemod'
-
-- name: MeteorDemod build
-  when: meteor_decoder == 'meteordemod' and not meteor_demod_installed.stat.exists
-  block:
-    - name: MeteorDemod build packages
-      become: yes
-      apt:
-        state: present
-        name: [liblapacke-dev, gfortran, libopencv-dev, python3-opencv]
-
-    - name: MeteorDemod source
-      git:
-        repo: https://github.com/Digitelektro/MeteorDemod.git
-        dest: /home/{{ target_user }}/MeteorDemod
-        version: origin/master
-        depth: 1
-        recursive: yes
-
-    - name: MeteorDemod compiled and installed
-      become: yes
-      shell: |
-        set -e
-        mkdir -p build && cd build
-        cmake ../ && ldconfig
-        make -j3 && make install
-        chown -R {{ target_user }}:{{ target_user }} /home/{{ target_user }}/.config/meteordemod || true
-      args:
-        chdir: /home/{{ target_user }}/MeteorDemod
-
-    - name: MeteorDemod source removed
-      file:
-        path: /home/{{ target_user }}/MeteorDemod
-        state: absent
+# MeteorDemod was removed in v1.31.1 (SatDump is the only decoder): one-time clean-up of a
+# build left by an earlier install
+- name: Old MeteorDemod removed
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /usr/local/bin/meteordemod
+    - /home/{{ target_user }}/.config/meteordemod
+    - /home/{{ target_user }}/MeteorDemod
 
 # No remote-desktop apps on this station (remote access is SSH only)
 - name: Remote-desktop apps check

@@ -366,5 +366,7 @@ return array(
   "aprs_station" => "Station",
   "aprs_stations" => "Stationen",
   "lg_aprs" => "APRS-Karte: Funkamateure, deren Positionspakete die ISS beim Überflug auf 145,825 MHz weitergeleitet hat (zwischen SSTV-Aktionen)",
+  "iss_sw_title_aprs" => "ISS-SSTV-Bilder und APRS (Extra)",
+  "iss_sw_hint_aprs" => "Bei ARISS-Aktionen (die SSTV-Daten) zeichnet es die SSTV-Bilder der ISS auf {freq} MHz auf, bei den übrigen Überflügen die APRS-Stationen, die sie auf 145,825 MHz weiterleitet, live auf der Satellitenkarte. Meteor-Überflüge haben immer Vorrang.",
 );
 ?>

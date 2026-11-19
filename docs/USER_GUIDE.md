@@ -8,7 +8,7 @@ goes wrong. For installing, see the [README](../README.md).
 - [The life of one pass](#the-life-of-one-pass)
 - [The web panel](#the-web-panel)
 - [The daily map](#the-daily-map)
-- [Extra: ISS SSTV pictures](#extra-iss-sstv-pictures)
+- [Extra: ISS SSTV pictures and APRS](#extra-iss-sstv-pictures-and-aprs)
 - [Posting to Discord](#posting-to-discord)
 - [Commands](#commands)
 - [Settings worth knowing](#settings-worth-knowing)
@@ -21,7 +21,7 @@ goes wrong. For installing, see the [README](../README.md).
 
 Everything runs by itself. Once a day the station downloads fresh orbits and schedules the passes;
 each pass is then recorded, decoded and published without anyone touching it. As an extra, the
-ISS's passes are scheduled too, between the Meteor passes ([ISS SSTV](#extra-iss-sstv-pictures)).
+ISS's passes are scheduled too, between the Meteor passes ([ISS SSTV and APRS](#extra-iss-sstv-pictures-and-aprs)).
 
 ```mermaid
 flowchart LR
@@ -172,7 +172,7 @@ top. There are two maps a day:
 - **Passes left out:** a pass with no orbit or corrupt line times (no map drawn) is not added.
 - **Turn it off:** `daily_map: false` in `config/settings.yml`, then run the install.
 
-## Extra: ISS SSTV pictures
+## Extra: ISS SSTV pictures and APRS
 
 The station is built for the Meteors; the ISS is an extra that uses the receiver while it would
 otherwise be idle, and never at a Meteor pass's expense.
@@ -185,13 +185,18 @@ pictures (`scripts/receive_iss.sh`). Meteor always has priority: an overlapping 
 scheduled, an ISS recording ends before the next Meteor pass, and a Meteor pass stops an ISS
 recording that is still running. It is off by default:
 turn it on with the switch on Admin > Passes or `scripts/switch.sh iss on` (`iss_sstv`). It needs
-an RTL-SDR, and a pass with no pictures leaves nothing behind.
+an RTL-SDR, and a pass where nothing was decoded leaves nothing behind.
 
 - **Where to see them:** violet **ISS** cards on the Captures page (filter chip **ISS**), each with
   its pictures (`SSTV 1`, `SSTV 2`, …), the sky track and the recording (`.wav`). ISS passes are in
   the pass list in violet, and the Satellites tab shows the ISS on the map with its own tab.
-- **Only during an event:** set `iss_sstv_dates: "2026-12-01 2026-12-04"` (first and last day), run
-  the install, then `./scripts/schedule.sh -x`.
+- **Between events, APRS** (`iss_aprs`, on by default): outside the `iss_sstv_dates` window (or on
+  every pass when it is empty) the pass is recorded on 145.825 MHz instead and Dire Wolf decodes the
+  APRS packets the ISS relays. The stations heard show live on the Satellites map while the pass is
+  recorded, and the capture has a map of them, a station list and the packets.
+- **For an SSTV event:** set `iss_sstv_dates: "2026-12-01 2026-12-04"` (first and last day), run
+  the install, then `./scripts/schedule.sh -x`. With `iss_aprs: false` only those days are
+  recorded (or every pass, for SSTV, when the dates are empty).
 - **Turn it off:** `iss_sstv: false`, run the install, then `./scripts/schedule.sh -x`.
 
 More in [ISS SSTV](iss_sstv.md).
@@ -304,7 +309,8 @@ web login, Discord webhook) are in `config/settings.local.yml` and win over it. 
 | `lang_setting` | en | Language for visitors who haven't picked one |
 | `iss_sstv` | false | Record the ISS's passes and decode its SSTV pictures (RTL-SDR; [ISS SSTV](iss_sstv.md)) |
 | `iss_sstv_frequency` | 437.550 | ISS downlink to record: 437.550 (70 cm, 2026's events) or 145.800 (2 m) |
-| `iss_sstv_dates`, `iss_sstv_min_elevation`, `iss_sstv_gain` | "", 20, 40 | Only between two dates (empty = always), lowest pass, gain |
+| `iss_sstv_dates`, `iss_sstv_min_elevation`, `iss_sstv_gain` | "", 20, 40 | SSTV event days (empty = none with APRS on, every pass without), lowest pass, gain |
+| `iss_aprs` | true | Outside the SSTV dates, record the ISS's APRS digipeater on 145.825 MHz ([ISS SSTV](iss_sstv.md)) |
 | `discord_webhook` | | Post each pass to Discord: asked by the install, kept in `settings.local.yml`; empty = off ([Discord](discord.md)) |
 | `discord_site_url`, `discord_images`, `discord_sky_track` | , 2, true | Link to the capture in the post, how many images, the sky track |
 

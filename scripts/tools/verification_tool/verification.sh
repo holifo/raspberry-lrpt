@@ -2,7 +2,7 @@
 #
 # Purpose: The purpose of this verification script is to attempt to verify the RL1 environment 
 #          is installed and configured correctly. It checks permissions, file/directory ownership,
-#          group permissions, package dependencies are met, key programs like satdump, meteordemod,
+#          group permissions, package dependencies are met, key programs like satdump and nginx
 #          are linked and execute without error during a dry run.
 #
 # Author:  Richard Creasey (AI4Y)
@@ -179,12 +179,6 @@ while IFS= read -r line; do
   perms ${line}
 done < ${PERMISSIONS_OTHER_LIST}
 
-if grep -qE "^METEOR_DECODER=.?meteordemod" "$HOME/.raspberry-lrpt.conf" 2>/dev/null; then
-  perms file 755 root root /usr/local/bin/meteordemod
-  perms directory 755 \$USER \$USER /home/\$USER/.config/meteordemod
-  perms file 644 \$USER \$USER /home/\$USER/.config/meteordemod/settings.ini
-fi
-
 # every script git marks executable must be executable here (a "git pull" keeps that bit)
 not_x=0
 while IFS= read -r f; do
@@ -327,16 +321,7 @@ NGINX_CMD="code=\$(curl -sk -o /dev/null -w '%{http_code}' ${WEB_URL}/passes); e
 SATDUMP="/usr/bin/satdump"
 SATDUMP_CMD="${SATDUMP} live meteor_m2-x_lrpt . --source rtlsdr --samplerate 1.024e6 --frequency 137.9e6 --fill_missing --gain 48 --timeout 1"
 
-METEORDEMOD="/usr/local/bin/meteordemod"
-METEORDEMOD_QCMD="${METEORDEMOD} -h"
-METEORDEMOD_CMD="${METEORDEMOD} -m oqpsk -diff 1 -s 72000 -sat 'METEOR-M-2-3' -t '${TEST_FILES}/meteordemod-input.tle' -f jpg -i '${TEST_FILES}/meteordemod-input.cadu' -o '${TEST_FILES}/tmp'"
-
-
-
-# MeteorDemod is only installed when it is the configured Meteor decoder
-METEOR_DECODER_SETTING=$(grep -E "^METEOR_DECODER=" "$HOME/.raspberry-lrpt.conf" 2>/dev/null | cut -d= -f2 | tr -d "'\"")
 BINS="${NGINX} ${SATDUMP}"
-[ "${METEOR_DECODER_SETTING}" == "meteordemod" ] && BINS="${BINS} ${METEORDEMOD}"
 for BIN in ${BINS} ;
 do 
   BINNAME=$(echo ${BIN} | awk -F"/" '{print $NF}' | tr '[:lower:]' '[:upper:]')
@@ -355,44 +340,17 @@ do
 
     # Perform Dry run execution since all libraries are dynamiclly linked
     #
-    # Writing test command to a file to call for execution. SATDUMP and METEORDEMOD could be called 
+    # dry run: the test command is written to a file and run from there
     echo ${!BINCMD} > ${BIN_SCRIPT};chmod +x ${BIN_SCRIPT}
-    if [[ ${BINNAME} == 'METEORDEMOD' && ${vMODE} == "FULL" ]]; then
-      loggit "INFO" "*** FULL mode choosen *** - Please wait for meteordemod testing to complete... ~ 4 minutes"
-      ${BIN_SCRIPT} >> ${TEST_LOG} 2>&1
-      vResult=$?
-      if (( ${vResult} )); then
-        vError=$(cat ${TEST_LOG} | tail -1)
-        loggit "FAIL" "${BIN} dry run failed: ${vError}"
-        FAILURES=$(expr ${FAILURES} + 1)
-      else
-        loggit "PASS" "${BIN} dry run was successful"
-        PASSES=$(expr ${PASSES} + 1)
-      fi
-    elif [[ ${BINNAME} != 'METEORDEMOD' ]]; then
-      ${BIN_SCRIPT} >> ${TEST_LOG} 2>&1
-      vResult=$?
-      if (( ${vResult} )); then
-        vError=$(cat ${TEST_LOG} | tail -1)
-        loggit "FAIL" "${BIN} dry run failed: ${vError}"
-        FAILURES=$(expr ${FAILURES} + 1)
-      else
-        loggit "PASS" "${BIN} dry run was successful"
-        PASSES=$(expr ${PASSES} + 1)
-      fi
-    elif [[ ${BINNAME} == 'METEORDEMOD' ]]; then
-      BINCMD="${BINNAME}_QCMD"
-      echo ${!BINCMD} > ${BIN_SCRIPT};chmod +x ${BIN_SCRIPT}
-      ${BIN_SCRIPT} >> ${TEST_LOG} 2>&1
-      vResult=$?
-      if (( ${vResult} )); then
-        vError=$(cat ${TEST_LOG} | tail -1)
-        loggit "FAIL" "${BIN} dry run failed: ${vError}"
-        FAILURES=$(expr ${FAILURES} + 1)
-      else
-        loggit "PASS" "${BIN} dry run was successful"
-        PASSES=$(expr ${PASSES} + 1)
-      fi
+    ${BIN_SCRIPT} >> ${TEST_LOG} 2>&1
+    vResult=$?
+    if (( ${vResult} )); then
+      vError=$(cat ${TEST_LOG} | tail -1)
+      loggit "FAIL" "${BIN} dry run failed: ${vError}"
+      FAILURES=$(expr ${FAILURES} + 1)
+    else
+      loggit "PASS" "${BIN} dry run was successful"
+      PASSES=$(expr ${PASSES} + 1)
     fi
   else
     loggit "FAIL" "${BIN} is missing ${v_lddresult} required librarie(s)"

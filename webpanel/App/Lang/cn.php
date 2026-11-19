@@ -366,5 +366,7 @@ return array(
   "aprs_station" => "个电台",
   "aprs_stations" => "个电台",
   "lg_aprs" => "APRS 地图：国际空间站过境时在 145.825 MHz 转发其位置数据包的业余无线电爱好者（SSTV 活动之间）",
+  "iss_sw_title_aprs" => "国际空间站 SSTV 图像和 APRS（附加功能）",
+  "iss_sw_hint_aprs" => "在 ARISS 活动期间（SSTV 日期）以 {freq} MHz 接收国际空间站的 SSTV 图像；其他过境时接收其在 145.825 MHz 转发的 APRS 电台，并实时显示在卫星地图上。Meteor 过境始终优先。",
 );
 ?>

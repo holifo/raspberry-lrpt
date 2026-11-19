@@ -140,7 +140,7 @@ class LogController extends \Lib\Controller {
     $s['capturing'] = false;
     foreach (glob('/proc/[0-9]*/comm') ?: array() as $cf) {
       $comm = trim(@file_get_contents($cf));
-      if ($comm == 'satdump' || $comm == 'rtl_fm' || $comm == 'meteordemod') { $s['capturing'] = true; break; }
+      if ($comm == 'satdump' || $comm == 'rtl_fm') { $s['capturing'] = true; break; }
     }
 
     # schedule: next pass, passes left today, last decoded capture

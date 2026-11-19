@@ -40,7 +40,7 @@ SRV="$WORK/srv"
 IMG="$WORK/real"; mkdir -p "$IMG"
 if command -v satdump >/dev/null; then
   say "Decoding the test CADU with SatDump"
-  satdump meteor_m2-x_lrpt cadu "$REPO/scripts/tools/verification_tool/test_files/meteordemod-input.cadu" \
+  satdump meteor_m2-x_lrpt cadu "$REPO/scripts/tools/verification_tool/test_files/meteor-sample.cadu" \
     "$IMG/out" >"$IMG/satdump.log" 2>&1
   # SatDump's exit code isn't reliable: look for its output instead
   [ -f "$IMG/out/MSU-MR/msu_mr_rgb_AVHRR_221_False_Color_corrected.png" ] || echo "  (SatDump made no images - using the made-up ones)"

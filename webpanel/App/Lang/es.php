@@ -366,5 +366,7 @@ return array(
   "aprs_station" => "estación",
   "aprs_stations" => "estaciones",
   "lg_aprs" => "Mapa APRS: radioaficionados cuyos paquetes de posición retransmitió la ISS en 145,825 MHz durante su paso (entre eventos SSTV)",
+  "iss_sw_title_aprs" => "Imágenes SSTV y APRS de la ISS (extra)",
+  "iss_sw_hint_aprs" => "Durante los eventos ARISS (las fechas SSTV) graba las imágenes SSTV de la ISS en {freq} MHz; en sus demás pasos, las estaciones APRS que retransmite en 145,825 MHz, mostradas en directo en el mapa de satélites. Los pasos de Meteor siempre tienen prioridad.",
 );
 ?>

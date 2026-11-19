@@ -38,7 +38,6 @@ IDENTIFY="/usr/bin/identify"
 PREDICT="/usr/bin/predict"
 RTL_FM="$(command -v rtl_fm || echo /usr/bin/rtl_fm)"
 SQLITE3="/usr/bin/sqlite3"
-METEORDEMOD="/usr/local/bin/meteordemod"
 SATDUMP="/usr/bin/satdump"
 
 # base directories for scripts

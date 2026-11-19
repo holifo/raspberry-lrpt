@@ -32,12 +32,9 @@ ntp_server: 'pool.ntp.org'
 #                       '--amp' (HackRF amplifier) or '--lna_gain 20' (SDRplay LNA state)
 #   sdrplay_licence_accepted - SDRplay's API is closed source; the install downloads it from
 #                              sdrplay.com only when this is true (asked by the setup questions)
-#   meteor_decoder - which receiver method to use (either 'meteordemod' or 'satdump')
 receiver_type: 'rtlsdr'
 sdr_extra_options: ''
 sdrplay_licence_accepted: false
-
-meteor_decoder: 'satdump'
 
 # test settings when running test scripts
 #   test_gain - gain to use for scanner test scripts

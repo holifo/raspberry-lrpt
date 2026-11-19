@@ -247,5 +247,7 @@ return array(
   "aprs_station" => "station",
   "aprs_stations" => "stations",
   "lg_aprs" => "APRS map: radio amateurs whose position packets the ISS relayed on 145.825 MHz while it passed over (between SSTV events)",
+  "iss_sw_title_aprs" => "ISS SSTV pictures and APRS (extra)",
+  "iss_sw_hint_aprs" => "During ARISS events (the SSTV dates) it records the ISS's SSTV pictures on {freq} MHz; on its other passes, the APRS stations it relays on 145.825 MHz, shown live on the Satellites map. Meteor passes always come first.",
 );
 ?>

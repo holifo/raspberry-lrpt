@@ -1,5 +1,17 @@
 # Changelog
 
+## Raspberry-LRPT v1.31.1 (2026-11-19)
+
+- **MeteorDemod removed: SatDump is the only decoder.** The documentation still said MeteorDemod
+  could be used instead (`meteor_decoder: 'meteordemod'`), but that path was a leftover from
+  raspberry-noaa-v2 that this project never tested, and MeteorDemod's current source no longer
+  builds with the compilers in Trixie. The setting, its build, its config and its checks are gone;
+  an upgrade deletes an old MeteorDemod build if there is one. A `meteor_decoder` line left in
+  your own settings is simply ignored.
+- **ISS switch text:** on Admin > Passes the ISS switch now says it records SSTV pictures during
+  ARISS events and APRS on the other passes (in all nine languages).
+- **Docs** brought up to date for ISS APRS (user guide, hardware, README credits: Dire Wolf).
+
 ## Raspberry-LRPT v1.31.0 (2026-11-19)
 
 - **ISS APRS between SSTV events, with a live map.** Most of the year the ISS sends no SSTV

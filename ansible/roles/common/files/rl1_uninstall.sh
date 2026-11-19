@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Purpose: The purpose of this uninstall script is to remove the RL1 environment 
-#          and key packages like satdump, meteordemod, predict and nginx. As well
+#          and key packages like satdump, predict and nginx. As well
 #          as removal of RL1 crontab entries and Audio, Videos and Images in /srv
 #
 # Author:  Richard Creasey (AI4Y)
@@ -14,7 +14,7 @@ UNINSTALL_LOG=/tmp/uninstall.log
 PACKAGES_BULLSEYE="satdump nginx predict php7.4-intl php8.0-sqlite3 php8.0-mbstring php8.0-fpm"
 PACKAGES_BOOKWORM="satdump rtl-sdr nginx predict php8.2-intl php8.2-sqlite3 php8.2-mbstring php8.2-fpm"
 PACKAGES_TRIXIE="satdump rtl-sdr nginx predict php8.4-intl php8.4-sqlite3 php8.4-mbstring php8.4-fpm"
-PATHS="/srv/audio /srv/videos /srv/images $HOME/.config/composer $HOME/.config/gmic $HOME/.config/matplotlib $HOME/.config/meteordemod $HOME/.config/composer $HOME/.config/satdump $HOME/raspberry-lrpt $HOME/.predict $HOME/.raspberry-lrpt.conf /usr/local/bin/rtl_* /var/log/raspberry-lrpt /etc/sudoers.d/020_www-data-atrm-nopasswd /var/www/wx-new /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default /tmp/rtl-sdr /etc/modprobe.d/rtlsdr.conf"
+PATHS="/srv/audio /srv/videos /srv/images $HOME/.config/composer $HOME/.config/gmic $HOME/.config/matplotlib $HOME/.config/composer $HOME/.config/satdump $HOME/raspberry-lrpt $HOME/.predict $HOME/.raspberry-lrpt.conf /usr/local/bin/rtl_* /var/log/raspberry-lrpt /etc/sudoers.d/020_www-data-atrm-nopasswd /var/www/wx-new /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default /tmp/rtl-sdr /etc/modprobe.d/rtlsdr.conf"
 SERVICES="phpsessionclean.service phpsessionclean.timer nginx.service"
 OS=$(. /etc/os-release && echo "${DEBIAN_CODENAME:-$VERSION_CODENAME}")
 
@@ -72,12 +72,6 @@ package_statuses() {
     fi
  
   done
-
-  if [[ -f /usr/local/bin/meteordemod ]]; then
-    loggit "INFO" "meteordemod is installed"
-  else
-    loggit "INFO" "meteordemod is NOT installed"
-  fi
 }
 
 remove_services() {
@@ -123,13 +117,6 @@ remove_packages() {
     fi
   
   done
-
-  sudo rm -rf /usr/local/bin/meteordemod
-  if [[ -f /usr/local/bin/meteordemod ]]; then
-    loggit "INFO" "meteordemod is installed"
-  else
-    loggit "INFO" "meteordemod is no longer installed"
-  fi
 }
 
 remove_paths() {

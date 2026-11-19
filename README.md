@@ -11,7 +11,7 @@ A Raspberry Pi ground station for the **METEOR-M2 3** and **METEOR-M2 4** weathe
 137.9 MHz), decoding with **SatDump 1.2.3**. Built on
 [raspberry-noaa-v2](https://github.com/jekhokie/raspberry-noaa-v2) and reworked for METEOR LRPT.
 **Extra:** between Meteor passes it also catches the slow-scan TV pictures the **ISS** sends during
-ARISS events. Made by holifo (SV5QNF).
+ARISS events, and between events the APRS stations it relays, live on a map. Made by holifo (SV5QNF).
 
 ## What it does
 
@@ -42,7 +42,7 @@ ARISS events. Made by holifo (SV5QNF).
   - **Admin** (at `/admin/passes`, password protected): delete passes and captures.
   - Live UTC and local clocks, and the station's version in the footer.
 
-### Extra: ISS SSTV pictures
+### Extra: ISS SSTV pictures and APRS
 
 A few times a year, during ARISS events, the International Space Station sends slow-scan TV
 pictures. Between Meteor passes the station records the ISS's passes and decodes them:
@@ -183,4 +183,5 @@ GPL-3.0, as the project it is based on. See [LICENSE](LICENSE).
 * **[RTL-SDR Blog drivers](https://github.com/rtlsdrblog/rtl-sdr-blog)**: the RTL-SDR driver the install builds.
 * **[d3](https://d3js.org)** and **[satellite.js](https://github.com/shashwatak/satellite-js)**: the live map on the Satellites page.
 * **[sstv](https://github.com/colaclanth/sstv)**: SSTV decoding for the ISS extra (besides the station's own decoder).
+* **[Dire Wolf](https://github.com/wb2osz/direwolf)** by John Langner, WB2OSZ: decodes the ISS's APRS packets.
 * **[flag-icons](https://github.com/lipis/flag-icons)** (MIT): the flags in the language menu.

@@ -35,14 +35,16 @@
   {% include('Admin/nav.html') %}
 
   {# Meteor and ISS switches: POST to /admin/switch, which runs scripts/switch.sh --web #}
+  {% set aprs = constant('Config\\Config::ISS_APRS') %}
   {% set switches = [
        {'what': 'meteor', 'on': constant('Config\\Config::METEOR_ON'), 'name': 'Meteor', 'dot': 'sat-m23',
         'title': lang['meteor_sw_title']|default('Meteor captures'),
         'hint': lang['meteor_sw_hint']|default('Records both Meteor satellites (METEOR-M2 3 and M2 4, LRPT on 137.9 MHz).'),
         'ok': true},
        {'what': 'iss', 'on': constant('Config\\Config::ISS_SSTV'), 'name': 'ISS SSTV', 'dot': 'sat-iss',
-        'title': lang['iss_sw_title']|default('ISS SSTV pictures (extra)'),
-        'hint': iss_switchable ? lang['iss_sw_hint']|default('Records the ISS\'s SSTV pictures when it passes. Meteor passes always come first.')
+        'title': aprs ? lang['iss_sw_title_aprs']|default('ISS SSTV pictures and APRS (extra)') : lang['iss_sw_title']|default('ISS SSTV pictures (extra)'),
+        'hint': iss_switchable ? (aprs ? lang['iss_sw_hint_aprs']|default('During ARISS events it records the ISS\'s SSTV pictures; on its other passes, the APRS stations it relays on 145.825 MHz. Meteor passes always come first.')
+                                      : lang['iss_sw_hint']|default('Records the ISS\'s SSTV pictures when it passes. Meteor passes always come first.'))
                                : lang['iss_sw_rtl']|default('Needs an RTL-SDR receiver.'),
         'ok': iss_switchable}] %}
   {% if sw %}

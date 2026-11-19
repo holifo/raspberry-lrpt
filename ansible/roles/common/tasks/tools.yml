@@ -28,7 +28,6 @@
     group: "{{ item.group }}"
     mode: "{{ item.mode }}"
   loop:
-    - { path: "{{ lrpt_home }}/tmp/meteor", group: "{{ target_user }}", mode: "0755" }
     - { path: "{{ lrpt_home }}/tmp/annotation", group: "{{ target_user }}", mode: "0755" }
     - { path: "{{ lrpt_home }}/tmp/scanner", group: "{{ target_user }}", mode: "0755" }
     # images and videos: group www-data, so the web panel can read them

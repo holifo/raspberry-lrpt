@@ -366,5 +366,7 @@ return array(
   "aprs_station" => "station",
   "aprs_stations" => "stations",
   "lg_aprs" => "Carte APRS : radioamateurs dont l'ISS a relayé les paquets de position sur 145,825 MHz pendant son passage (entre les événements SSTV)",
+  "iss_sw_title_aprs" => "Images SSTV et APRS de l'ISS (extra)",
+  "iss_sw_hint_aprs" => "Pendant les événements ARISS (les dates SSTV), enregistre les images SSTV de l'ISS sur {freq} MHz ; lors de ses autres passages, les stations APRS qu'elle relaie sur 145,825 MHz, affichées en direct sur la carte des satellites. Les passages Meteor restent prioritaires.",
 );
 ?>

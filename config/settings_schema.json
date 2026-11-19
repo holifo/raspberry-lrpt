@@ -13,10 +13,6 @@
       "type": "string",
       "enum": [ "rtlsdr", "airspy_mini", "airspy_r2", "airspy_hf_plus_discovery", "hackrf", "sdrplay", "mirisdr" ]
     },
-    "meteor_decoder": {
-      "type": "string",
-      "enum": [ "satdump", "meteordemod" ]
-    },
     "select_best_overlapping_passes": { "type": "boolean" },
     "meteor_m2_3_schedule":        { "type": "boolean" },
     "meteor_m2_3_sdr_device_id":   { "type": "number" },
@@ -168,7 +164,6 @@
     "storage",
     "use_device_string",
     "receiver_type",
-    "meteor_decoder",
     "days_to_schedule_passes",
     "keep_recordings",
     "iss_sstv",

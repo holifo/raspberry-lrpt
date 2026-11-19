@@ -75,7 +75,6 @@ esac
 
 if [ "$SAT_NAME" == "METEOR-M2 3" ]; then
   SAT_NUMBER="M2_3"
-  SAT_NAME_METEORDEMOD="METEOR-M-2-3"
   METEOR_FREQUENCY=$METEOR_M2_3_FREQ
 
   # export some variables for use in the annotation - note that we do not
@@ -88,7 +87,6 @@ if [ "$SAT_NAME" == "METEOR-M2 3" ]; then
   export SAT_MIN_ELEV=$METEOR_M2_3_SAT_MIN_ELEV
 elif [ "$SAT_NAME" == "METEOR-M2 4" ]; then
   SAT_NUMBER="M2_4"
-  SAT_NAME_METEORDEMOD="METEOR-M-2-4"
   METEOR_FREQUENCY=$METEOR_M2_4_FREQ
 
   # export some variables for use in the annotation - note that we do not
@@ -139,11 +137,7 @@ else
     bias_tee_option=""
 fi
 
-if [ "$METEOR_DECODER" == "satdump" ]; then
-  finish_processing="--finish_processing"
-else
-  finish_processing=""
-fi
+finish_processing="--finish_processing"
 
 FLIP=""
 log "Direction $PASS_DIRECTION" "INFO"
@@ -227,111 +221,76 @@ if [[ "${PRODUCE_SPECTROGRAM}" == "true" ]] && [ -f "${SPECTRO_DATA}" ]; then
 fi
 CADU_FILE="$WORK_DIR/meteor_m2-x_lrpt${mode}.cadu"
 
-log "Removing old bmp, gcp, and dat files" "INFO"
-find "$LRPT_HOME/tmp/meteor" -type f \( -name "*.gcp" -o -name "*.bmp" -o -name "*.dat" \) -mtime +1 -delete >> $LRPT_LOG 2>&1
+# keep the product (raw channels, line times, orbit) for the daily map, before it is deleted
+save_daily_product . "$FILENAME_BASE" "$EPOCH_START"
+find "MSU-MR (Filled)/" -type f ! -name "*projected*" ! -name "*corrected*" -delete
 
-if [[ "$METEOR_DECODER" == "meteordemod" ]]; then
-  log "Running MeteorDemod to demodulate OQPSK file, rectify (spread) images, create heat map and composites and convert them to JPG" "INFO"
-  if [[ "$METEOR_${SAT_NUMBER}_80K_INTERLEAVING" == "true" ]]; then
-    $METEORDEMOD -m oqpsk -diff 1 -int 1 -s 80000 -sat $SAT_NAME_METEORDEMOD -t "$TLE_FILE" -f jpg -i "${CADU_FILE}" -o "$LRPT_HOME/tmp/meteor"  >> $LRPT_LOG 2>&1
-  else
-    $METEORDEMOD -m oqpsk -diff 1 -s 72000 -sat $SAT_NAME_METEORDEMOD -t "$TLE_FILE" -f jpg -i "${CADU_FILE}" -o "$LRPT_HOME/tmp/meteor" >> $LRPT_LOG 2>&1
-  fi
+log "Deleting SatDump projected composites which have been generated, but the channels aren't broadcast" "INFO"
+for projected_file in MSU-MR\ \(Filled\)/rgb_msu_mr_rgb_*_projected.png; do
+    [ -e "$projected_file" ] || continue   # no such files: the pattern itself
+    # Extract the corresponding corrected.png filename
+    corrected_file="${projected_file/rgb_msu_mr_rgb_/msu_mr_rgb_}"
+    corrected_file="${corrected_file/_projected.png/_corrected.png}"
 
-  log "Waiting for files to close" "INFO"
-  sleep 2
+    # Check if the corrected.png file does not exist
+    if [ ! -e "$corrected_file" ]; then
+        log "$corrected_file doesn't exist, hence deleting $projected_file" "INFO"
+        rm "$projected_file"
+    fi
+done
 
-  # for i in -o $LRPT_HOME/tmp/meteor/spread_*.jpg; do
-  #   $CONVERT -quality 100 $FLIP "$i" "$i" >> $LRPT_LOG 2>&1
-  # done
-
-  for file in $LRPT_HOME/tmp/meteor/*.jpg; do
-    new_filename=$(echo "$file" | sed -E 's/_([0-9]+-[0-9]+-[0-9]+-[0-9]+-[0-9]+-[0-9]+)//')        #This part removes unecessary numbers from the MeteorDemod image names using RegEx
-    mv "$file" "$new_filename"
-    image_filename=$(basename "$new_filename")
-
-    ${IMAGE_PROC_DIR}/meteor_normalize_annotate.sh "$new_filename" "${IMAGE_FILE_BASE}-${image_filename%.jpg}.jpg" $METEOR_IMAGE_QUALITY >> $LRPT_LOG 2>&1
-    ${IMAGE_PROC_DIR}/thumbnail.sh 300 "${IMAGE_FILE_BASE}-${image_filename%.jpg}.jpg" "${IMAGE_THUMB_BASE}-${image_filename%.jpg}.jpg" >> $LRPT_LOG 2>&1
-    rm "$new_filename"
+if satdump_times_ok . "$EPOCH_START"; then
+  log "Removing images without a map if they exist" "INFO"
+  for file in MSU-MR\ \(Filled\)/*map.png; do
+    [ -e "$file" ] && mv "$file" "${file/_map.png/.png}"
   done
+else
+  # the frames' times are nonsense (corrupt data), so any map would be in the wrong place
+  log "SatDump's line times are hours away from the pass - keeping the images without a map" "WARN"
+  rm -f MSU-MR\ \(Filled\)/*map.png MSU-MR\ \(Filled\)/*projected*.png MSU-MR\ \(Filled\)/*MCIR*.png
+fi
 
-
-elif [[ "$METEOR_DECODER" == "satdump" ]]; then
-  # keep the product (raw channels, line times, orbit) for the daily map, before it is deleted
-  save_daily_product . "$FILENAME_BASE" "$EPOCH_START"
-  find "MSU-MR (Filled)/" -type f ! -name "*projected*" ! -name "*corrected*" -delete
-
-  log "Deleting SatDump projected composites which have been generated, but the channels aren't broadcast" "INFO"
-  for projected_file in MSU-MR\ \(Filled\)/rgb_msu_mr_rgb_*_projected.png; do
-      [ -e "$projected_file" ] || continue   # no such files: the pattern itself
-      # Extract the corresponding corrected.png filename
-      corrected_file="${projected_file/rgb_msu_mr_rgb_/msu_mr_rgb_}"
-      corrected_file="${corrected_file/_projected.png/_corrected.png}"
-
-      # Check if the corrected.png file does not exist
-      if [ ! -e "$corrected_file" ]; then
-          log "$corrected_file doesn't exist, hence deleting $projected_file" "INFO"
-          rm "$projected_file"
-      fi
-  done
-
-  if satdump_times_ok . "$EPOCH_START"; then
-    log "Removing images without a map if they exist" "INFO"
-    for file in MSU-MR\ \(Filled\)/*map.png; do
-      [ -e "$file" ] && mv "$file" "${file/_map.png/.png}"
-    done
-  else
-    # the frames' times are nonsense (corrupt data), so any map would be in the wrong place
-    log "SatDump's line times are hours away from the pass - keeping the images without a map" "WARN"
-    rm -f MSU-MR\ \(Filled\)/*map.png MSU-MR\ \(Filled\)/*projected*.png MSU-MR\ \(Filled\)/*MCIR*.png
-  fi
-
-  # northbound passes come out upside down (south at the top); rotate them when
-  # flip_meteor_image is on. Southbound passes are left alone (no re-encoding).
-  if [ -n "$FLIP" ]; then
-    log "Rotating the northbound pass's images 180 degrees" "INFO"
-    for i in MSU-MR\ \(Filled\)/*_corrected.png; do
-      $CONVERT "$i" $FLIP "$i" >> $LRPT_LOG 2>&1 &
-      throttle
-    done
-    wait
-  fi
-
-  # Renaming files, annotating images and creating thumbnails, several images at once
-  log "Annotating images and creating thumbnails ($PARALLEL_JOBS at a time)" "INFO"
-  annotate_one() {
-    local i=$1 path image_filename new_name
-    path="$(pwd)"
-    image_filename=$(basename "$i")
-    new_name="$image_filename"
-
-    # Use parameter expansion to remove the specified prefixes
-    new_name="${new_name#msu_mr_rgb_}"
-    new_name="${new_name#rgb_msu_mr_rgb_}"
-    new_name="${new_name#rgb_msu_mr_rgb_}"
-    new_name="${new_name#rgb_msu_mr_}"
-    new_name="${new_name#msu_mr_}"
-
-    # Rename the file with the new name
-    mv "$i" "$path/MSU-MR (Filled)/$new_name" >> $LRPT_LOG 2>&1
-
-    ${IMAGE_PROC_DIR}/meteor_normalize_annotate.sh "$path/MSU-MR (Filled)/$new_name" "${IMAGE_FILE_BASE}-${new_name%.png}.jpg" $METEOR_IMAGE_QUALITY >> $LRPT_LOG 2>&1
-    ${IMAGE_PROC_DIR}/thumbnail.sh 300 "${IMAGE_FILE_BASE}-${new_name%.png}.jpg" "${IMAGE_THUMB_BASE}-${new_name%.png}.jpg" >> $LRPT_LOG 2>&1
-    rm "$path/MSU-MR (Filled)/$new_name" >> $LRPT_LOG 2>&1
-  }
-  for i in MSU-MR\ \(Filled\)/*.png; do
-    [ -e "$i" ] || continue
-    annotate_one "$i" &
+# northbound passes come out upside down (south at the top); rotate them when
+# flip_meteor_image is on. Southbound passes are left alone (no re-encoding).
+if [ -n "$FLIP" ]; then
+  log "Rotating the northbound pass's images 180 degrees" "INFO"
+  for i in MSU-MR\ \(Filled\)/*_corrected.png; do
+    $CONVERT "$i" $FLIP "$i" >> $LRPT_LOG 2>&1 &
     throttle
   done
   wait
-  rm -r "MSU-MR (Filled)" >> $LRPT_LOG 2>&1
-  rm -r "MSU-MR" >> $LRPT_LOG 2>&1
-
-
-else
-  echo "Unknown decoder: $METEOR_DECODER"
 fi
+
+# Renaming files, annotating images and creating thumbnails, several images at once
+log "Annotating images and creating thumbnails ($PARALLEL_JOBS at a time)" "INFO"
+annotate_one() {
+  local i=$1 path image_filename new_name
+  path="$(pwd)"
+  image_filename=$(basename "$i")
+  new_name="$image_filename"
+
+  # Use parameter expansion to remove the specified prefixes
+  new_name="${new_name#msu_mr_rgb_}"
+  new_name="${new_name#rgb_msu_mr_rgb_}"
+  new_name="${new_name#rgb_msu_mr_rgb_}"
+  new_name="${new_name#rgb_msu_mr_}"
+  new_name="${new_name#msu_mr_}"
+
+  # Rename the file with the new name
+  mv "$i" "$path/MSU-MR (Filled)/$new_name" >> $LRPT_LOG 2>&1
+
+  ${IMAGE_PROC_DIR}/meteor_normalize_annotate.sh "$path/MSU-MR (Filled)/$new_name" "${IMAGE_FILE_BASE}-${new_name%.png}.jpg" $METEOR_IMAGE_QUALITY >> $LRPT_LOG 2>&1
+  ${IMAGE_PROC_DIR}/thumbnail.sh 300 "${IMAGE_FILE_BASE}-${new_name%.png}.jpg" "${IMAGE_THUMB_BASE}-${new_name%.png}.jpg" >> $LRPT_LOG 2>&1
+  rm "$path/MSU-MR (Filled)/$new_name" >> $LRPT_LOG 2>&1
+}
+for i in MSU-MR\ \(Filled\)/*.png; do
+  [ -e "$i" ] || continue
+  annotate_one "$i" &
+  throttle
+done
+wait
+rm -r "MSU-MR (Filled)" >> $LRPT_LOG 2>&1
+rm -r "MSU-MR" >> $LRPT_LOG 2>&1
 
 # keep the decoded frames (.cadu) of the newest KEEP_RECORDINGS passes for offline
 # re-processing in SatDump, e.g. satdump meteor_m2-x_lrpt cadu <file>.cadu <output_dir>

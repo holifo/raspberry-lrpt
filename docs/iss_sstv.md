@@ -15,8 +15,9 @@ passes and decodes those pictures. ARISS announces the events on [ariss.org](htt
 and on the [ARISS SSTV blog](https://ariss-sstv.blogspot.com/).
 
 It is **off by default**; turn it on with the switch on Admin > Passes or
-`scripts/switch.sh iss on` (below). Passes with no pictures (most of the year) leave nothing behind, so you
-only see the ISS on the site when it actually sent something.
+`scripts/switch.sh iss on` (below). Between events it records the ISS's APRS digipeater instead
+(below). A pass where nothing was decoded leaves nothing behind, so you only see the ISS on the
+site when something was received.
 
 ## How it works
 
@@ -24,7 +25,8 @@ only see the ISS on the site when it actually sent something.
    orbits, into `tmp/iss.tle`. A failed download keeps the previous one.
 2. **Scheduling:** every ISS pass whose highest point is above `iss_sstv_min_elevation` (20°) is
    scheduled with `at`, like the Meteor passes, and shows in the pass list in violet. With
-   `iss_sstv_dates` set, only the passes between those dates are.
+   `iss_aprs: false` and `iss_sstv_dates` set, only the passes between those dates are (with APRS
+   on, every pass is, and the dates decide SSTV or APRS).
 3. **Meteor always has priority**, at every step:
    - **Scheduling:** when an ISS pass overlaps a Meteor pass, the Meteor pass is kept and the ISS
      pass dropped, however high the ISS pass is (`select_best_overlapping_passes.py`).
@@ -33,7 +35,7 @@ only see the ISS on the site when it actually sent something.
      that is still running, then gives up.
    - **During recording:** a Meteor pass that starts while the ISS is still being recorded stops
      that recording and takes the SDR (the pictures received so far are still decoded).
-4. **Recording:** `receive_iss.sh` records the pass on `iss_sstv_frequency` with `rtl_fm`
+4. **Recording** (SSTV; APRS is below): `receive_iss.sh` records the pass on `iss_sstv_frequency` with `rtl_fm`
    (48 kHz wide, which covers the ISS's Doppler shift: about ±3.5 kHz on 2 m, ±10 kHz on 70 cm)
    as audio at 11025 Hz, with the gain `iss_sstv_gain`.
 5. **Decoding:** `scripts/image_processors/sstv_decode.py` finds the pictures in the audio. For

@@ -21,5 +21,3 @@ a time, so the composites a pass can make depend on what it sends.
    ```bash
    satdump meteor_m2-x_lrpt cadu <file>.cadu <output folder>
    ```
-
-MeteorDemod can be used instead of SatDump with `meteor_decoder: 'meteordemod'` in `settings.yml`.
