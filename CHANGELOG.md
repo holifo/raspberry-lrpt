@@ -1,5 +1,19 @@
 # Changelog
 
+## Raspberry-LRPT v1.31.2 (2026-11-19)
+
+- **Live log: the SDR card now finds every supported receiver.** It only looked for an RTL-SDR,
+  so an SDRplay, Airspy, HackRF or MiriSDR always showed "not detected", even when it was plugged
+  in and working. It now looks for the station's own receiver (the one chosen in the setup
+  questions) by its USB ids, the same ones the install checks.
+- **Live log: your receiver's driver errors are shown.** SatDump logs an "Error loading" line for
+  every SDR driver a station doesn't use, and the console hid those lines for all receivers but
+  the RTL-SDR. It now hides them only for the drivers you don't use, so a missing SDRplay, Airspy
+  or HackRF driver shows up.
+
+- **Satellites tab: the ISS's downlink now lists APRS too** (145.825 MHz), next to the SSTV
+  frequency, when ISS APRS is on.
+
 ## Raspberry-LRPT v1.31.1 (2026-11-19)
 
 - **MeteorDemod removed: SatDump is the only decoder.** The documentation still said MeteorDemod

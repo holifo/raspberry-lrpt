@@ -71,15 +71,39 @@ class LogController extends \Lib\Controller {
   const NOISE = '/^\\[\\d\\d:\\d\\d:\\d\\d - [\\d\\/]+\\] (?:'
     . '\\([DT]\\) (?:Loading plugin |Plugin .* loaded!|Loaded plugins|Registered (?:modules|pipelines)| - |Found system pipeline file)'
     . '|\\(I\\) (?:Loading pipelines from file|Loading plugins from|Loading system pipelines|Loading config|Loading user settings|[ _\\/\\\\|.,`]*$)'
-    . '|\\(E\\) Error loading (?!.*rtl).*(?:\\.so|dynload)'
     . ')/';
+
+  # SatDump tries every SDR driver at start and logs "Error loading …" for the ones a station
+  # doesn't use. Those lines are dropped, except for the station's own receiver's driver.
+  const LOAD_ERROR = '/^\\[\\d\\d:\\d\\d:\\d\\d - [\\d\\/]+\\] \\(E\\) Error loading .*(?:\\.so|dynload)/';
+  const DRIVER = array('rtlsdr' => '/rtl/i', 'airspy_mini' => '/airspy(?!hf)/i', 'airspy_r2' => '/airspy(?!hf)/i',
+                       'airspy_hf_plus_discovery' => '/airspyhf/i', 'hackrf' => '/hackrf/i',
+                       'sdrplay' => '/sdrplay/i', 'mirisdr' => '/mirisdr/i');
+
+  # USB ids of each receiver type (vendor, products; null = any product), as the install checks them
+  const SDR_USB = array(
+    'rtlsdr' => array(array('0bda', array('2832', '2838'), 'RTL-SDR')),
+    'airspy_mini' => array(array('1d50', array('60a1'), 'Airspy')),
+    'airspy_r2' => array(array('1d50', array('60a1'), 'Airspy')),
+    'airspy_hf_plus_discovery' => array(array('03eb', array('800c'), 'Airspy HF+')),
+    'hackrf' => array(array('1d50', array('6089', 'cc15'), 'HackRF')),
+    'sdrplay' => array(array('1df7', null, 'SDRplay')),
+    'mirisdr' => array(array('1df7', null, 'MiriSDR'), array('2040', array('d300'), 'MiriSDR')));
+
+  private static function receiver() {
+    $r = defined('Config\\Config::RECEIVER_TYPE') ? Config::RECEIVER_TYPE : 'rtlsdr';
+    return isset(self::SDR_USB[$r]) ? $r : 'rtlsdr';
+  }
 
   private function dropNoise($text) {
     $lines = explode("\n", $text);
     $last = array_pop($lines);
     $keep = array();
     foreach ($lines as $line) {
-      if (!preg_match(self::NOISE, preg_replace('/\\x1b?\\[[0-9;]*m/', '', $line))) { $keep[] = $line; }
+      $plain = preg_replace('/\\x1b?\\[[0-9;]*m/', '', $line);
+      if (preg_match(self::NOISE, $plain)) continue;
+      if (preg_match(self::LOAD_ERROR, $plain) && !preg_match(self::DRIVER[self::receiver()], $plain)) continue;
+      $keep[] = $line;
     }
     $keep[] = $last;
     return implode("\n", $keep);
@@ -128,13 +152,17 @@ class LogController extends \Lib\Controller {
     if ($model !== false) { $s['model'] = trim($model, "\0\n "); }
     $s['host'] = gethostname();
 
-    # SDR: RTL-SDR dongle on USB (vendor 0bda, product 2832/2838), and whether a capture is running
+    # SDR: the station's own receiver on USB (receiver_type), and whether a capture is running
     $s['sdr'] = false;
     foreach (glob('/sys/bus/usb/devices/*/idVendor') ?: array() as $vf) {
       $dir = dirname($vf);
-      if (trim(@file_get_contents($vf)) == '0bda' &&
-          in_array(trim(@file_get_contents($dir . '/idProduct')), array('2832', '2838'))) {
-        $s['sdr'] = trim(@file_get_contents($dir . '/product')) ?: 'RTL-SDR';
+      $vendor = strtolower(trim(@file_get_contents($vf)));
+      $product = strtolower(trim(@file_get_contents($dir . '/idProduct')));
+      foreach (self::SDR_USB[self::receiver()] as $id) {
+        if ($vendor == $id[0] && ($id[1] === null || in_array($product, $id[1]))) {
+          $s['sdr'] = trim(@file_get_contents($dir . '/product')) ?: $id[2];
+          break 2;
+        }
       }
     }
     $s['capturing'] = false;
