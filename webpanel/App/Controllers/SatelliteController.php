@@ -63,6 +63,7 @@ class SatelliteController extends \Lib\Controller {
     ));
     $inject = "<script>window.RL1_OBSERVER = " . $observer . ";";
     $inject .= "\nwindow.RL1_ISS = " . (Config::ISS_SSTV ? 'true' : 'false') . ";";
+    $inject .= "\nwindow.RL1_APRS = " . (Config::ISS_SSTV && defined('Config\\Config::ISS_APRS') && Config::ISS_APRS ? 'true' : 'false') . ";";
     # the visitor's language for the map's own text
     $inject .= "\nwindow.RL1_LANG = " . json_encode(\Lib\Lang::strings(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . ";";
 

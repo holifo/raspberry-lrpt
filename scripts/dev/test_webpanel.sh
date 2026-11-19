@@ -32,7 +32,7 @@ set -u
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${PWD}/webpanel-test-output"
 KEEP=0
-PAGES="/passes /satellite /meteor /captures?page_no=1 /captures/listImages?pass_id=1 /daily /satellite/map /admin/passes /admin/captures?page_no=1 /log"
+PAGES="/passes /satellite /meteor /captures?page_no=1 /captures/listImages?pass_id=1 /captures/listImages?pass_id=2 /daily /satellite/map /admin/passes /admin/captures?page_no=1 /log"
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/rl1-webtest"
 
 while getopts ":o:kp:" opt; do
@@ -172,6 +172,63 @@ if have_im:
                         '-pointsize', '36', '-annotate', '+0+20', 'ARISS SSTV %d/12' % n, img], check=False)
         for suffix in ('-SSTV_%d.jpg' % n,) + (('-website-thumbnail.jpg',) if n == 1 else ()):
             subprocess.run(['convert', img, '-resize', '300x', os.path.join(srv, 'images/thumb', 'ISS-sample' + suffix)], check=False)
+# ISS APRS (iss_aprs): a pass with stations heard through the ISS (drawn by the station's own
+# aprs_pass.py), and an APRS pass being recorded now for the Satellites map's live layer.
+# N0CALL is APRS's placeholder call sign.
+aprs_hdr = ('chan,utime,isotime,source,heard,level,error,dti,name,symbol,latitude,longitude,speed,course,'
+            'altitude,frequency,offset,tone,system,status,telemetry,comment')
+aprs_st = [('N0CALL-7', 'RS0ISS', 38.25, 21.73, '/>', 'Mobile via ARISS'),
+           ('N0CALL-9', 'RS0ISS', 41.01, 28.98, '/[', 'Hello from the bridge'),
+           ('N0CALL-1', 'RS0ISS', 35.34, 25.13, '/-', 'QRV 145.825 sat'),
+           ('N0CALL-5', 'RS0ISS', 32.89, 13.19, '/-', '73 de N0CALL'),
+           ('N0CALL-3', 'RS0ISS', 39.62, 19.92, '/`', 'Portable, 5 W Arrow'),
+           ('N0CALL-2', 'RS0ISS', None, None, '', 'ISS QSO? 73')]
+def aprs_csv(path, t0, n):
+    with open(path, 'w') as f:
+        f.write(aprs_hdr + '\n')
+        for j, (call, heard, la, lo, sym, cmt) in enumerate(aprs_st[:n]):
+            for rep in range(1 + j % 2):
+                t = t0 + 40 * j + 25 * rep
+                f.write('0,%d,x,%s,%s,50(14/14),0,!,%s,%s,%s,%s,,,,,,,,,,"%s"\n' % (
+                    t, call, heard, call, sym, '' if la is None else la, '' if lo is None else lo, cmt))
+aprs_ps = now - 86400 - 20000
+try:   # a real ISS pass over the sample station, so the map's track crosses the stations
+    import ephem, datetime
+    l = [x for x in open(os.path.join(wp, 'App/Static/meteor.tle')).read().split('\n') if x.strip()]
+    k = [x.strip() for x in l].index('ISS')
+    o = ephem.Observer(); o.lat, o.lon, o.horizon = '37.983810', '23.727539', '10'
+    o.date = datetime.datetime.fromtimestamp(aprs_ps, datetime.timezone.utc).replace(tzinfo=None)
+    for _ in range(12):
+        p = o.next_pass(ephem.readtle('ISS', l[k + 1], l[k + 2]))
+        if p[3] > 0.6:         # max elevation over ~35 degrees
+            break
+        o.date = p[4] + ephem.minute
+    aprs_ps = int(ephem.Date(p[0]).datetime().replace(tzinfo=datetime.timezone.utc).timestamp())
+    if aprs_ps > now - 3600:
+        aprs_ps = now - 86400 - 20000
+except Exception:
+    pass
+db.execute('INSERT INTO predict_passes (sat_name, pass_start, pass_end, max_elev, is_active, '
+           'pass_start_azimuth, direction, azimuth_at_max) VALUES (?,?,?,?,?,?,?,?)',
+           ('ISS', aprs_ps, aprs_ps + 600, 48, 0, 290, 'Southbound', 200))
+db.execute('INSERT INTO decoded_passes (pass_start, file_path, daylight_pass, sat_type, img_count, gain, '
+           'has_spectrogram, has_pristine, has_polar_az_el, has_polar_direction, has_histogram) '
+           'VALUES (?,?,1,4,?,30,0,0,0,0,0)', (aprs_ps, 'ISS-aprs-sample', len(aprs_st)))
+aprs_tmp = os.path.join(work, 'aprs-sample.csv')
+aprs_csv(aprs_tmp, aprs_ps + 60, len(aprs_st))
+r = subprocess.run([sys.executable, '-I', os.path.join(repo, 'scripts/image_processors/aprs_pass.py'),
+                    aprs_tmp, '', os.path.join(wp, 'App/Static/meteor.tle'), 'ISS', str(aprs_ps),
+                    str(aprs_ps + 600), '37.983810', '23.727539',
+                    os.path.join(srv, 'images', 'ISS-aprs-sample')], capture_output=True, text=True)
+if r.returncode != 0:
+    print('APRS sample not drawn:', r.stderr.strip()[-300:])
+elif have_im:
+    for src, dst in (('-aprs-map.png', '-aprs-map.png'), ('-aprs-map.png', '-website-thumbnail.jpg')):
+        subprocess.run(['convert', os.path.join(srv, 'images', 'ISS-aprs-sample' + src), '-resize', '300x',
+                        os.path.join(srv, 'images/thumb', 'ISS-aprs-sample' + dst)], check=False)
+json.dump({'base': 'ISS-live', 'start': now - 200, 'end': now + 400, 'frequency': '145.825'},
+          open(os.path.join(srv, 'images', 'aprs-live.json'), 'w'))
+aprs_csv(os.path.join(srv, 'images', 'aprs-live.csv'), now - 180, 5)
 for i in range(6):
     fp = 'METEOR-M2-%d-sample%d' % (3 + i % 2, i)
     ps = now - 86400 * (i + 1)

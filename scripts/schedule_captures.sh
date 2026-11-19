@@ -70,7 +70,7 @@ while [ "$(date --date="@${end_epoch_time}" +"%s")" -le "${END_TIME_MS}" ]; do
       fi
   fi
 
-  if [ "$OBJ_NAME" == "ISS" ] && [ -n "$iss_from" ]; then
+  if [ "$OBJ_NAME" == "ISS" ] && [ -n "$iss_from" ] && [ "$ISS_APRS" != "true" ]; then
     pass_day=$(date -d "@$start_epoch_time" +%F)
     if [[ "$pass_day" < "$iss_from" || "$pass_day" > "$iss_to" ]]; then
       schedule_enabled_by_sun_elev=0       # outside the ARISS event's dates

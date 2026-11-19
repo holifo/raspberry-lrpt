@@ -12,6 +12,7 @@
       - certbot
       - cmake
       - curl
+      - direwolf
       - ffmpeg
       - git
       - gmic

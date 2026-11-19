@@ -121,11 +121,15 @@ keep_recordings: 5
 #   iss_sstv_frequency - the ISS downlink to record, MHz: 437.550 (70 cm, ARISS's 2026 events) or
 #                        145.800 (2 m, earlier events); the decoder finds the mode itself
 #   iss_sstv_gain - the RTL-SDR's gain for the ISS (dB)
+#   iss_aprs - between SSTV events (outside iss_sstv_dates, or every pass when it is empty), record
+#              the ISS's APRS packet radio on 145.825 MHz instead: the stations heard through the
+#              ISS show live on the Satellites map and on each pass's page (needs iss_sstv on)
 iss_sstv: false
 iss_sstv_dates: ""
 iss_sstv_min_elevation: 20
 iss_sstv_frequency: 437.550
 iss_sstv_gain: 40
+iss_aprs: true
 
 # Daily map: every pass of a day projected onto one map of the region around the station,
 # one for daytime passes and one for night-time passes (Daily map page)

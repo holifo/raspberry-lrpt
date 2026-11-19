@@ -81,7 +81,7 @@ for name, f in src.items():
 ch = Image.open(os.path.join(real, 'MSU-MR-2.png')).convert('RGB')
 w, h = ch.size
 pics['MSU-MR_channel_2'] = ch.crop((0, int(h * 0.06), w, int(h * 0.80)))
-caps = [r[0] for r in db.execute('SELECT file_path FROM decoded_passes ORDER BY pass_start DESC')]
+caps = [r[0] for r in db.execute('SELECT file_path FROM decoded_passes WHERE sat_type < 3 ORDER BY pass_start DESC')]
 for i, fp in enumerate(caps):
     for old in glob.glob(os.path.join(srv, 'images', fp + '-*.jpg')) + glob.glob(os.path.join(srv, 'images/thumb', fp + '-*.jpg')):
         if 'polar' not in old:
@@ -110,9 +110,11 @@ sleep 1
 mkdir -p "$OUT"
 rm -f "$OUT"/*.jpg
 say "Taking screenshots into ${OUT#$REPO/}"
-NODE_PATH="$CACHE/node_modules" node - "http://127.0.0.1:$PORT" "$OUT" "$CHROME" <<'EOF'
+# the newest Meteor capture (the sample data's ISS captures come first)
+METEOR_ID=$(sqlite3 "$WORK/panel.db" "SELECT id FROM decoded_passes WHERE sat_type < 3 ORDER BY pass_start DESC LIMIT 1" 2>/dev/null)
+NODE_PATH="$CACHE/node_modules" node - "http://127.0.0.1:$PORT" "$OUT" "$CHROME" "${METEOR_ID:-3}" <<'EOF'
 const { chromium } = require('playwright-core');
-const [base, out, exe] = process.argv.slice(2);
+const [base, out, exe, METEOR_ID] = process.argv.slice(2);
 (async () => {
   const browser = await chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
   async function page(opts) {
@@ -141,10 +143,11 @@ const [base, out, exe] = process.argv.slice(2);
   await page({ name: 'map-fullscreen', url: '/satellite', before: async p => {
     await p.frameLocator('#meteor-map-frame').locator('#fullscreen').click(); await p.waitForTimeout(1500); } });
   await page({ name: 'captures', url: '/captures?page_no=1' });
-  await page({ name: 'capture', url: '/captures/listImages?pass_id=1', full: true });
-  await page({ name: 'image-viewer', url: '/captures/listImages?pass_id=1', before: async p => {
+  await page({ name: 'capture', url: '/captures/listImages?pass_id=' + METEOR_ID, full: true });
+  await page({ name: 'image-viewer', url: '/captures/listImages?pass_id=' + METEOR_ID, before: async p => {
     await p.click('.cap-card >> nth=0'); await p.waitForTimeout(1200);
     await p.click('.iv [data-z="in"]'); await p.waitForTimeout(500); } });
+  await page({ name: 'iss-aprs', url: '/captures/listImages?pass_id=2', full: true });
   await page({ name: 'meteor', url: '/meteor', viewport: { width: 1280, height: 1100 } });
   await page({ name: 'daily', url: '/daily', viewport: { width: 1400, height: 900 } });
   await page({ name: 'live-log', url: '/log', wait: 4000 });

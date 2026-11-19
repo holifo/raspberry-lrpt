@@ -63,6 +63,14 @@ from.
 
 ![Sat info tab](assets/screenshots/meteor.jpg)
 
+## ISS APRS
+
+Between ARISS SSTV events the ISS extra records the ISS's APRS digipeater (145.825 MHz). Each pass
+gets a page with a map of the stations heard and the ISS's track, the list of stations and the
+packets as received; while a pass is recorded, the stations also show up live on the Satellites map.
+
+![An ISS APRS pass](assets/screenshots/iss-aprs.jpg)
+
 ## Captures
 
 Captures grouped by day:

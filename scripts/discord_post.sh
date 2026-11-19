@@ -82,6 +82,7 @@ posted=0 skipped=0 failed=0
 for row in "${rows[@]}"; do
   IFS='|' read -r id start base day sat elev dir secs <<< "$row"
   [ -n "$sat" ] || sat=$(echo "$base" | sed -E 's/^(METEOR-M2-?[0-9]).*/\1/; s/M2-/M2 /')
+  [ "$sat" == "ISS" ] && [ -f "${IMAGE_OUTPUT}/${base}-aprs.json" ] && sat="ISS-APRS"   # an APRS pass
   [ "$secs" -gt 0 ] 2>/dev/null || secs=0
   discord_pass "$base" "$day" "$sat" "$start" "$elev" "${dir:-unknown}" "$secs" "$id" --wait > /dev/null
   case $? in

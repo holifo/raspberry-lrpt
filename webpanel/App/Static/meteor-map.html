@@ -77,6 +77,18 @@
   #zoom button:hover { background: #16263b; }
   #zoom button:disabled { color: #4a5a6e; cursor: default; background: transparent; }
   #zoom button svg { width: 16px; height: 16px; vertical-align: middle; }
+  /* ISS APRS (iss_aprs): stations heard through the ISS on the pass being recorded */
+  .aprs-dot { fill: #a78bfa; stroke: #0a1220; stroke-width: 1.5; }
+  .aprs-dot.direct { fill: #8fa3b8; }
+  .aprs-label { font-size: 10.5px; font-weight: 600; fill: #e3dcff; paint-order: stroke; stroke: #0a1220;
+    stroke-width: 3px; stroke-linejoin: round; }
+  .aprs-link { stroke: #a78bfa; stroke-opacity: 0.35; stroke-width: 1; stroke-dasharray: 2 3; }
+  #aprs { position: absolute; left: 8px; bottom: 6px; background: rgba(10,18,32,0.86);
+    border: 1px solid #4b3d80; border-radius: 8px; padding: 5px 9px; max-width: min(320px, 70vw);
+    font-size: 12px; display: none; }
+  #aprs b { color: #c4b5fd; }
+  #aprs .calls { color: #8fa3b8; font-size: 11px; margin-top: 2px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; }
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #5fd38a; margin-right: 4px; }
 </style>
 </head>
@@ -101,6 +113,7 @@
       <path class="fs-close" d="M9 3v4h4M9 7l5-5M7 13V9H3M7 9l-5 5" style="display:none"/></svg>
   </button>
 </div>
+<div id="aprs" aria-live="polite"></div>
 <div id="status">Loading map…</div>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
@@ -366,6 +379,7 @@
     layers.foot = layers.zoom.append('g');
     layers.marks = svg.append('g');
     layers.hlMarks = layers.marks.append('g');
+    layers.aprs = layers.marks.append('g');
     layers.sats = layers.marks.append('g');
 
     layers.stationRing = layers.marks.append('circle').attr('class', 'station-ring pulse').attr('r', 5);
@@ -417,6 +431,7 @@
     var st = toScreen([OBS.lon, OBS.lat]);
     [layers.station, layers.stationRing].forEach(function (el) { el.attr('cx', st[0]).attr('cy', st[1]); });
     placeHighlightMarks();
+    drawAprs();
     document.getElementById('zoom-in').disabled = zoomT.k >= MAX_ZOOM - 0.01;
     document.getElementById('zoom-out').disabled = zoomT.k <= 1.01;
     drawSats(Date.now());
@@ -610,6 +625,54 @@
     if (mapReady) { showPass(ev.data); } else { pendingPass = ev.data; }
   });
 
+  // ---- ISS APRS live (iss_aprs) ----------------------------------------------------
+  // While receive_iss.sh records an APRS pass, /passes/aprs lists the stations direwolf has
+  // decoded so far. Polled every 5 s (30 s when nothing is being recorded; not at all when the
+  // ISS is off). Stations with a position get a dot and their call sign, drawn at a fixed size.
+  var aprs = { active: false, stations: [] }, aprsBox = document.getElementById('aprs');
+  function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
+  function drawAprs() {
+    if (!layers.aprs) { return; }
+    var pts = aprs.active ? aprs.stations.filter(function (x) { return x.lat !== null && x.lon !== null; }) : [];
+    var g = layers.aprs.selectAll('g.aprs').data(pts, function (x) { return x.call; });
+    g.exit().remove();
+    var ng = g.enter().append('g').attr('class', 'aprs');
+    ng.append('circle').attr('r', 4);
+    ng.append('text').attr('class', 'aprs-label');
+    ng.append('title');
+    g = ng.merge(g);
+    g.select('circle').attr('class', function (x) { return 'aprs-dot' + (x.via_iss ? '' : ' direct'); });
+    g.select('text').text(function (x) { return x.call; });
+    g.select('title').text(function (x) {
+      return x.call + (x.comment ? ' · ' + x.comment : '') + ' · ' + x.packets + ' ' + tr('aprs_packets', 'packets');
+    });
+    // labels that would overlap one already placed are hidden (the dot's tooltip still names it)
+    var placed = [];
+    g.each(function (x) {
+      var xy = toScreen([x.lon, x.lat]) || [-99, -99];
+      var w = 7 * x.call.length + 8;
+      var clash = placed.some(function (q) { return Math.abs(q[1] - xy[1]) < 13 && xy[0] < q[0] + q[2] && q[0] < xy[0] + w; });
+      if (!clash) { placed.push([xy[0], xy[1], w]); }
+      d3.select(this).select('circle').attr('cx', xy[0]).attr('cy', xy[1]);
+      d3.select(this).select('text').attr('x', xy[0] + 6).attr('y', xy[1] + 3.5).style('display', clash ? 'none' : null);
+    });
+    if (!aprs.active) { aprsBox.style.display = 'none'; return; }
+    var n = aprs.stations.length;
+    aprsBox.innerHTML = '<b>' + esc(tr('aprs_live', 'ISS APRS live')) + '</b> · ' + esc(aprs.frequency || '145.825') + ' MHz · ' +
+      n + ' ' + esc(n === 1 ? tr('aprs_station', 'station') : tr('aprs_stations', 'stations')) +
+      (n ? '<div class="calls">' + aprs.stations.map(function (x) { return esc(x.call); }).join(' · ') + '</div>' : '');
+    aprsBox.style.display = 'block';
+  }
+  function pollAprs() {
+    if (window.RL1_ISS === false || !window.RL1_APRS) { return; }
+    fetch('/passes/aprs', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+      aprs = d && d.active ? d : { active: false, stations: [] };
+      drawAprs();
+    }).catch(function () {}).then(function () {
+      setTimeout(pollAprs, document.hidden ? 30000 : (aprs.active ? 5000 : 30000));
+    });
+  }
+
   function frame() {
     var now = Date.now();
     if (now - lastNight > NIGHT_EVERY_MS) { drawNight(now); lastNight = now; }
@@ -629,6 +692,7 @@
     build();
     mapReady = true;
     if (pendingPass) { showPass(pendingPass); pendingPass = null; }
+    pollAprs();
     setStatus('<span class="dot"></span>' + tr('live', 'Live') + ' · ' + tr('orbit_data', 'orbit data') + ': ' + tleSource);
     requestAnimationFrame(frame);
     var resizeTimer;

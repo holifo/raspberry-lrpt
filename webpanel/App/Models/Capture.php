@@ -78,6 +78,18 @@ class Capture extends \Lib\Model {
       }
     }
     $prefix = Config::IMAGE_PATH . '/' . $pass['file_path'] . '-';
+    # ISS APRS pass (sat_type 4): the map of the stations heard comes first, and the pass's data
+    # file (aprs_pass.py) gives the station and packet lists
+    $this->sat_type = (int) $pass['sat_type'];
+    if ($this->sat_type == 4) {
+      if (file_exists($prefix . 'aprs-map.png')) { $enhancements[] = '-aprs-map.png'; }
+      $data = @json_decode((string) @file_get_contents($prefix . 'aprs.json'), true);
+      if (is_array($data)) {
+        $this->aprs = array('stations' => array_slice($data['stations'] ?? array(), 0, 300),
+                            'packets' => array_slice($data['packets'] ?? array(), 0, 500),
+                            'frequency' => $data['frequency'] ?? null);
+      }
+    }
     $others = [];
     foreach (glob(addcslashes($prefix, '*?[') . '*.jpg') ?: [] as $file) {
       $e = '-' . substr($file, strlen($prefix));
@@ -109,6 +121,9 @@ class Capture extends \Lib\Model {
 
     $this->enhancements = $enhancements;
   }
+
+  public $sat_type = 0;
+  public $aprs = [];
 
   # get the image path for the specific capture
   public function getImagePath($id) {

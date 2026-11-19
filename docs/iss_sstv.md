@@ -1,4 +1,4 @@
-# Extra: ISS SSTV pictures
+# Extra: ISS SSTV pictures and APRS
 
 The station is a METEOR-M2 LRPT station; the ISS is an extra that uses the receiver between Meteor
 passes and never takes a Meteor pass's place.
@@ -73,6 +73,32 @@ The choice is kept in `config/settings.local.yml`, so later installs keep it. Th
 also ask "Also record the ISS's SSTV pictures (extra)" (asked once on an upgrade). A recording
 already running finishes.
 
+## Between events: APRS (`iss_aprs`)
+
+Most of the year the ISS sends no pictures, but its **APRS digipeater** is on almost all the
+time: radio amateurs send short position and message packets on **145.825 MHz** (1200 baud AFSK),
+and the ISS repeats them on the same frequency (via `RS0ISS` / `ARISS`). With `iss_aprs: true`
+(the default) the station records those passes instead:
+
+- **Which mode:** inside the `iss_sstv_dates` window a pass is recorded for SSTV pictures; outside
+  it (or always, when `iss_sstv_dates` is empty) for APRS. **So for an ARISS event, set
+  `iss_sstv_dates`** to the event's days.
+- **Decoding:** `rtl_fm` on 145.825 MHz feeds [Dire Wolf](https://github.com/wb2osz/direwolf)
+  (the `direwolf` package), which writes each packet to a log as it is heard.
+- **Live map:** while a pass is recorded, the **Satellites** map shows each station heard so far as
+  a violet dot with its call sign (grey: heard directly, not through the ISS), and a box at the
+  bottom left counts them. The map asks the station (`/passes/aprs`) every 5 seconds.
+- **After the pass:** a capture with a map of the stations and the ISS's track, a table of the
+  stations (call sign linked to aprs.fi, time, packets, distance, comment) and the packets as
+  received. The Captures card says "N APRS". Discord posts the map. The 2 m audio is kept as a
+  `.wav` like the SSTV recordings (`keep_recordings`).
+- Passes where nothing was decoded leave no trace, as with SSTV.
+- 145.825 MHz is 2 m, so a 2 m QFH hears it well; packets are short, so expect a handful of
+  stations on a good pass, more over Europe at weekends.
+
+Set `iss_aprs: false` to record only SSTV (then every pass is an SSTV pass when `iss_sstv_dates`
+is empty, as before v1.31.0).
+
 ## Settings
 
 | Setting | Default | What it does |
@@ -82,6 +108,7 @@ already running finishes.
 | `iss_sstv_min_elevation` | 20 | Lowest maximum elevation of a pass worth recording |
 | `iss_sstv_frequency` | 437.550 | The downlink to record (MHz): 437.550 (70 cm) or 145.800 (2 m), whichever the event uses |
 | `iss_sstv_gain` | 40 | The RTL-SDR's gain for the ISS |
+| `iss_aprs` | true | Between SSTV events (outside `iss_sstv_dates`), record the ISS's APRS digipeater on 145.825 MHz |
 
 Change them in `config/settings.yml` and run `./install_and_upgrade.sh`; to drop passes already
 scheduled, run `./scripts/schedule.sh -x` afterwards.

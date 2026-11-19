@@ -47,7 +47,7 @@
   {% set niss = items|filter(c => c.sat_name == 'ISS')|length %}
   {% set nday = items|filter(c => c.daylight_pass == 1)|length %}
   {# best pass: of the Meteor passes (an ISS pass's elevation says nothing about its pictures) #}
-  {% set met = items|filter(c => c.sat_type != 3) %}
+  {% set met = items|filter(c => c.sat_type < 3) %}
   {% set best = met|length ? max(met|map(c => c.max_elev)) : max(items|map(c => c.max_elev)) %}
   {% set best_id = met|length > 1 ? (met|filter(c => c.max_elev == best)|first).id : 0 %}
   <section class="cap-day" data-day="{{ day }}">
@@ -92,7 +92,7 @@
             <span class="elev-val">{{ c.max_elev }}&deg;</span>
           </div>
           <div class="cap-meta">
-            {% if c.sat_type == 3 %}<span class="sstv-count"><i class="fas fa-tv"></i> {{ c.img_count }} SSTV</span> · {% endif %}
+            {% if c.sat_type == 3 %}<span class="sstv-count"><i class="fas fa-tv"></i> {{ c.img_count }} SSTV</span> · {% endif %}{% if c.sat_type == 4 %}<span class="sstv-count"><i class="fas fa-satellite-dish"></i> {{ c.img_count }} APRS</span> · {% endif %}
             {% if c.direction == 'Northbound' %}<i class="fas fa-arrow-up"></i>{% elseif c.direction == 'Southbound' %}<i class="fas fa-arrow-down"></i>{% endif %}
             {{ c.direction == 'Northbound' ? lang['northbound']|default('Northbound') : (c.direction == 'Southbound' ? lang['southbound']|default('Southbound') : c.direction) }}{% if c.gain != '' %} · {{ lang['gain'] }} {{ c.gain == '0' ? lang['auto']|default('auto') : c.gain }}{% endif %}
           </div>

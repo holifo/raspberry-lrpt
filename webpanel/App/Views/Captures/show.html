@@ -7,7 +7,8 @@
   'polar-direction': lang['sky_track']|default('Sky track'),
   'polar-azel': lang['elevation_azimuth']|default('Elevation & azimuth'),
   'spectrogram': lang['spectrogram']|default('Spectrogram'),
-  'histogram': lang['histogram']|default('Histogram')
+  'histogram': lang['histogram']|default('Histogram'),
+  'aprs-map': lang['aprs_map']|default('APRS stations heard')
 } %}
 
 <div class="page-head sat-{{ colour }}">
@@ -40,7 +41,10 @@
   </div>
 </div>
 
-{% if info.sat_name|default('') == 'ISS' %}
+{% if capture.sat_type == 4 %}
+<p class="sstv-note aprs-note"><i class="fas fa-satellite-dish"></i> {{ lang['aprs_note']|default('APRS packets relayed by the International Space Station\'s digipeater on 145.825 MHz and decoded by this station. Each call sign is a radio amateur who was in the ISS\'s footprint at the same time.') }}
+  <a href="https://www.ariss.org/" target="_blank" rel="noopener">ARISS</a></p>
+{% elseif info.sat_name|default('') == 'ISS' %}
 <p class="sstv-note"><i class="fas fa-tv"></i> {{ lang['sstv_note']|default('Slow-scan TV pictures sent by the International Space Station during an ARISS event, decoded by this station.') }}
   <a href="https://www.ariss.org/" target="_blank" rel="noopener">ARISS</a></p>
 {% endif %}
@@ -49,7 +53,7 @@
 <div class="cap-grid" data-viewer>
   {% for enhancement in capture.enhancements %}
     {% set key = enhancement|trim('-', side='left')|split('.')|slice(0, -1)|join('.') %}
-    {% set graph = key starts with 'polar' or key in ['spectrogram', 'histogram'] %}
+    {% set graph = key starts with 'polar' or key in ['spectrogram', 'histogram', 'aprs-map'] %}
     <a class="cap-card sat-{{ colour }}" href="/images/{{ capture.image_path }}{{ enhancement }}">
       <div class="cap-img{% if graph %} contain{% endif %}">
         <img src="{{ constant('Config\\Config::THUMB_PATH') }}/{{ capture.image_path }}{{ enhancement }}" alt="{{ key }}" loading="lazy">
@@ -62,6 +66,41 @@
     <div class="cap-empty">{{ lang['no_images']|default('No images for this pass') }}</div>
   {% endfor %}
 </div>
+
+{% if capture.aprs.stations is defined and capture.aprs.stations %}
+<section class="aprs-list">
+  <h2 class="aprs-h">{{ lang['aprs_stations_heard']|default('Stations heard') }} <span class="aprs-n">{{ capture.aprs.stations|length }}</span></h2>
+  <div class="aprs-table-wrap">
+  <table class="aprs-table">
+    <thead><tr>
+      <th>{{ lang['aprs_call']|default('Call sign') }}</th>
+      <th>{{ lang['aprs_time']|default('Time') }}</th>
+      <th class="num">{{ lang['aprs_packets']|default('packets') }}</th>
+      <th class="num">{{ lang['aprs_distance']|default('Distance') }}</th>
+      <th>{{ lang['aprs_comment']|default('Comment') }}</th>
+    </tr></thead>
+    <tbody>
+    {% for st in capture.aprs.stations %}
+      <tr class="{{ st.via_iss ? 'via-iss' : 'direct' }}">
+        <td class="call"><a href="https://aprs.fi/#!call={{ st.call|url_encode }}" target="_blank" rel="noopener nofollow">{{ st.call }}</a>{% if not st.via_iss %} <span class="aprs-direct" title="{{ lang['aprs_direct_hint']|default('Heard directly, not through the ISS') }}">{{ lang['aprs_direct']|default('direct') }}</span>{% endif %}</td>
+        <td>{{ st.first|date('H:i:s') }}</td>
+        <td class="num">{{ st.packets }}</td>
+        <td class="num">{{ st.km is not null ? st.km ~ ' km' : '–' }}</td>
+        <td class="cmt">{{ st.comment }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% if capture.aprs.packets %}
+  <details class="aprs-raw">
+    <summary>{{ lang['aprs_raw']|default('Packets as received') }} ({{ capture.aprs.packets|length }})</summary>
+    <pre>{% for pk in capture.aprs.packets %}{{ pk.time|date('H:i:s') }}  {{ pk.raw ?: pk.call ~ ' ' ~ pk.comment }}
+{% endfor %}</pre>
+  </details>
+  {% endif %}
+</section>
+{% endif %}
 {% endblock %}
 
 {% block js_includes %}

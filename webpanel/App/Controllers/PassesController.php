@@ -54,6 +54,55 @@ class PassesController extends \Lib\Controller {
     exit;
   }
 
+  # /passes/aprs: the stations heard so far through the ISS on the APRS pass being recorded
+  # (receive_iss.sh writes IMAGE_PATH/aprs-live.json and direwolf's log aprs-live.csv). Public, like
+  # /passes/live; read by the Satellites map. Stations are grouped by call sign, last position wins.
+  public function aprsAction($args) {
+    $out = array('active' => false, 'time' => time(), 'stations' => array());
+    $info = @json_decode((string) @file_get_contents(Config::IMAGE_PATH . '/aprs-live.json'), true);
+    if (is_array($info) && isset($info['end']) && time() <= $info['end'] + 120) {
+      $out['active'] = true;
+      $out['start'] = $info['start'] ?? null;
+      $out['end'] = $info['end'] ?? null;
+      $out['frequency'] = $info['frequency'] ?? null;
+      $out['stations'] = self::aprsStations(Config::IMAGE_PATH . '/aprs-live.csv');
+    }
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+    echo json_encode($out);
+    exit;
+  }
+
+  # direwolf -L log -> [{call, lat, lon, symbol, packets, last, comment, via_iss}]
+  public static function aprsStations($file) {
+    $st = array();
+    $f = @fopen($file, 'r');
+    if (!$f) return array();
+    $head = fgetcsv($f, 0, ',', '"', '');
+    if (!is_array($head)) { fclose($f); return array(); }
+    while (($row = fgetcsv($f, 0, ',', '"', '')) !== false) {
+      if (count($row) != count($head)) continue;
+      $r = array_combine($head, $row);
+      $call = trim($r['source'] ?? '');
+      if ($call === '' || count($st) >= 500) continue;
+      $s = $st[$call] ?? array('call' => $call, 'lat' => null, 'lon' => null, 'symbol' => '',
+                              'packets' => 0, 'last' => 0, 'comment' => '', 'via_iss' => false);
+      $s['packets']++;
+      $s['last'] = max($s['last'], (int) ($r['utime'] ?? 0));
+      if (is_numeric($r['latitude'] ?? '') && is_numeric($r['longitude'] ?? '')) {
+        $s['lat'] = round((float) $r['latitude'], 4);
+        $s['lon'] = round((float) $r['longitude'], 4);
+      }
+      if (($r['symbol'] ?? '') !== '') $s['symbol'] = $r['symbol'];
+      $c = trim(($r['comment'] ?? '') !== '' ? $r['comment'] : ($r['status'] ?? ''));
+      if ($c !== '') $s['comment'] = mb_substr($c, 0, 80);
+      if (preg_match('/RS0ISS|NA1SS|ARISS/i', $r['heard'] ?? '')) $s['via_iss'] = true;
+      $st[$call] = $s;
+    }
+    fclose($f);
+    return array_values($st);
+  }
+
   # the middle LIVE_SPAN Hz of SatDump's FFT (centred on the tuned frequency), max-pooled to
   # LIVE_BINS points, in dB with one decimal
   private function spectrum($fft, $samplerate) {

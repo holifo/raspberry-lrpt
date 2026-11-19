@@ -248,3 +248,24 @@ a.cap-card.sat-iss:hover { border-color: var(--iss); }
 .sstv-count { color: var(--iss-text); font-weight: 600; }
 .sstv-note { margin: 0 0 12px; padding: 8px 12px; border-radius: 8px; background: var(--iss-bg); color: var(--iss-text); font-size: .9rem; }
 .sstv-note a { color: inherit; text-decoration: underline; }
+/* ISS APRS pass (sat_type 4): stations heard, packets as received; colours from the shared variables */
+.aprs-list { margin: 18px 0 8px; }
+.aprs-h { font-size: 1.05rem; font-weight: 600; margin: 0 0 8px; }
+.aprs-n { display: inline-block; min-width: 1.6em; padding: 0 6px; border-radius: 10px; text-align: center;
+  background: var(--iss-bg); color: var(--iss-text); font-size: .85rem; }
+.aprs-table-wrap { overflow-x: auto; border: 1px solid var(--pl-line); border-radius: 8px; background: var(--pl-card); }
+.aprs-table { width: 100%; border-collapse: collapse; font-size: .88rem; font-variant-numeric: tabular-nums; }
+.aprs-table th { text-align: left; font-weight: 600; color: var(--pl-dim); font-size: .78rem;
+  text-transform: uppercase; letter-spacing: .03em; padding: 7px 10px; border-bottom: 1px solid var(--pl-line); }
+.aprs-table td { padding: 6px 10px; border-top: 1px solid var(--pl-line); vertical-align: top; }
+.aprs-table tr:first-child td { border-top: 0; }
+.aprs-table .num { text-align: right; white-space: nowrap; }
+.aprs-table .call { font-weight: 600; white-space: nowrap; }
+.aprs-table .call a { color: var(--iss-text); }
+.aprs-table .cmt { color: var(--pl-dim); word-break: break-word; }
+.aprs-direct { font-size: .72rem; font-weight: 500; color: var(--pl-dim); border: 1px solid var(--pl-line);
+  border-radius: 6px; padding: 0 4px; }
+.aprs-raw { margin-top: 10px; }
+.aprs-raw summary { cursor: pointer; color: var(--pl-dim); font-size: .88rem; }
+.aprs-raw pre { margin: 6px 0 0; padding: 8px 10px; max-height: 320px; overflow: auto; font-size: .78rem;
+  background: var(--pl-img); color: #cfd9e4; border-radius: 8px; white-space: pre-wrap; word-break: break-all; }

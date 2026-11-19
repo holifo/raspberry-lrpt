@@ -10,6 +10,11 @@
 #
 # A pass with no pictures (most of the year) leaves nothing behind: its scheduled row is
 # removed, so the site doesn't list it as a missed pass.
+#
+# APRS (iss_aprs): outside an SSTV event's dates (iss_sstv_dates; every pass when it is empty)
+# it records the ISS's APRS digipeater on 145.825 MHz instead and decodes it live with direwolf.
+# The packets go to $IMAGE_OUTPUT/aprs-live.csv while the pass lasts (the Satellites map shows
+# them), then to the pass's -aprs.json and -aprs-map.png (sat_type 4).
 
 TIMER_START=$(date '+%s')
 
@@ -66,6 +71,61 @@ ppm_args=""
 [ -n "$METEOR_M2_3_FREQ_OFFSET" ] && [ "$METEOR_M2_3_FREQ_OFFSET" != "0" ] && ppm_args="-p $METEOR_M2_3_FREQ_OFFSET"
 bias_args=""
 [ "$METEOR_M2_3_ENABLE_BIAS_TEE" == "-T" ] && bias_args="-T"
+
+# SSTV during an event, APRS the rest of the time (iss_aprs)
+mode=sstv
+if [ "${ISS_APRS}" == "true" ]; then
+  read -r ev_from ev_to <<< "${ISS_SSTV_DATES}"
+  pass_day=$(date -d "@$EPOCH_START" +%F)
+  if [ -z "$ev_from" ] || [[ "$pass_day" < "$ev_from" || "$pass_day" > "$ev_to" ]]; then mode=aprs; fi
+fi
+if [ "$mode" == "aprs" ]; then
+  LIVE_JSON="${IMAGE_OUTPUT}/aprs-live.json"
+  LIVE_CSV="${IMAGE_OUTPUT}/aprs-live.csv"
+  trap 'cd "$LRPT_HOME"; rm -rf "$WORK_DIR"; rm -f "$LIVE_JSON" "$LIVE_CSV"' EXIT
+  ARATE=22050
+  printf 'ADEVICE stdin null\nCHANNEL 0\nMODEM 1200\n' > "$WORK_DIR/direwolf.conf"
+  rm -f "$LIVE_CSV"
+  printf '{"base":"%s","start":%s,"end":%s,"frequency":%s}\n' "$FILENAME_BASE" "$(date +%s)" \
+    "$(( $(date +%s) + CAPTURE_TIME ))" "$ISS_APRS_FREQ" > "$LIVE_JSON"
+  log "Recording ISS APRS ${ISS_APRS_FREQ} MHz for ${CAPTURE_TIME} s (max elevation ${SAT_MAX_ELEVATION}°), decoding live" "INFO"
+  timeout "$CAPTURE_TIME" $RTL_FM -f "${ISS_APRS_FREQ}M" -M fm -s 48000 -r $ARATE -g "$ISS_SSTV_GAIN" -E dc \
+    $dev_args $ppm_args $bias_args - 2>> "$LRPT_LOG" | tee "$RAW" | \
+    direwolf -c "$WORK_DIR/direwolf.conf" -r $ARATE -b 16 -n 1 -t 0 -a 0 -q hd -L "$LIVE_CSV" - \
+    > "$WORK_DIR/direwolf.out" 2>&1
+  rm -f "$LIVE_JSON"
+
+  stations=$(python3 "$IMAGE_PROC_DIR/aprs_pass.py" "$LIVE_CSV" "$WORK_DIR/direwolf.out" "$TLE_FILE" "$SAT_NAME" \
+             "$EPOCH_START" $((EPOCH_START + CAPTURE_TIME)) "$LAT" "$LON" "$IMAGE_FILE_BASE" 2>> "$LRPT_LOG" | tail -1)
+  packets=$(grep -c '^\[' "$WORK_DIR/direwolf.out" 2>/dev/null)
+  if [ "${stations:-0}" -eq 0 ] 2>/dev/null || [ -z "$stations" ]; then
+    log "No APRS packets heard in this ISS pass" "INFO"
+    $SQLITE3 "$DB_FILE" "DELETE FROM predict_passes WHERE pass_start = $EPOCH_START AND sat_name = 'ISS';" >> "$LRPT_LOG" 2>&1
+    exit 0
+  fi
+  log "APRS: ${stations} station(s), ${packets:-?} packet(s) heard through the ISS" "INFO"
+  "$IMAGE_PROC_DIR/thumbnail.sh" 300 "${IMAGE_FILE_BASE}-aprs-map.png" "${IMAGE_THUMB_BASE}-aprs-map.png" >> "$LRPT_LOG" 2>&1
+  "$IMAGE_PROC_DIR/thumbnail.sh" 300 "${IMAGE_FILE_BASE}-aprs-map.png" "${IMAGE_THUMB_BASE}-website-thumbnail.jpg" >> "$LRPT_LOG" 2>&1
+
+  if [ "${KEEP_RECORDINGS:-0}" -gt 0 ]; then
+    $SOX -t raw -r $ARATE -e signed -b 16 -c 1 "$RAW" "${AUDIO_FILE_BASE}.wav" >> "$LRPT_LOG" 2>&1 &&
+      log "Recording kept as ${AUDIO_FILE_BASE}.wav ($(du -h "${AUDIO_FILE_BASE}.wav" | cut -f1))" "INFO"
+    ls -1t "${METEOR_AUDIO_OUTPUT}"/ISS-*.wav 2>/dev/null | tail -n +$((KEEP_RECORDINGS + 1)) | xargs -r rm -f
+  fi
+
+  daylight=0
+  [ "$(python3 "$SCRIPTS_DIR/tools/sun.py" $((EPOCH_START + CAPTURE_TIME / 2)))" -gt "${METEOR_M2_3_SUN_MIN_ELEV:-0}" ] && daylight=1
+  # sat_type 4 = ISS APRS; img_count = stations heard
+  $SQLITE3 "$DB_FILE" "INSERT OR REPLACE INTO decoded_passes (pass_start, file_path, daylight_pass, sat_type, img_count, has_spectrogram, has_polar_az_el, has_polar_direction, gain) \
+                       VALUES ($EPOCH_START, \"$FILENAME_BASE\", $daylight, 4, $stations, 0, 0, 0, $ISS_SSTV_GAIN);" >> "$LRPT_LOG" 2>&1
+  pass_id=$($SQLITE3 "$DB_FILE" "SELECT id FROM decoded_passes WHERE pass_start = $EPOCH_START;")
+  $SQLITE3 "$DB_FILE" "UPDATE predict_passes SET is_active = 0 WHERE pass_start = $EPOCH_START;" >> "$LRPT_LOG" 2>&1
+  log "ISS APRS pass added to the site (${stations} station(s))" "INFO"
+  discord_pass "$FILENAME_BASE" "$daylight" "ISS-APRS" "$EPOCH_START" "$SAT_MAX_ELEVATION" \
+               "$PASS_DIRECTION" "$CAPTURE_TIME" "$pass_id" || true
+  log "Total processing time: $(date -ud "@$(( $(date +%s) - TIMER_START ))" +'%H:%M.%S')" "INFO"
+  exit 0
+fi
 
 log "Recording ISS ${ISS_FREQ} MHz FM for ${CAPTURE_TIME} s (max elevation ${SAT_MAX_ELEVATION}°)" "INFO"
 # 48 kHz: room for the FM signal plus the Doppler shift (±3.5 kHz on 2 m, ±10 kHz on 70 cm); audio 11025 Hz

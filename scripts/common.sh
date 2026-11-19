@@ -54,7 +54,8 @@ ISS_RUNNING='^(/usr)?/bin/bash [^ ]*/receive_iss\.sh '
 METEOR_M2_3_FREQ="137.9000"
 METEOR_M2_4_FREQ="137.9000"
 ELEKTRO_L3_FREQ="1691.0000"
-ISS_FREQ="${ISS_SSTV_FREQ:-437.5500}"   # ARISS SSTV downlink (FM): iss_sstv_frequency
+ISS_FREQ="${ISS_SSTV_FREQ:-437.5500}"
+ISS_APRS_FREQ="145.825"                 # ARISS APRS digipeater (packet, 1200 baud AFSK), iss_aprs   # ARISS SSTV downlink (FM): iss_sstv_frequency
 
 # the pass's start time: set once, by the script that starts the pass (receive_meteor.sh,
 # reprocess_meteor.sh); helpers that source this file later keep it
@@ -150,6 +151,23 @@ discord_pass() {
   local base=$1 day=$2 sat=$3 start=$4 elev=$5 dir=$6 secs=$7 id=$8 wait=$9
   [ -n "${DISCORD_WEBHOOK}" ] || return 1
   local order day_word name f
+  if [ "$sat" == "ISS-APRS" ]; then      # an APRS pass: its map and the station count
+    local n
+    n=$($SQLITE3 "$DB_FILE" "SELECT img_count FROM decoded_passes WHERE id = '${id}';" 2>/dev/null)
+    [ -f "${IMAGE_OUTPUT}/${base}-aprs-map.png" ] || return 1
+    local amsg="📡 **ISS** APRS · $(date -d "@$start" '+%d/%m/%Y %H:%M') ($(date -u -d "@$start" '+%H:%M') UTC)
+${n:-?} station(s) heard through the ISS on ${ISS_APRS_FREQ} MHz · max elevation ${elev}°
+${STATION_TITLE}"
+    [ -n "${DISCORD_SITE_URL}" ] && amsg="${amsg}
+${DISCORD_SITE_URL%/}/captures/listImages?pass_id=${id}"
+    log "Posting ${base} (APRS) to Discord" "INFO"
+    if [ "$wait" == "--wait" ]; then
+      "$LRPT_HOME/scripts/push_discord.sh" "$amsg" "${IMAGE_OUTPUT}/${base}-aprs-map.png"
+    else
+      ( nohup "$LRPT_HOME/scripts/push_discord.sh" "$amsg" "${IMAGE_OUTPUT}/${base}-aprs-map.png" > /dev/null 2>&1 & )
+    fi
+    return 0
+  fi
   if [ "$sat" == "ISS" ]; then
     order=$(cd "${IMAGE_OUTPUT}" && ls "${base}"-SSTV_*.jpg 2>/dev/null | sed "s/^${base}-//; s/\.jpg$//" | sort -t_ -k2n | tr '\n' ' ')
     day_word="SSTV pictures"

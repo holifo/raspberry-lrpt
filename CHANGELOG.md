@@ -1,5 +1,20 @@
 # Changelog
 
+## Raspberry-LRPT v1.31.0 (2026-11-19)
+
+- **ISS APRS between SSTV events, with a live map.** Most of the year the ISS sends no SSTV
+  pictures, but its APRS digipeater is on: radio amateurs' position and message packets, repeated
+  on 145.825 MHz. With the ISS extra on, passes outside the `iss_sstv_dates` window (or every pass
+  when it is empty) are now recorded for APRS and decoded with Dire Wolf (new `direwolf` package):
+  - **live:** while a pass is recorded, the Satellites map shows each station heard so far as a dot
+    with its call sign, and a box counts them (updated every 5 seconds)
+  - **after the pass:** a capture page with a map of the stations and the ISS's track, a table of
+    stations (call sign linked to aprs.fi, time, packets, distance) and the packets as received; the
+    Captures card says "N APRS"; Discord posts the map
+  - passes where nothing was decoded leave no trace, as with SSTV
+  - new setting `iss_aprs` (true); `false` records SSTV only, as before. For an ARISS SSTV event,
+    set `iss_sstv_dates` to its days. Texts in all nine languages.
+
 ## Raspberry-LRPT v1.30.3 (2026-11-17)
 
 - **New top menu order:** Passes · Captures · Daily map · Satellites · Sat info · Live log. What

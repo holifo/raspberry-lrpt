@@ -38,6 +38,8 @@ class Config {
   const RECORDING_PATH = '{{ audio_output }}/meteor';
   # ISS SSTV (ARISS events): record and show the ISS's passes
   const ISS_SSTV = {{ 'true' if iss_sstv|default(false) else 'false' }};
+  # APRS on 145.825 MHz between SSTV events (iss_aprs): live stations on the map, per-pass pages
+  const ISS_APRS = {{ 'true' if iss_aprs|default(true) else 'false' }};
   # Meteor captures on (either satellite scheduled); the web switch turns both on or off
   const METEOR_ON = {{ 'true' if (meteor_m2_3_schedule or meteor_m2_4_schedule) else 'false' }};
   # the web switches run LRPT_HOME/scripts/switch.sh --web meteor|iss on|off
