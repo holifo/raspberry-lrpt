@@ -68,7 +68,6 @@ return array(
   "day_night" => "白天 / 夜间图像",
   "tap_pass_hint" => "点击某次过境即可在地图上查看",
   "map_title" => "Meteor 星下点轨迹",
-  "cme_title" => "日冕物质抛射",
   "from" => "自",
   "based_on" => "基于",
   "times_local" => "时间为本地时间",

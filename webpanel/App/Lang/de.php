@@ -68,7 +68,6 @@ return array(
   "day_night" => "Tag- / Nachtbilder",
   "tap_pass_hint" => "Tippe auf einen Überflug, um ihn auf der Karte zu sehen",
   "map_title" => "Meteor-Bodenspuren",
-  "cme_title" => "Koronale Massenauswürfe",
   "from" => "aus",
   "based_on" => "Basiert auf",
   "times_local" => "Zeiten in Ortszeit",

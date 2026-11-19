@@ -68,7 +68,6 @@ return array(
   "day_night" => "दिन / रात की छवियाँ",
   "tap_pass_hint" => "नक्शे पर देखने के लिए किसी पास पर टैप करें",
   "map_title" => "Meteor भू-पथ",
-  "cme_title" => "कोरोनल मास इजेक्शन",
   "from" => "दिशा",
   "based_on" => "आधारित",
   "times_local" => "समय स्थानीय है",

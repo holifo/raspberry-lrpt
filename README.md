@@ -165,7 +165,7 @@ GPL-3.0, as the project it is based on. See [LICENSE](LICENSE).
   for live Meteor decoding and support for Airspy, HackRF and SDRplay receivers.
 * **[Richard AI4Y](https://www.qrz.com/db/AI4Y)**: Debian 12 (Bookworm) and 64-bit Raspberry Pi OS support, the verification
   tool, the backup/restore and uninstall utilities, and SatDump/predict packages for the Pi.
-* **[Dom Robinson](https://github.com/dom-robinson)**: Meteor enhancements and the Satvis view on the Passes page.
+* **[Dom Robinson](https://github.com/dom-robinson)**: Meteor enhancements in raspberry-noaa-v2.
 * **[Nico Rey](https://github.com/reynico/raspberry-noaa)** and **[haslettj](https://www.instructables.com/id/Raspberry-Pi-NOAA-Weather-Satellite-Receiver/)**:
   raspberry-noaa and the original Raspberry Pi weather-satellite receiver guide that started it all.
 * **[Silvio I6CBI](https://www.qrz.com/db/I6CBI)**: testing of the SDRplay and MiriSDR receivers.

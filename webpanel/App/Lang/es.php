@@ -68,7 +68,6 @@ return array(
   "day_night" => "imágenes de día / noche",
   "tap_pass_hint" => "Toca un paso para verlo en el mapa",
   "map_title" => "Trazas de los Meteor",
-  "cme_title" => "Eyecciones de masa coronal",
   "from" => "desde",
   "based_on" => "Basado en",
   "times_local" => "Horas en hora local",

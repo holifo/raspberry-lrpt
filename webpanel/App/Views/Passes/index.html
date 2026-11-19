@@ -15,14 +15,6 @@
     <div class="station-state" id="station-state"><span class="state-dot"></span><span>&nbsp;</span></div>
   </div>
 
-  {% if constant('Config\\Config::ENABLE_SATVIS') == 'true' %}
-  <div id="instruments" class="flex-container">
-    <div id="satvis" class="d-none d-sm-block flex-child">
-      <iframe name="satvis" src="https://satvis.space/?elements=Point,Label,SensorCone&layers=ArcGis&terrain=None&gs={{ constant('Config\\Config::BASE_STATION_LAT') }},{{ constant('Config\\Config::BASE_STATION_LON') }}&tags=Weather"></iframe>
-    </div>
-  </div>
-  {% endif %}
-
   {# next pass / recording now - filled in by the script below #}
   <div class="next-card" id="next-card" hidden>
     <div class="next-top">
@@ -175,16 +167,6 @@
     <span class="legend-tip">{{ lang['tap_pass_hint']|default('Tap a pass to show it on the map') }}</span>
   </div>
 
-  {% if constant('Config\\Config::ENABLE_CORONAL_GIF') == 'true' %}
-  <br>
-  <center>
-  <h1>{{ lang['cme_title']|default('Coronal Mass Ejection Activity') }}</h1>
-  <br>
-  <img src="https://sohowww.nascom.nasa.gov/data/LATEST/current_c2.gif" height=300 style="margin-right=2em; margin-bottom:2em;">
-  <img src="https://sohowww.nascom.nasa.gov/data/LATEST/current_c3.gif" height=300 style="margin-right=2em; margin-bottom:2em;">
-  <img src="https://stereo.gsfc.nasa.gov/beacon/latest_512/ahead_cor2_latest.jpg" height=300 style="margin-right=2em; margin-bottom:2em;">
-  </center>
-  {% endif %}
 {% endblock %}
 
 {% block js_includes %}

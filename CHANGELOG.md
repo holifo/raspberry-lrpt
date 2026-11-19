@@ -1,5 +1,13 @@
 # Changelog
 
+## Raspberry-LRPT v1.32.1 (2026-11-19)
+
+- **Removed two leftovers from raspberry-noaa-v2 on the Passes page:** the satvis 3D globe
+  (`enable_satvis`, an outside site in a frame; the Satellites tab is the station's own live map)
+  and the NASA coronal mass ejection pictures (`enable_coronal`, which fetched three large images
+  from NASA on every visit). Their settings, web panel code, styles and translations are gone. An
+  `enable_satvis` or `enable_coronal` line left in your `settings.local.yml` is simply ignored.
+
 ## Raspberry-LRPT v1.32.0 (2026-11-19)
 
 - **Image label: choose its look.** The station label on capture images was always light grey and

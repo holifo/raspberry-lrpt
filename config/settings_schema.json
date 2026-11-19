@@ -128,7 +128,6 @@
       "enum": [ "DEBUG", "WARN", "INFO", "ERROR" ]
     },
     "disable_at_mail":         { "type": "boolean" },
-    "enable_satvis":           { "type": "boolean" },
     "experimental_features":   { "type": "boolean" },
     "enable_animation":        { "type": "boolean" },
     "animation_area":          { "type": "string", "pattern": "^-?[0-9.]+ -?[0-9.]+ -?[0-9.]+ -?[0-9.]+$" },
@@ -216,7 +215,6 @@
     "web_datetime_format",
     "log_level",
     "disable_at_mail",
-    "enable_satvis",
     "experimental_features",
     "enable_animation",
     "animation_area",

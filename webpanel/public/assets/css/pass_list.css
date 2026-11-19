@@ -26,11 +26,6 @@
 .next-card.rec .next-bar { display: block; }
 .next-bar-fill { height: 100%; width: 0; background: var(--rec); transition: width 0.9s linear; }
 
-/* ---- satvis 3D globe (optional; the live map is on the Satellites tab) ---- */
-div#satvis iframe { border: 0; width: 100%; height: 100%; display: block; }
-div#satvis { width: 100%; height: 360px; }
-.flex-container { display: flex; }
-.flex-child { flex: 1; max-height: 500px; }
 
 /* ---- pass list ---- */
 .pass-list { margin-top: 14px; }
