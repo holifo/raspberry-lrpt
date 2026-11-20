@@ -1,5 +1,13 @@
 # Changelog
 
+## Raspberry-LRPT v1.32.3 (2026-11-20)
+
+- **Install fix for Trixie stations that have Debian's own SatDump.** Debian 13 ships SatDump 1.2.2
+  as two packages, `satdump` and `satdump-data`. If they were installed, the install stopped at
+  "Packages and SatDump" with `trying to overwrite '/usr/include/satdump/…', which is also in
+  package satdump-data`. The install now removes any SatDump package that is not the one it brings
+  (Debian's, or the old 2.x alpha) before installing SatDump 1.2.3. Just run the update again.
+
 ## Raspberry-LRPT v1.32.2 (2026-11-19)
 
 - Removed the `enable_coronal` setting that v1.32.1 left behind in `config/settings.yml`; it no

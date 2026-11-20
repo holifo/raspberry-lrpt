@@ -104,19 +104,27 @@
 
 # SatDump 1.2.3 (stable). The 2.0.0-alpha failed on this station ("A subcommand is required" for
 # 'satdump live meteor_m2-x_lrpt ...', and its plugin needs libhdf5_serial_cpp.so.103).
-- name: SatDump version check
-  command: dpkg-query -W -f=${Version} satdump
-  register: satdump_installed
-  failed_when: false
+# Any other SatDump package goes first: the 2.x alpha, or Debian's own split packages (Trixie has
+# satdump 1.2.2 + satdump-data in its archive), whose files dpkg will not let ours overwrite
+# ("trying to overwrite '/usr/include/satdump/...', which is also in package satdump-data").
+# Ours is the single package 'satdump' with the deb's own Version.
+- name: Other SatDump packages check
+  shell: |
+    want=$(dpkg-deb -f "{{ lrpt_home }}/software/satdump_{{ satdump_version }}_{{ raspbian_version.stdout }}_{{ system_architecture }}.deb" Version)
+    dpkg-query -W -f='${Package}\t${Version}\t${source:Package}\t${db:Status-Status}\n' 2>/dev/null |
+      awk -F'\t' -v want="$want" '$4 != "not-installed" && $4 != "config-files" &&
+        ($3 == "satdump" || $1 ~ /^(lib)?satdump/) && !($1 == "satdump" && $2 == want) { print $1 }'
+  args:
+    executable: /bin/bash
+  register: satdump_others
   changed_when: false
 
-- name: SatDump 2.x alpha removed
+- name: Other SatDump packages removed
   become: yes
-  apt:
-    name: satdump
-    state: absent
-    purge: yes
-  when: satdump_installed.rc == 0 and satdump_installed.stdout.startswith('2.')
+  shell: >
+    apt-get remove -y -q {{ satdump_others.stdout_lines | join(' ') }} ||
+    dpkg --remove --force-remove-reinstreq --force-depends {{ satdump_others.stdout_lines | join(' ') }}
+  when: satdump_others.stdout_lines | length > 0
 
 - name: SatDump {{ satdump_version }}
   become: yes
