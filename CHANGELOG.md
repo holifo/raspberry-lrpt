@@ -1,5 +1,12 @@
 # Changelog
 
+## Raspberry-LRPT v1.36.1 (2026-11-21)
+
+- **Install no longer fails on the old PHP repository.** Stations that came from raspberry-noaa-v2
+  still had its sury PHP repository in apt's sources, although this project uses Debian's own PHP.
+  When that mirror was in the middle of an update, apt refused to refresh and the install stopped at
+  "System packages". The install now removes the left-over entry.
+
 ## Raspberry-LRPT v1.36.0 (2026-11-21)
 
 - **About tab, with an update check.** The Sat info tab is now **About** (`/about`; old `/meteor`

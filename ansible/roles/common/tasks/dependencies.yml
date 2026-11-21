@@ -1,5 +1,18 @@
 ---
 # Packages, predict and SatDump. The first install takes a while here; the Pi isn't frozen.
+# raspberry-noaa-v2 added the sury PHP repository (php8.list); this station uses Debian's own PHP.
+# A left-over entry made apt fail whenever sury's mirror was mid-sync (seen 21/11/2026).
+- name: Old sury PHP repository removed
+  become: yes
+  shell: |
+    set -e
+    files=$(grep -lsE '^[^#]*packages\.sury\.org' /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources || true)
+    [ -z "$files" ] && exit 0
+    rm -f $files
+    echo "removed: $files"
+  register: sury_removed
+  changed_when: "'removed' in sury_removed.stdout"
+
 - name: System packages
   become: yes
   apt:
