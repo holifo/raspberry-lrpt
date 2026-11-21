@@ -1,5 +1,9 @@
 # Changelog
 
+## Raspberry-LRPT v1.36.3 (2026-11-21)
+
+- **About is now the last item in the top menu**, after Live log.
+
 ## Raspberry-LRPT v1.36.2 (2026-11-21)
 
 - **SDRplay: the service is restarted after the API is installed.** On a station where the service

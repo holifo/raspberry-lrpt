@@ -57,11 +57,11 @@
             <a class="nav-link" href="/satellite"><span class="nav-long">{{ lang['nav_satellites']|default('Satellites') }}</span><span class="nav-short">{{ lang['nav_satellites_short']|default('Sats') }}</span></a>
           </li>
           {% endif %}
-          <li class="nav-item {% if page == 'about' %} active {% endif %}">
-            <a class="nav-link" href="/about"><span class="nav-long">{{ lang['nav_about']|default('About') }}</span><span class="nav-short" title="{{ lang['nav_about']|default('About') }}"><i class="fas fa-info-circle" aria-hidden="true"></i><span class="sr-only">{{ lang['nav_about_short']|default('About') }}</span></span></a>
-          </li>
           <li class="nav-item {% if page == 'log' %} active {% endif %}">
             <a class="nav-link" href="/log"><span class="nav-long">{{ lang['live_log']|default('Live log') }}</span><span class="nav-short">{{ lang['live_log_short']|default('Log') }}</span></a>
+          </li>
+          <li class="nav-item {% if page == 'about' %} active {% endif %}">
+            <a class="nav-link" href="/about"><span class="nav-long">{{ lang['nav_about']|default('About') }}</span><span class="nav-short" title="{{ lang['nav_about']|default('About') }}"><i class="fas fa-info-circle" aria-hidden="true"></i><span class="sr-only">{{ lang['nav_about_short']|default('About') }}</span></span></a>
           </li>
         </ul>
         {# live clocks: UTC and the station's local time (Config::TIMEZONE) #}
