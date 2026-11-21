@@ -233,7 +233,7 @@ return array(
   "about_ai" => "Made with the help of AI. Much of the code, the documentation and the translations on this site were written by {claude}, an AI assistant made by Anthropic (most recently the Claude Opus 5.5 model, used through Claude Code), working to holifo's instructions. holifo decided what to build and tested it on a working station.",
   "about_ai_note" => "The satellite facts on this page were checked against the sources above on the date shown at the top, but AI can make mistakes: if something looks wrong, please say so on GitHub.",
   "aprs_map" => "APRS stations heard",
-  "aprs_note" => "APRS packets relayed by the International Space Station's digipeater on 145.825 MHz and decoded by this station. Each call sign is a radio amateur who was in the ISS's footprint at the same time.",
+  "aprs_note" => "APRS packets relayed by the International Space Station's digipeater on {aprs_freq} MHz and decoded by this station. Each call sign is a radio amateur who was in the ISS's footprint at the same time.",
   "aprs_stations_heard" => "Stations heard",
   "aprs_call" => "Call sign",
   "aprs_time" => "Time",
@@ -246,8 +246,8 @@ return array(
   "aprs_live" => "ISS APRS live",
   "aprs_station" => "station",
   "aprs_stations" => "stations",
-  "lg_aprs" => "APRS map: radio amateurs whose position packets the ISS relayed on 145.825 MHz while it passed over (between SSTV events)",
+  "lg_aprs" => "APRS map: radio amateurs whose position packets the ISS relayed on {aprs_freq} MHz while it passed over (between SSTV events)",
   "iss_sw_title_aprs" => "ISS SSTV pictures and APRS (extra)",
-  "iss_sw_hint_aprs" => "During ARISS events (the SSTV dates) it records the ISS's SSTV pictures on {freq} MHz; on its other passes, the APRS stations it relays on 145.825 MHz, shown live on the Satellites map. Meteor passes always come first.",
+  "iss_sw_hint_aprs" => "During ARISS events (the SSTV dates) it records the ISS's SSTV pictures on {freq} MHz; on its other passes, the APRS stations it relays on {aprs_freq} MHz, shown live on the Satellites map. Meteor passes always come first.",
 );
 ?>

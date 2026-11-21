@@ -12,7 +12,7 @@
 # removed, so the site doesn't list it as a missed pass.
 #
 # APRS (iss_aprs): outside an SSTV event's dates (iss_sstv_dates; every pass when it is empty)
-# it records the ISS's APRS digipeater on 145.825 MHz instead and decodes it live with direwolf.
+# it records the ISS's APRS digipeater (iss_aprs_frequency) instead and decodes it live with direwolf.
 # The packets go to $IMAGE_OUTPUT/aprs-live.csv while the pass lasts (the Satellites map shows
 # them), then to the pass's -aprs.json and -aprs-map.png (sat_type 4).
 
@@ -101,7 +101,7 @@ if [ "$mode" == "aprs" ]; then
   rm -f "$LIVE_JSON"
 
   stations=$(python3 "$IMAGE_PROC_DIR/aprs_pass.py" "$LIVE_CSV" "$WORK_DIR/direwolf.out" "$TLE_FILE" "$SAT_NAME" \
-             "$EPOCH_START" $((EPOCH_START + CAPTURE_TIME)) "$LAT" "$LON" "$IMAGE_FILE_BASE" 2>> "$LRPT_LOG" | tail -1)
+             "$EPOCH_START" $((EPOCH_START + CAPTURE_TIME)) "$LAT" "$LON" "$IMAGE_FILE_BASE" "$ISS_APRS_FREQ" 2>> "$LRPT_LOG" | tail -1)
   packets=$(grep -c '^\[' "$WORK_DIR/direwolf.out" 2>/dev/null)
   if [ "${stations:-0}" -eq 0 ] 2>/dev/null || [ -z "$stations" ]; then
     log "No APRS packets heard in this ISS pass" "INFO"

@@ -42,7 +42,7 @@
 </div>
 
 {% if capture.sat_type == 4 %}
-<p class="sstv-note aprs-note"><i class="fas fa-satellite-dish"></i> {{ lang['aprs_note']|default('APRS packets relayed by the International Space Station\'s digipeater on 145.825 MHz and decoded by this station. Each call sign is a radio amateur who was in the ISS\'s footprint at the same time.') }}
+<p class="sstv-note aprs-note"><i class="fas fa-satellite-dish"></i> {{ lang['aprs_note']|default('APRS packets relayed by the International Space Station\'s digipeater and decoded by this station. Each call sign is a radio amateur who was in the ISS\'s footprint at the same time.') }}
   <a href="https://www.ariss.org/" target="_blank" rel="noopener">ARISS</a></p>
 {% elseif info.sat_name|default('') == 'ISS' %}
 <p class="sstv-note"><i class="fas fa-tv"></i> {{ lang['sstv_note']|default('Slow-scan TV pictures sent by the International Space Station during an ARISS event, decoded by this station.') }}

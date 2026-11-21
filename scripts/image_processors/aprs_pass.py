@@ -125,7 +125,7 @@ def coastlines(box):
   return lines
 
 
-def draw_map(out_file, stations, track, lat, lon, start, n_packets):
+def draw_map(out_file, stations, track, lat, lon, start, n_packets, freq=437.825):
   pts = [(s['lon'], s['lat']) for s in stations if s['lat'] is not None] + [(lon, lat)] + \
         [tuple(p) for p in track]
   xs, ys = [p[0] for p in pts], [p[1] for p in pts]
@@ -143,7 +143,7 @@ def draw_map(out_file, stations, track, lat, lon, start, n_packets):
   fig, png = pp.new_figure(out_file, 10, 7.4)
   colour = pp.SAT_COLOURS['ISS']
   fig.text(0.04, 0.965, 'ISS', fontsize=17, fontweight='bold', color=colour, va='top')
-  fig.text(0.96, 0.965, 'APRS 145.825 MHz', fontsize=11, color=pp.DIM, va='top', ha='right')
+  fig.text(0.96, 0.965, 'APRS {:.3f} MHz'.format(freq), fontsize=11, color=pp.DIM, va='top', ha='right')
   fig.text(0.04, 0.915, '{}  ·  {} station{} heard  ·  {} packet{}'.format(
              pp.local(start).strftime('%a %d/%m/%Y %H:%M %Z'), len(stations), '' if len(stations) == 1 else 's',
              n_packets, '' if n_packets == 1 else 's'), fontsize=11, color=pp.TEXT, va='top')
@@ -214,12 +214,13 @@ def main():
   if len(sys.argv) == 2 and sys.argv[1] == '--follow':
     follow()
     return
-  if len(sys.argv) != 10:
+  if len(sys.argv) not in (10, 11):
     print(__doc__)
     sys.exit(1)
   csv_file, raw_file, tle, sat = sys.argv[1:5]
   start, end = int(sys.argv[5]), int(sys.argv[6])
   lat, lon, prefix = float(sys.argv[7]), float(sys.argv[8]), sys.argv[9]
+  freq = float(sys.argv[10]) if len(sys.argv) > 10 else 437.825   # MHz (iss_aprs_frequency)
 
   packets = read_packets(csv_file, raw_file) if os.path.exists(csv_file) else []
   stations = stations_of(packets)
@@ -237,10 +238,10 @@ def main():
     print('APRS track failed: {}'.format(e), file=sys.stderr)
     track = []
   with open(prefix + '-aprs.json', 'w') as f:
-    json.dump({'start': start, 'end': end, 'frequency': 145.825, 'station': [lon, lat],
+    json.dump({'start': start, 'end': end, 'frequency': freq, 'station': [lon, lat],
                'stations': stations, 'packets': packets, 'track': track}, f, separators=(',', ':'))
   try:
-    draw_map(prefix + '-aprs-map.png', stations, track, lat, lon, start, len(packets))
+    draw_map(prefix + '-aprs-map.png', stations, track, lat, lon, start, len(packets), freq)
   except Exception as e:                 # keep the pass even without its picture
     print('APRS map failed: {}'.format(e), file=sys.stderr)
   print(len(stations))

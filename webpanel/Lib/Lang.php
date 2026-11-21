@@ -52,8 +52,10 @@ class Lang {
       $cache[$c] = ($c === 'en' || !is_file($dir . $c . '.php')) ? $en : array_merge($en, include($dir . $c . '.php'));
       # {freq}: the ISS SSTV frequency this station records (iss_sstv_frequency)
       $freq = defined('Config\Config::ISS_SSTV_FREQ') ? \Config\Config::ISS_SSTV_FREQ : '437.550';
+      # {aprs_freq}: the ISS APRS frequency (iss_aprs_frequency)
+      $aprs = defined('Config\Config::ISS_APRS_FREQ') ? \Config\Config::ISS_APRS_FREQ : '437.825';
       foreach ($cache[$c] as $k => $v) {
-        if (is_string($v) && strpos($v, '{freq}') !== false) { $cache[$c][$k] = str_replace('{freq}', $freq, $v); }
+        if (is_string($v) && strpos($v, 'freq}') !== false) { $cache[$c][$k] = str_replace(array('{freq}', '{aprs_freq}'), array($freq, $aprs), $v); }
       }
     }
     return $cache[$c];

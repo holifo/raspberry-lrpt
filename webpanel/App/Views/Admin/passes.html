@@ -43,7 +43,7 @@
         'ok': true},
        {'what': 'iss', 'on': constant('Config\\Config::ISS_SSTV'), 'name': 'ISS SSTV', 'dot': 'sat-iss',
         'title': aprs ? lang['iss_sw_title_aprs']|default('ISS SSTV pictures and APRS (extra)') : lang['iss_sw_title']|default('ISS SSTV pictures (extra)'),
-        'hint': iss_switchable ? (aprs ? lang['iss_sw_hint_aprs']|default('During ARISS events it records the ISS\'s SSTV pictures; on its other passes, the APRS stations it relays on 145.825 MHz. Meteor passes always come first.')
+        'hint': iss_switchable ? (aprs ? lang['iss_sw_hint_aprs']|default('During ARISS events it records the ISS\'s SSTV pictures; on its other passes, the APRS stations it relays. Meteor passes always come first.')
                                       : lang['iss_sw_hint']|default('Records the ISS\'s SSTV pictures when it passes. Meteor passes always come first.'))
                                : lang['iss_sw_rtl']|default('Needs an RTL-SDR receiver.'),
         'ok': iss_switchable}] %}

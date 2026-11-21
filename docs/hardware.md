@@ -47,8 +47,9 @@ Below are links to antennas and calculators that are in use and confirmed workin
 Dipole:
 
 
-Quadrifilar (QFH) Antenna (137 MHz for the Meteors; a **2 m QFH**, cut for 145.8 MHz, also suits the
-ISS's SSTV pictures and its APRS on 145.825 MHz, see [ISS SSTV](iss_sstv.md)):
+Quadrifilar (QFH) Antenna (137 MHz for the Meteors; a **2 m QFH**, cut for 145.8 MHz, suits the ISS's 2 m SSTV events; its
+70 cm downlinks, SSTV on 437.550 MHz and APRS on 437.825 MHz, want a 70 cm or dual-band antenna,
+see [ISS SSTV](iss_sstv.md)):
 
 * [John Coppens QFH Calculator](http://jcoppens.com/ant/qfh/index.en.php)
 * [Thingverse 3-Printed QFH](https://www.thingiverse.com/make:768284)

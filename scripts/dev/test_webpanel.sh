@@ -219,14 +219,14 @@ aprs_csv(aprs_tmp, aprs_ps + 60, len(aprs_st))
 r = subprocess.run([sys.executable, '-I', os.path.join(repo, 'scripts/image_processors/aprs_pass.py'),
                     aprs_tmp, '', os.path.join(wp, 'App/Static/meteor.tle'), 'ISS', str(aprs_ps),
                     str(aprs_ps + 600), '37.983810', '23.727539',
-                    os.path.join(srv, 'images', 'ISS-aprs-sample')], capture_output=True, text=True)
+                    os.path.join(srv, 'images', 'ISS-aprs-sample'), '437.825'], capture_output=True, text=True)
 if r.returncode != 0:
     print('APRS sample not drawn:', r.stderr.strip()[-300:])
 elif have_im:
     for src, dst in (('-aprs-map.png', '-aprs-map.png'), ('-aprs-map.png', '-website-thumbnail.jpg')):
         subprocess.run(['convert', os.path.join(srv, 'images', 'ISS-aprs-sample' + src), '-resize', '300x',
                         os.path.join(srv, 'images/thumb', 'ISS-aprs-sample' + dst)], check=False)
-json.dump({'base': 'ISS-live', 'start': now - 200, 'end': now + 400, 'frequency': '145.825'},
+json.dump({'base': 'ISS-live', 'start': now - 200, 'end': now + 400, 'frequency': '437.825'},
           open(os.path.join(srv, 'images', 'aprs-live.json'), 'w'))
 aprs_csv(os.path.join(srv, 'images', 'aprs-live.csv'), now - 180, 5)
 for i in range(6):

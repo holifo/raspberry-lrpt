@@ -351,7 +351,7 @@ return array(
   "about_ai" => "Realizzato con l'aiuto dell'IA. Gran parte del codice, della documentazione e delle traduzioni di questo sito è stata scritta da {claude}, un assistente IA creato da Anthropic (di recente il modello Claude Opus 5.5, usato tramite Claude Code), seguendo le istruzioni di holifo. holifo ha deciso cosa costruire e lo ha provato su una stazione funzionante.",
   "about_ai_note" => "I dati sui satelliti di questa pagina sono stati verificati con le fonti qui sopra alla data indicata in alto, ma l'IA può sbagliare: se qualcosa sembra errato, segnalalo su GitHub.",
   "aprs_map" => "Stazioni APRS ascoltate",
-  "aprs_note" => "Pacchetti APRS ritrasmessi dal digipeater della Stazione Spaziale Internazionale su 145,825 MHz e decodificati da questa stazione. Ogni nominativo è un radioamatore che si trovava nello stesso momento nell'area di copertura della ISS.",
+  "aprs_note" => "Pacchetti APRS ritrasmessi dal digipeater della Stazione Spaziale Internazionale su {aprs_freq} MHz e decodificati da questa stazione. Ogni nominativo è un radioamatore che si trovava nello stesso momento nell'area di copertura della ISS.",
   "aprs_stations_heard" => "Stazioni ascoltate",
   "aprs_call" => "Nominativo",
   "aprs_time" => "Ora",
@@ -364,8 +364,8 @@ return array(
   "aprs_live" => "APRS della ISS in diretta",
   "aprs_station" => "stazione",
   "aprs_stations" => "stazioni",
-  "lg_aprs" => "Mappa APRS: radioamatori i cui pacchetti di posizione la ISS ha ritrasmesso su 145,825 MHz durante il passaggio (tra gli eventi SSTV)",
+  "lg_aprs" => "Mappa APRS: radioamatori i cui pacchetti di posizione la ISS ha ritrasmesso su {aprs_freq} MHz durante il passaggio (tra gli eventi SSTV)",
   "iss_sw_title_aprs" => "Immagini SSTV e APRS della ISS (extra)",
-  "iss_sw_hint_aprs" => "Durante gli eventi ARISS (le date SSTV) registra le immagini SSTV della ISS su {freq} MHz; negli altri passaggi, le stazioni APRS che ritrasmette su 145,825 MHz, mostrate in diretta sulla mappa dei satelliti. I passaggi Meteor hanno sempre la precedenza.",
+  "iss_sw_hint_aprs" => "Durante gli eventi ARISS (le date SSTV) registra le immagini SSTV della ISS su {freq} MHz; negli altri passaggi, le stazioni APRS che ritrasmette su {aprs_freq} MHz, mostrate in diretta sulla mappa dei satelliti. I passaggi Meteor hanno sempre la precedenza.",
 );
 ?>

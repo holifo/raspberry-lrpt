@@ -191,7 +191,7 @@ an RTL-SDR, and a pass where nothing was decoded leaves nothing behind.
   its pictures (`SSTV 1`, `SSTV 2`, …), the sky track and the recording (`.wav`). ISS passes are in
   the pass list in violet, and the Satellites tab shows the ISS on the map with its own tab.
 - **Between events, APRS** (`iss_aprs`, on by default): outside the `iss_sstv_dates` window (or on
-  every pass when it is empty) the pass is recorded on 145.825 MHz instead and Dire Wolf decodes the
+  every pass when it is empty) the pass is recorded on the APRS frequency (437.825 MHz) instead and Dire Wolf decodes the
   APRS packets the ISS relays. The stations heard show live on the Satellites map while the pass is
   recorded, and the capture has a map of them, a station list and the packets.
 - **For an SSTV event:** set `iss_sstv_dates: "2026-12-01 2026-12-04"` (first and last day), run
@@ -313,7 +313,8 @@ web login, Discord webhook) are in `config/settings.local.yml` and win over it. 
 | `iss_sstv` | false | Record the ISS's passes and decode its SSTV pictures (RTL-SDR; [ISS SSTV](iss_sstv.md)) |
 | `iss_sstv_frequency` | 437.550 | ISS downlink to record: 437.550 (70 cm, 2026's events) or 145.800 (2 m) |
 | `iss_sstv_dates`, `iss_sstv_min_elevation`, `iss_sstv_gain` | "", 20, 40 | SSTV event days (empty = none with APRS on, every pass without), lowest pass, gain |
-| `iss_aprs` | true | Outside the SSTV dates, record the ISS's APRS digipeater on 145.825 MHz ([ISS SSTV](iss_sstv.md)) |
+| `iss_aprs` | true | Outside the SSTV dates, record the ISS's APRS digipeater ([ISS SSTV](iss_sstv.md)) |
+| `iss_aprs_frequency` | 437.825 | The ISS's APRS frequency in MHz (145.825 before 2026) |
 | `discord_webhook` | | Post each pass to Discord: asked by the install, kept in `settings.local.yml`; empty = off ([Discord](discord.md)) |
 | `discord_site_url`, `discord_images`, `discord_sky_track` | , 2, true | Link to the capture in the post, how many images, the sky track |
 

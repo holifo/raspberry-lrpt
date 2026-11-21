@@ -351,7 +351,7 @@ return array(
   "about_ai" => "Mit Hilfe von KI entstanden. Ein Großteil des Codes, der Dokumentation und der Übersetzungen dieser Seite wurde von {claude} geschrieben, einem KI-Assistenten von Anthropic (zuletzt das Modell Claude Opus 5.5, genutzt über Claude Code), nach den Vorgaben von holifo. holifo hat entschieden, was gebaut wird, und es an einer laufenden Station getestet.",
   "about_ai_note" => "Die Satellitenangaben auf dieser Seite wurden am oben angegebenen Datum anhand der obigen Quellen geprüft, aber KI kann Fehler machen: Wenn etwas falsch aussieht, melde es bitte auf GitHub.",
   "aprs_map" => "Gehörte APRS-Stationen",
-  "aprs_note" => "APRS-Pakete, die der Digipeater der Internationalen Raumstation auf 145,825 MHz weitergeleitet hat, von dieser Station dekodiert. Jedes Rufzeichen ist ein Funkamateur, der zur selben Zeit im Empfangsbereich der ISS war.",
+  "aprs_note" => "APRS-Pakete, die der Digipeater der Internationalen Raumstation auf {aprs_freq} MHz weitergeleitet hat, von dieser Station dekodiert. Jedes Rufzeichen ist ein Funkamateur, der zur selben Zeit im Empfangsbereich der ISS war.",
   "aprs_stations_heard" => "Gehörte Stationen",
   "aprs_call" => "Rufzeichen",
   "aprs_time" => "Zeit",
@@ -364,8 +364,8 @@ return array(
   "aprs_live" => "ISS-APRS live",
   "aprs_station" => "Station",
   "aprs_stations" => "Stationen",
-  "lg_aprs" => "APRS-Karte: Funkamateure, deren Positionspakete die ISS beim Überflug auf 145,825 MHz weitergeleitet hat (zwischen SSTV-Aktionen)",
+  "lg_aprs" => "APRS-Karte: Funkamateure, deren Positionspakete die ISS beim Überflug auf {aprs_freq} MHz weitergeleitet hat (zwischen SSTV-Aktionen)",
   "iss_sw_title_aprs" => "ISS-SSTV-Bilder und APRS (Extra)",
-  "iss_sw_hint_aprs" => "Bei ARISS-Aktionen (die SSTV-Daten) zeichnet es die SSTV-Bilder der ISS auf {freq} MHz auf, bei den übrigen Überflügen die APRS-Stationen, die sie auf 145,825 MHz weiterleitet, live auf der Satellitenkarte. Meteor-Überflüge haben immer Vorrang.",
+  "iss_sw_hint_aprs" => "Bei ARISS-Aktionen (die SSTV-Daten) zeichnet es die SSTV-Bilder der ISS auf {freq} MHz auf, bei den übrigen Überflügen die APRS-Stationen, die sie auf {aprs_freq} MHz weiterleitet, live auf der Satellitenkarte. Meteor-Überflüge haben immer Vorrang.",
 );
 ?>

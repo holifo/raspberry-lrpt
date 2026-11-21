@@ -1,5 +1,14 @@
 # Changelog
 
+## Raspberry-LRPT v1.33.0 (2026-11-21)
+
+- **ISS APRS on its new frequency, 437.825 MHz.** ARISS moved the ISS's APRS packet radio from
+  2 m (145.825 MHz) to 70 cm (437.825 MHz) in 2026, so the station's APRS recordings heard nothing.
+  APRS passes are now recorded on 437.825 MHz, and the frequency is a new setting,
+  `iss_aprs_frequency`, in case ARISS moves it again (check ariss.org's station status). The web
+  panel, the Discord posts and the APRS maps show the frequency in use. On 70 cm a 2 m QFH hears
+  little: a 70 cm or dual-band antenna works much better.
+
 ## Raspberry-LRPT v1.32.4 (2026-11-21)
 
 - **Faster orbit (TLE) updates when CelesTrak can't be reached.** Before downloading, the scheduler

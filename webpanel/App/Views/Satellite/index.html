@@ -96,6 +96,7 @@
   <script>
     window.RL1_ISS_FREQ = '{{ constant('Config\\Config::ISS_SSTV_FREQ') }}';
     window.RL1_ISS_APRS = {{ constant('Config\\Config::ISS_APRS') ? 'true' : 'false' }};
+    window.RL1_ISS_APRS_FREQ = '{{ constant('Config\\Config::ISS_APRS_FREQ') }}';
     window.RL1_SAT_TEXT = {
       in_range: {{ (lang['in_range']|default('In range'))|json_encode|raw }},
       below: {{ (lang['si_below']|default('Below the horizon'))|json_encode|raw }},

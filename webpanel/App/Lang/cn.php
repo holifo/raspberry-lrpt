@@ -351,7 +351,7 @@ return array(
   "about_ai" => "借助人工智能制作。本网站的大部分代码、文档和翻译由 {claude} 编写，它是 Anthropic 开发的 AI 助手（最近使用的是 Claude Opus 5.5 模型，通过 Claude Code 使用），按照 holifo 的指示工作。holifo 决定要做什么，并在一个运行中的地面站上进行了测试。",
   "about_ai_note" => "本页的卫星资料已于页首所示日期对照上方来源核实，但 AI 可能出错：如发现错误，请在 GitHub 上告知。",
   "aprs_map" => "收到的 APRS 电台",
-  "aprs_note" => "国际空间站数字中继器在 145.825 MHz 转发、由本站解码的 APRS 数据包。每个呼号都是当时位于国际空间站覆盖范围内的业余无线电爱好者。",
+  "aprs_note" => "国际空间站数字中继器在 {aprs_freq} MHz 转发、由本站解码的 APRS 数据包。每个呼号都是当时位于国际空间站覆盖范围内的业余无线电爱好者。",
   "aprs_stations_heard" => "收到的电台",
   "aprs_call" => "呼号",
   "aprs_time" => "时间",
@@ -364,8 +364,8 @@ return array(
   "aprs_live" => "国际空间站 APRS 实时",
   "aprs_station" => "个电台",
   "aprs_stations" => "个电台",
-  "lg_aprs" => "APRS 地图：国际空间站过境时在 145.825 MHz 转发其位置数据包的业余无线电爱好者（SSTV 活动之间）",
+  "lg_aprs" => "APRS 地图：国际空间站过境时在 {aprs_freq} MHz 转发其位置数据包的业余无线电爱好者（SSTV 活动之间）",
   "iss_sw_title_aprs" => "国际空间站 SSTV 图像和 APRS（附加功能）",
-  "iss_sw_hint_aprs" => "在 ARISS 活动期间（SSTV 日期）以 {freq} MHz 接收国际空间站的 SSTV 图像；其他过境时接收其在 145.825 MHz 转发的 APRS 电台，并实时显示在卫星地图上。Meteor 过境始终优先。",
+  "iss_sw_hint_aprs" => "在 ARISS 活动期间（SSTV 日期）以 {freq} MHz 接收国际空间站的 SSTV 图像；其他过境时接收其在 {aprs_freq} MHz 转发的 APRS 电台，并实时显示在卫星地图上。Meteor 过境始终优先。",
 );
 ?>

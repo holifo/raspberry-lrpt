@@ -54,7 +54,7 @@ pictures. Between Meteor passes the station records the ISS's passes and decodes
 - **On the site:** violet ISS cards on the Captures page (filter chip **ISS**), the ISS on the
   Satellites map, and Discord posts with the pictures. Passes with no pictures leave no trace.
 - **Between events, APRS:** outside the event dates it records the ISS's APRS digipeater
-  (145.825 MHz, decoded with Dire Wolf): the stations heard show up live on the Satellites map,
+  (437.825 MHz since 2026, decoded with Dire Wolf): the stations heard show up live on the Satellites map,
   and each pass gets a page with a map and a list of the stations (`iss_aprs`).
 - RTL-SDR only; off by default, with an on/off switch on Admin > Passes (`iss_sstv`). See [ISS SSTV](docs/iss_sstv.md).
 

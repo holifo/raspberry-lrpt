@@ -675,7 +675,7 @@
     });
     if (!aprs.active) { aprsBox.style.display = 'none'; return; }
     var n = aprs.stations.length;
-    aprsBox.innerHTML = '<b>' + esc(tr('aprs_live', 'ISS APRS live')) + '</b> · ' + esc(aprs.frequency || '145.825') + ' MHz · ' +
+    aprsBox.innerHTML = '<b>' + esc(tr('aprs_live', 'ISS APRS live')) + '</b> · ' + esc(aprs.frequency || '437.825') + ' MHz · ' +
       n + ' ' + esc(n === 1 ? tr('aprs_station', 'station') : tr('aprs_stations', 'stations')) +
       (n ? '<div class="calls">' + aprs.stations.map(function (x) { return esc(x.call); }).join(' · ') + '</div>' : '');
     aprsBox.style.display = 'block';

@@ -78,14 +78,21 @@ already running finishes.
 ## Between events: APRS (`iss_aprs`)
 
 Most of the year the ISS sends no pictures, but its **APRS digipeater** is on almost all the
-time: radio amateurs send short position and message packets on **145.825 MHz** (1200 baud AFSK),
-and the ISS repeats them on the same frequency (via `RS0ISS` / `ARISS`). With `iss_aprs: true`
-(the default) the station records those passes instead:
+time: radio amateurs send short position and message packets (1200 baud AFSK), and the ISS repeats
+them on the same frequency (via `RS0ISS` / `ARISS`). With `iss_aprs: true` (the default) the
+station records those passes instead.
+
+**Which frequency:** since 2026 ARISS runs the APRS radio on **437.825 MHz** (70 cm, in the Service
+Module); for years before that it was **145.825 MHz** (2 m). Set `iss_aprs_frequency` to the one
+[ARISS's station status](https://www.ariss.org/current-status-of-iss-stations.HTML) lists (default
+437.825), for example with `python3 scripts/tools/settings.py set iss_aprs_frequency 145.825` and
+then `./install_and_upgrade.sh`.
+
 
 - **Which mode:** inside the `iss_sstv_dates` window a pass is recorded for SSTV pictures; outside
   it (or always, when `iss_sstv_dates` is empty) for APRS. **So for an ARISS event, set
   `iss_sstv_dates`** to the event's days.
-- **Decoding:** `rtl_fm` on 145.825 MHz feeds [Dire Wolf](https://github.com/wb2osz/direwolf)
+- **Decoding:** `rtl_fm` on `iss_aprs_frequency` feeds [Dire Wolf](https://github.com/wb2osz/direwolf)
   (the `direwolf` package), which writes each packet to a log as it is heard.
 - **Live map:** while a pass is recorded, the **Satellites** map shows each station heard so far as
   a violet dot with its call sign (grey: heard directly, not through the ISS), and a box at the
@@ -95,10 +102,12 @@ and the ISS repeats them on the same frequency (via `RS0ISS` / `ARISS`). With `i
   wasn't relayed by the ISS), so the Live log follows the pass too.
 - **After the pass:** a capture with a map of the stations and the ISS's track, a table of the
   stations (call sign linked to aprs.fi, time, packets, distance, comment) and the packets as
-  received. The Captures card says "N APRS". Discord posts the map. The 2 m audio is kept as a
+  received. The Captures card says "N APRS". Discord posts the map. The audio is kept as a
   `.wav` like the SSTV recordings (`keep_recordings`).
 - Passes where nothing was decoded leave no trace, as with SSTV.
-- 145.825 MHz is 2 m, so a 2 m QFH hears it well; packets are short, so expect a handful of
+- **Antenna:** on 437.825 MHz a 70 cm antenna (or a dual-band 2 m/70 cm one) hears far more than a
+  2 m QFH, which is a poor match at 70 cm. Doppler moves the signal by up to about ±10 kHz on
+  70 cm; the recording's 48 kHz bandwidth covers it. Packets are short, so expect a handful of
   stations on a good pass, more over Europe at weekends.
 
 Set `iss_aprs: false` to record only SSTV (then every pass is an SSTV pass when `iss_sstv_dates`
@@ -113,7 +122,8 @@ is empty, as before v1.31.0).
 | `iss_sstv_min_elevation` | 20 | Lowest maximum elevation of a pass worth recording |
 | `iss_sstv_frequency` | 437.550 | The downlink to record (MHz): 437.550 (70 cm) or 145.800 (2 m), whichever the event uses |
 | `iss_sstv_gain` | 40 | The RTL-SDR's gain for the ISS |
-| `iss_aprs` | true | Between SSTV events (outside `iss_sstv_dates`), record the ISS's APRS digipeater on 145.825 MHz |
+| `iss_aprs` | true | Between SSTV events (outside `iss_sstv_dates`), record the ISS's APRS digipeater |
+| `iss_aprs_frequency` | 437.825 | The ISS's APRS frequency (MHz): 437.825 (70 cm, since 2026) or 145.825 (2 m) |
 
 Change them in `config/settings.yml` and run `./install_and_upgrade.sh`; to drop passes already
 scheduled, run `./scripts/schedule.sh -x` afterwards.
