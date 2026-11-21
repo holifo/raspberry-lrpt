@@ -35,42 +35,54 @@ IMAGE_THUMB_BASE="${IMAGE_OUTPUT}/thumb/${FILENAME_BASE}"
 AUDIO_FILE_BASE="${METEOR_AUDIO_OUTPUT}/${FILENAME_BASE}"
 RATE=11025
 
-if [ "$RECEIVER_TYPE" != "rtlsdr" ]; then
-  log "ISS SSTV needs an RTL-SDR (rtl_fm); receiver is ${RECEIVER_TYPE} - skipped" "WARN"
+# which RTL-SDR (iss_sdr_device): its own dongle records alongside the Meteors; the Meteors' one
+# (a station with one RTL-SDR) is shared, and then Meteor passes come first
+read -r SDR_INDEX SDR_MODE <<< "$(iss_sdr)"
+if [ "$SDR_MODE" == "none" ]; then
+  log "ISS pass skipped: no RTL-SDR found (the ISS records with rtl_fm)" "WARN"
   exit 0
 fi
-# a Meteor pass that is still being decoded keeps the SDR busy: wait up to a minute, then give up
-for _ in $(seq 12); do pgrep -f "$METEOR_RUNNING" >/dev/null || break; sleep 5; done
-if pgrep -f "$METEOR_RUNNING" >/dev/null; then
-  log "ISS pass skipped: a Meteor capture is still using the SDR" "WARN"
-  exit 0
-fi
+log "ISS records on RTL-SDR #${SDR_INDEX} ($([ "$SDR_MODE" == dedicated ] && echo "its own, alongside the Meteors" || echo "shared with the Meteors, which come first"))" "INFO"
 
-# Meteor has priority: stop recording 20 s before the next scheduled Meteor pass starts
-now=$(date +%s)
-next_meteor=$($SQLITE3 "$DB_FILE" "SELECT MIN(pass_start) FROM predict_passes WHERE is_active = 1
-               AND sat_name LIKE 'METEOR%' AND pass_end > $now AND pass_start < $((now + CAPTURE_TIME + 20));" 2>/dev/null)
-if [ -n "$next_meteor" ]; then
-  left=$(( next_meteor - now - 20 ))
-  if [ "$left" -lt 60 ]; then
-    log "ISS pass skipped: a Meteor pass starts at $(date -d "@$next_meteor" +%H:%M:%S)" "INFO"
-    $SQLITE3 "$DB_FILE" "DELETE FROM predict_passes WHERE pass_start = $EPOCH_START AND sat_name = 'ISS';" >> "$LRPT_LOG" 2>&1
+if [ "$SDR_MODE" == "shared" ]; then
+  # a Meteor pass that is still being decoded keeps the SDR busy: wait up to a minute, then give up
+  for _ in $(seq 12); do pgrep -f "$METEOR_RUNNING" >/dev/null || break; sleep 5; done
+  if pgrep -f "$METEOR_RUNNING" >/dev/null; then
+    log "ISS pass skipped: a Meteor capture is still using the SDR" "WARN"
     exit 0
   fi
-  [ "$left" -lt "$CAPTURE_TIME" ] && { log "ISS recording cut to ${left} s: a Meteor pass starts at $(date -d "@$next_meteor" +%H:%M:%S)" "INFO"; CAPTURE_TIME=$left; }
+
+  # Meteor has priority: stop recording 20 s before the next scheduled Meteor pass starts
+  now=$(date +%s)
+  next_meteor=$($SQLITE3 "$DB_FILE" "SELECT MIN(pass_start) FROM predict_passes WHERE is_active = 1
+                 AND sat_name LIKE 'METEOR%' AND pass_end > $now AND pass_start < $((now + CAPTURE_TIME + 20));" 2>/dev/null)
+  if [ -n "$next_meteor" ]; then
+    left=$(( next_meteor - now - 20 ))
+    if [ "$left" -lt 60 ]; then
+      log "ISS pass skipped: a Meteor pass starts at $(date -d "@$next_meteor" +%H:%M:%S)" "INFO"
+      $SQLITE3 "$DB_FILE" "DELETE FROM predict_passes WHERE pass_start = $EPOCH_START AND sat_name = 'ISS';" >> "$LRPT_LOG" 2>&1
+      exit 0
+    fi
+    [ "$left" -lt "$CAPTURE_TIME" ] && { log "ISS recording cut to ${left} s: a Meteor pass starts at $(date -d "@$next_meteor" +%H:%M:%S)" "INFO"; CAPTURE_TIME=$left; }
+  fi
 fi
 
 WORK_DIR=$(work_dir "iss-${FILENAME_BASE}")
-trap 'cd "$LRPT_HOME"; rm -rf "$WORK_DIR"' EXIT
+trap 'cd "$LRPT_HOME"; rm -rf "$WORK_DIR"; rm -f "$ISS_SDR_MARK"' EXIT
+echo "$SDR_INDEX $SDR_MODE" > "$ISS_SDR_MARK"     # receive_meteor.sh stops a shared recording only
 RAW="$WORK_DIR/pass.raw"
 
-# rtl_fm options: the station's RTL-SDR settings (device, ppm, bias tee) with the ISS gain
-dev_args=""
-[ "$USE_DEVICE_STRING" == "true" ] && [ -n "$METEOR_M2_3_SDR_DEVICE_ID" ] && dev_args="-d $METEOR_M2_3_SDR_DEVICE_ID"
+# rtl_fm options: the chosen dongle with the ISS gain; a shared dongle keeps the Meteors' ppm and
+# bias tee, the ISS's own one uses iss_bias_tee
+dev_args="-d $SDR_INDEX"
 ppm_args=""
-[ -n "$METEOR_M2_3_FREQ_OFFSET" ] && [ "$METEOR_M2_3_FREQ_OFFSET" != "0" ] && ppm_args="-p $METEOR_M2_3_FREQ_OFFSET"
 bias_args=""
-[ "$METEOR_M2_3_ENABLE_BIAS_TEE" == "-T" ] && bias_args="-T"
+if [ "$SDR_MODE" == "shared" ]; then
+  [ -n "$METEOR_M2_3_FREQ_OFFSET" ] && [ "$METEOR_M2_3_FREQ_OFFSET" != "0" ] && ppm_args="-p $METEOR_M2_3_FREQ_OFFSET"
+  [ "$METEOR_M2_3_ENABLE_BIAS_TEE" == "-T" ] && bias_args="-T"
+else
+  [ "$ISS_BIAS_TEE" == "true" ] && bias_args="-T"
+fi
 
 # SSTV during an event, APRS the rest of the time (iss_aprs)
 mode=sstv
@@ -82,7 +94,7 @@ fi
 if [ "$mode" == "aprs" ]; then
   LIVE_JSON="${IMAGE_OUTPUT}/aprs-live.json"
   LIVE_CSV="${IMAGE_OUTPUT}/aprs-live.csv"
-  trap 'pkill -f "tail -n +1 -F $LIVE_CSV" 2>/dev/null; cd "$LRPT_HOME"; rm -rf "$WORK_DIR"; rm -f "$LIVE_JSON" "$LIVE_CSV"' EXIT
+  trap 'pkill -f "tail -n +1 -F $LIVE_CSV" 2>/dev/null; cd "$LRPT_HOME"; rm -rf "$WORK_DIR"; rm -f "$LIVE_JSON" "$LIVE_CSV" "$ISS_SDR_MARK"' EXIT
   ARATE=22050
   printf 'ADEVICE stdin null\nCHANNEL 0\nMODEM 1200\n' > "$WORK_DIR/direwolf.conf"
   rm -f "$LIVE_CSV"

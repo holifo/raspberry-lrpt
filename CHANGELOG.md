@@ -1,5 +1,25 @@
 # Changelog
 
+## Raspberry-LRPT v1.34.0 (2026-11-21)
+
+- **ISS with one SDR or two, chosen automatically.** With two or more RTL-SDRs the ISS now gets
+  its own dongle and records at the same time as the Meteor passes: overlapping passes are all
+  kept and nothing is cut short. With one, it works as before: Meteor passes come first, and the
+  ISS records when the dongle is free (SSTV on event dates, APRS otherwise). The choice is made
+  when passes are scheduled and again when each ISS pass starts, so an unplugged second dongle
+  just falls back to the shared rules.
+- **Choose the ISS dongle** with the new `iss_sdr_device` setting: empty for automatic, or an
+  index, a serial number or part of the model name (e.g. `Blog V4`). `iss_bias_tee` sets the bias
+  tee on the ISS's own dongle. `scripts/switch.sh iss` lists the connected RTL-SDRs (index, maker,
+  model, serial) and says which one the ISS uses.
+- The ISS can now run on a station whose Meteor receiver is an Airspy, HackRF or SDRplay, with an
+  RTL-SDR beside it for the ISS.
+- The Passes page no longer marks an ISS pass during a Meteor pass as a conflict when the ISS has
+  its own dongle.
+- **Fix:** with overlapping passes, an ISS pass between two overlapping Meteor passes made the
+  scheduler keep both Meteors (the second then found the SDR busy). Each pass is now compared with
+  the last pass that was kept.
+
 ## Raspberry-LRPT v1.33.0 (2026-11-21)
 
 - **ISS APRS on its new frequency, 437.825 MHz.** ARISS moved the ISS's APRS packet radio from

@@ -315,7 +315,7 @@ return array(
   "meteor_sw_title" => "Meteor-Aufnahmen",
   "meteor_sw_hint" => "Zeichnet beide Meteor-Satelliten auf (METEOR-M2 3 und M2 4, LRPT auf 137,9 MHz).",
   "iss_sw_title" => "ISS-SSTV-Bilder (Extra)",
-  "iss_sw_hint" => "Zeichnet die SSTV-Bilder der ISS auf {freq} MHz bei ihren Überflügen auf. Meteor-Überflüge haben immer Vorrang.",
+  "iss_sw_hint" => "Zeichnet die SSTV-Bilder der ISS auf {freq} MHz bei ihren Überflügen auf. Mit einem zweiten RTL-SDR zeichnet es parallel zu den Meteors auf; mit nur einem haben Meteor-Überflüge Vorrang.",
   "iss_sw_rtl" => "Benötigt einen RTL-SDR-Empfänger.",
   "sw_on" => "Ein",
   "sw_off" => "Aus",
@@ -366,6 +366,6 @@ return array(
   "aprs_stations" => "Stationen",
   "lg_aprs" => "APRS-Karte: Funkamateure, deren Positionspakete die ISS beim Überflug auf {aprs_freq} MHz weitergeleitet hat (zwischen SSTV-Aktionen)",
   "iss_sw_title_aprs" => "ISS-SSTV-Bilder und APRS (Extra)",
-  "iss_sw_hint_aprs" => "Bei ARISS-Aktionen (die SSTV-Daten) zeichnet es die SSTV-Bilder der ISS auf {freq} MHz auf, bei den übrigen Überflügen die APRS-Stationen, die sie auf {aprs_freq} MHz weiterleitet, live auf der Satellitenkarte. Meteor-Überflüge haben immer Vorrang.",
+  "iss_sw_hint_aprs" => "Bei ARISS-Aktionen (die SSTV-Daten) zeichnet es die SSTV-Bilder der ISS auf {freq} MHz auf, bei den übrigen Überflügen die APRS-Stationen, die sie auf {aprs_freq} MHz weiterleitet, live auf der Satellitenkarte. Mit einem zweiten RTL-SDR zeichnet es parallel zu den Meteors auf; mit nur einem haben Meteor-Überflüge Vorrang.",
 );
 ?>

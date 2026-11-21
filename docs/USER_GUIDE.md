@@ -181,8 +181,9 @@ During ARISS events (a few times a year) the ISS sends slow-scan TV pictures: in
 437.550 MHz FM in Robot 36, before that on 145.800 MHz FM in PD120. `iss_sstv_frequency` sets
 which one is recorded (437.550 by default); the decoder finds the mode itself.
 Between Meteor passes the station records the ISS's passes above 20° with `rtl_fm` and decodes the
-pictures (`scripts/receive_iss.sh`). Meteor always has priority: an overlapping ISS pass isn't
-scheduled, an ISS recording ends before the next Meteor pass, and a Meteor pass stops an ISS
+pictures (`scripts/receive_iss.sh`). With a second RTL-SDR the ISS gets its own and records at the
+same time as the Meteors (`iss_sdr_device`). With one, Meteor has priority: an overlapping ISS pass
+isn't scheduled, an ISS recording ends before the next Meteor pass, and a Meteor pass stops an ISS
 recording that is still running. It is off by default:
 turn it on with the switch on Admin > Passes or `scripts/switch.sh iss on` (`iss_sstv`). It needs
 an RTL-SDR, and a pass where nothing was decoded leaves nothing behind.
@@ -315,6 +316,8 @@ web login, Discord webhook) are in `config/settings.local.yml` and win over it. 
 | `iss_sstv_dates`, `iss_sstv_min_elevation`, `iss_sstv_gain` | "", 20, 40 | SSTV event days (empty = none with APRS on, every pass without), lowest pass, gain |
 | `iss_aprs` | true | Outside the SSTV dates, record the ISS's APRS digipeater ([ISS SSTV](iss_sstv.md)) |
 | `iss_aprs_frequency` | 437.825 | The ISS's APRS frequency in MHz (145.825 before 2026) |
+| `iss_sdr_device` | "" | Which RTL-SDR records the ISS: empty = automatic (a second one records at the same time as the Meteors), or an index, serial or part of the model name |
+| `iss_bias_tee` | false | Bias tee on the ISS's own RTL-SDR |
 | `discord_webhook` | | Post each pass to Discord: asked by the install, kept in `settings.local.yml`; empty = off ([Discord](discord.md)) |
 | `discord_site_url`, `discord_images`, `discord_sky_track` | , 2, true | Link to the capture in the post, how many images, the sky track |
 

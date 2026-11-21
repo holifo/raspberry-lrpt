@@ -193,11 +193,19 @@ if [ "$METEOR_M2_4_SCHEDULE" == "true" ]; then
   log "Scheduling Meteor-M2 4 captures..." "INFO"
   $LRPT_HOME/scripts/schedule_captures.sh "METEOR-M2 4" "receive_meteor.sh" $TLE_OUTPUT $start_time_ms $end_time_ms >> $LRPT_LOG 2>&1
 fi
+iss_own_sdr=false
 if [ "$ISS_SSTV" == "true" ]; then
-  if [ "$RECEIVER_TYPE" != "rtlsdr" ]; then
-    log "ISS SSTV needs an RTL-SDR (rtl_fm) - not scheduling ISS passes with ${RECEIVER_TYPE}" "WARN"
+  read -r iss_idx iss_mode <<< "$(iss_sdr)"
+  printf '{"index": "%s", "mode": "%s", "made": %s}\n' "$iss_idx" "$iss_mode" "$(date +%s)" > "${IMAGE_OUTPUT}/iss-sdr.json" 2>/dev/null
+  if [ "$iss_mode" == "none" ]; then
+    log "The ISS records with an RTL-SDR (rtl_fm) and none is connected - not scheduling ISS passes" "WARN"
   elif [ -s "$ISS_TLE" ]; then
-    log "Scheduling ISS SSTV captures..." "INFO"
+    if [ "$iss_mode" == "dedicated" ]; then
+      iss_own_sdr=true
+      log "Scheduling ISS captures on RTL-SDR #${iss_idx} (its own: alongside the Meteor passes)..." "INFO"
+    else
+      log "Scheduling ISS captures on the Meteors' RTL-SDR (Meteor passes come first)..." "INFO"
+    fi
     $LRPT_HOME/scripts/schedule_captures.sh "ISS" "receive_iss.sh" $ISS_TLE $start_time_ms $end_time_ms >> $LRPT_LOG 2>&1
   else
     log "No ISS orbit yet - ISS passes not scheduled" "WARN"
@@ -208,7 +216,7 @@ log "Done scheduling jobs!" "INFO"
 # Check if the variable is set and true
 if [ "$SELECT_BEST_OVERLAPPING_PASSES" == true ]; then
     log "Program automatically selected the best pass!" "INFO"
-    $LRPT_HOME/scripts/select_best_overlapping_passes.py $DB_FILE true
+    $LRPT_HOME/scripts/select_best_overlapping_passes.py $DB_FILE true $iss_own_sdr
 else
     log "You should manually remove overlapping passes." "INFO"
 fi

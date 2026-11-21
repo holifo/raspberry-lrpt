@@ -315,7 +315,7 @@ return array(
   "meteor_sw_title" => "Meteor 接收",
   "meteor_sw_hint" => "接收两颗 Meteor 卫星（METEOR-M2 3 和 M2 4，137.9 MHz LRPT）。",
   "iss_sw_title" => "ISS SSTV 图像（附加功能）",
-  "iss_sw_hint" => "在国际空间站过境时以 {freq} MHz 接收其 SSTV 图像。Meteor 过境始终优先。",
+  "iss_sw_hint" => "在国际空间站过境时以 {freq} MHz 接收其 SSTV 图像。有第二个 RTL-SDR 时与 Meteor 同时接收；只有一个时，Meteor 过境优先。",
   "iss_sw_rtl" => "需要 RTL-SDR 接收机。",
   "sw_on" => "开",
   "sw_off" => "关",
@@ -366,6 +366,6 @@ return array(
   "aprs_stations" => "个电台",
   "lg_aprs" => "APRS 地图：国际空间站过境时在 {aprs_freq} MHz 转发其位置数据包的业余无线电爱好者（SSTV 活动之间）",
   "iss_sw_title_aprs" => "国际空间站 SSTV 图像和 APRS（附加功能）",
-  "iss_sw_hint_aprs" => "在 ARISS 活动期间（SSTV 日期）以 {freq} MHz 接收国际空间站的 SSTV 图像；其他过境时接收其在 {aprs_freq} MHz 转发的 APRS 电台，并实时显示在卫星地图上。Meteor 过境始终优先。",
+  "iss_sw_hint_aprs" => "在 ARISS 活动期间（SSTV 日期）以 {freq} MHz 接收国际空间站的 SSTV 图像；其他过境时接收其在 {aprs_freq} MHz 转发的 APRS 电台，并实时显示在卫星地图上。有第二个 RTL-SDR 时与 Meteor 同时接收；只有一个时，Meteor 过境优先。",
 );
 ?>

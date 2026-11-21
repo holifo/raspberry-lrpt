@@ -55,6 +55,16 @@ METEOR_M2_4_FREQ="137.9000"
 ELEKTRO_L3_FREQ="1691.0000"
 ISS_FREQ="${ISS_SSTV_FREQ:-437.5500}"
 ISS_APRS_FREQ="${ISS_APRS_FREQ:-437.825}"   # ARISS APRS digipeater (packet, 1200 baud AFSK): iss_aprs_frequency
+ISS_SDR_MARK="${LRPT_HOME}/tmp/iss-sdr"    # while the ISS records: "<index> <dedicated|shared>"
+
+# the RTL-SDR the ISS records with: prints "<index> <mode>", mode dedicated (its own dongle, records
+# alongside the Meteors), shared (the Meteors' dongle: Meteor passes come first) or none ("- none")
+iss_sdr() {
+  local meteor=0
+  [ "$USE_DEVICE_STRING" == "true" ] && meteor="${METEOR_M2_3_SDR_DEVICE_ID:-0}"
+  python3 "$LRPT_HOME/scripts/tools/rtlsdr_list.py" pick "${ISS_SDR_DEVICE:-}" "$meteor" "${RECEIVER_TYPE:-rtlsdr}" 2>> "${LRPT_LOG:-/dev/null}" ||
+    echo "- none"
+}
 
 # the pass's start time: set once, by the script that starts the pass (receive_meteor.sh,
 # reprocess_meteor.sh); helpers that source this file later keep it

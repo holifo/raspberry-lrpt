@@ -120,8 +120,8 @@ def skip(key, data):
     receiver = data.get('receiver_type')
     if key == 'sdrplay_licence_accepted':
         return receiver != 'sdrplay'
-    if key == 'iss_sstv':
-        return receiver not in (None, 'rtlsdr')     # the ISS recorder uses rtl_fm
+    # iss_sstv is asked with every receiver: the ISS records with an RTL-SDR, which can be a second
+    # dongle beside an Airspy, HackRF or SDRplay (iss_sdr_device)
     if key in ('meteor_m2_3_gain', 'meteor_m2_4_gain'):
         return receiver in RECEIVERS and RECEIVERS[receiver][1] is None
     return False

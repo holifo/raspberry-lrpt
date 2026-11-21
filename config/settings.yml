@@ -123,6 +123,12 @@ keep_recordings: 5
 #              the Satellites map and on each pass's page (needs iss_sstv on)
 #   iss_aprs_frequency - the ISS's APRS frequency, MHz: 437.825 (70 cm, ARISS's setting since 2026)
 #                        or 145.825 (2 m, the classic one); check ariss.org's station status
+#   iss_sdr_device - which RTL-SDR records the ISS: "" = automatic (with two or more RTL-SDRs the
+#                    ISS gets one the Meteors don't use and both record at the same time; with one,
+#                    Meteor passes come first), or an index, a serial number, or part of the
+#                    model name ("Blog V4"); scripts/switch.sh iss lists the connected dongles
+#   iss_bias_tee - bias tee on the ISS's own RTL-SDR (only when it has its own; with a shared one
+#                  the Meteor M2 3 setting is used)
 iss_sstv: false
 iss_sstv_dates: ""
 iss_sstv_min_elevation: 20
@@ -130,6 +136,8 @@ iss_sstv_frequency: 437.550
 iss_sstv_gain: 40
 iss_aprs: true
 iss_aprs_frequency: 437.825
+iss_sdr_device: ""
+iss_bias_tee: false
 
 # Daily map: every pass of a day projected onto one map of the region around the station,
 # one for daytime passes and one for night-time passes (Daily map page)

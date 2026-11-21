@@ -27,7 +27,10 @@ site when something was received.
    scheduled with `at`, like the Meteor passes, and shows in the pass list in violet. With
    `iss_aprs: false` and `iss_sstv_dates` set, only the passes between those dates are (with APRS
    on, every pass is, and the dates decide SSTV or APRS).
-3. **Meteor always has priority**, at every step:
+3. **One RTL-SDR or two** (`iss_sdr_device`, chosen automatically): the ISS records with an
+   RTL-SDR. When the station has **two or more**, the ISS gets one the Meteors don't use and
+   **both record at the same time**: overlapping passes are all kept and nothing is cut short.
+   When there is **only one**, it is shared and **Meteor has priority**, at every step:
    - **Scheduling:** when an ISS pass overlaps a Meteor pass, the Meteor pass is kept and the ISS
      pass dropped, however high the ISS pass is (`select_best_overlapping_passes.py`).
    - **Before recording:** an ISS recording ends 20 s before the next Meteor pass starts; with
@@ -35,6 +38,10 @@ site when something was received.
      that is still running, then gives up.
    - **During recording:** a Meteor pass that starts while the ISS is still being recorded stops
      that recording and takes the SDR (the pictures received so far are still decoded).
+
+   The choice is made when passes are scheduled and again when each ISS pass starts, so an
+   unplugged second dongle simply falls back to the shared rules. `scripts/switch.sh iss` lists
+   the connected RTL-SDRs (index, maker, model, serial) and says which one the ISS uses.
 4. **Recording** (SSTV; APRS is below): `receive_iss.sh` records the pass on `iss_sstv_frequency` with `rtl_fm`
    (48 kHz wide, which covers the ISS's Doppler shift: about ±3.5 kHz on 2 m, ±10 kHz on 70 cm)
    as audio at 11025 Hz, with the gain `iss_sstv_gain`.
@@ -65,7 +72,8 @@ running the whole install:
 - **On the Pi:**
 
   ```bash
-  ~/raspberry-lrpt/scripts/switch.sh iss on       # schedule the ISS's passes (Meteor keeps priority)
+  ~/raspberry-lrpt/scripts/switch.sh iss on       # schedule the ISS's passes
+  ~/raspberry-lrpt/scripts/switch.sh iss          # its status and the connected RTL-SDRs
   ~/raspberry-lrpt/scripts/switch.sh iss off      # no ISS passes, the ISS leaves the web panel
   ~/raspberry-lrpt/scripts/switch.sh meteor off   # no Meteor passes (both satellites)
   ~/raspberry-lrpt/scripts/switch.sh              # what is on
@@ -124,14 +132,22 @@ is empty, as before v1.31.0).
 | `iss_sstv_gain` | 40 | The RTL-SDR's gain for the ISS |
 | `iss_aprs` | true | Between SSTV events (outside `iss_sstv_dates`), record the ISS's APRS digipeater |
 | `iss_aprs_frequency` | 437.825 | The ISS's APRS frequency (MHz): 437.825 (70 cm, since 2026) or 145.825 (2 m) |
+| `iss_sdr_device` | "" | Which RTL-SDR records the ISS: empty = automatic (a second one if there is one), or an index, a serial or part of the model name |
+| `iss_bias_tee` | false | Bias tee on the ISS's own RTL-SDR (with a shared one the Meteor M2 3 setting is used) |
 
 Change them in `config/settings.yml` and run `./install_and_upgrade.sh`; to drop passes already
 scheduled, run `./scripts/schedule.sh -x` afterwards.
 
 ## Notes
 
-- **RTL-SDR only:** the recording uses `rtl_fm`. With another receiver the ISS isn't scheduled
-  (the log says so).
+- **Which SDR:** the recording uses `rtl_fm`, so it needs an RTL-SDR. It can be a second dongle
+  beside an Airspy, HackRF or SDRplay that records the Meteors; with no RTL-SDR connected the
+  ISS isn't scheduled (the log says so).
+- **Choosing the dongle** (`iss_sdr_device`): leave it empty to choose automatically, or give an
+  index (`1`), a serial number (`00000002`; set one with `rtl_eeprom -s 00000002` so two
+  identical dongles can be told apart) or part of the model name (`Blog V4`). The ISS's own
+  dongle has its own bias tee setting, `iss_bias_tee`; a shared one uses the Meteor M2 3 settings.
+  Give the second dongle its own antenna for the ISS (2 m or 70 cm), or a splitter if both share one.
 - **Antenna:** a **2 m QFH** (cut for 145.8 MHz) is the antenna this documentation assumes for the
   ISS: right for 2 m events, and it still receives the Meteors at 137.9 MHz. A QFH cut for
   137 MHz also hears 145.8 MHz, a little weaker. On 437.55 MHz (70 cm) either QFH is much weaker,
@@ -141,7 +157,7 @@ scheduled, run `./scripts/schedule.sh -x` afterwards.
   [ARISS SSTV gallery](https://ariss-usa.org/ARISS_SSTV/) and its social media. Set
   `iss_sstv_frequency` (and `iss_sstv_dates`) to match, run the install, then
   `./scripts/schedule.sh -x`.
-- **Every pass costs SDR time,** about ten minutes, but never a Meteor pass. If you'd rather record
+- **With one SDR, every pass costs SDR time,** about ten minutes, but never a Meteor pass. If you'd rather record
   only during announced events, put the event's dates in `iss_sstv_dates`.
 - **Decode a recording again:** `python3 scripts/image_processors/sstv_decode.py
   /srv/audio/meteor/ISS-<date>.wav /tmp/sstv` writes `/tmp/sstv-1.png`, `-2.png`, …

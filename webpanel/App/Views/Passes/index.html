@@ -95,7 +95,7 @@
       <div class="no-passes">{{ lang['no_passes']|default('No passes scheduled') }}</div>
     {% else %}
       {% set last_day = '' %}
-      {% set prev_end = 0 %}
+      {% set prev_end = 0 %}{% set prev_end_iss = 0 %}
       {% for p in pass.list %}
         {% set day = p.pass_start|date('Y-m-d') %}
         {% if day != last_day %}
@@ -118,7 +118,8 @@
         {% set colour = sat_colours[p.sat_name]|default('other') %}
         {% set short = p.sat_name|replace({'METEOR-': ''}) %}
         {% set mins = ((p.pass_end - p.pass_start) / 60)|round %}
-        {% set conflict = prev_end >= p.pass_start %}
+        {% set own = iss_own_sdr and p.sat_name == 'ISS' %}
+        {% set conflict = (own ? prev_end_iss : prev_end) >= p.pass_start %}
         {% set az = p.pass_start_azimuth %}
         <div class="pass-row sat-{{ colour }}{% if p.is_active == false %} skipped{% endif %}{% if conflict %} conflict{% endif %}"
              data-sat="{{ p.sat_name }}" data-start="{{ p.pass_start }}" data-end="{{ p.pass_end }}"
@@ -152,7 +153,7 @@
             {% if az != '' %}<span class="dir-from" data-az="{{ az }}"></span>{% endif %}
           </span>
         </div>
-        {% set prev_end = p.pass_end %}
+        {% if own %}{% set prev_end_iss = p.pass_end %}{% else %}{% set prev_end = p.pass_end %}{% endif %}
       {% endfor %}
       </div>
     {% endif %}

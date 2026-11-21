@@ -197,7 +197,7 @@ return array(
   "meteor_sw_title" => "Meteor captures",
   "meteor_sw_hint" => "Records both Meteor satellites (METEOR-M2 3 and M2 4, LRPT on 137.9 MHz).",
   "iss_sw_title" => "ISS SSTV pictures (extra)",
-  "iss_sw_hint" => "Records the ISS's SSTV pictures on {freq} MHz when it passes. Meteor passes always come first.",
+  "iss_sw_hint" => "Records the ISS's SSTV pictures on {freq} MHz when it passes. With a second RTL-SDR it records alongside the Meteors; with one, Meteor passes come first.",
   "iss_sw_rtl" => "Needs an RTL-SDR receiver.",
   "sw_on" => "On",
   "sw_off" => "Off",
@@ -248,6 +248,6 @@ return array(
   "aprs_stations" => "stations",
   "lg_aprs" => "APRS map: radio amateurs whose position packets the ISS relayed on {aprs_freq} MHz while it passed over (between SSTV events)",
   "iss_sw_title_aprs" => "ISS SSTV pictures and APRS (extra)",
-  "iss_sw_hint_aprs" => "During ARISS events (the SSTV dates) it records the ISS's SSTV pictures on {freq} MHz; on its other passes, the APRS stations it relays on {aprs_freq} MHz, shown live on the Satellites map. Meteor passes always come first.",
+  "iss_sw_hint_aprs" => "During ARISS events (the SSTV dates) it records the ISS's SSTV pictures on {freq} MHz; on its other passes, the APRS stations it relays on {aprs_freq} MHz, shown live on the Satellites map. With a second RTL-SDR it records alongside the Meteors; with one, Meteor passes come first.",
 );
 ?>

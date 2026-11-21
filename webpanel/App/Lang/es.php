@@ -315,7 +315,7 @@ return array(
   "meteor_sw_title" => "Capturas Meteor",
   "meteor_sw_hint" => "Graba los dos satélites Meteor (METEOR-M2 3 y M2 4, LRPT en 137,9 MHz).",
   "iss_sw_title" => "Imágenes SSTV de la ISS (extra)",
-  "iss_sw_hint" => "Graba las imágenes SSTV de la ISS en {freq} MHz cuando pasa. Los pasos de Meteor siempre tienen prioridad.",
+  "iss_sw_hint" => "Graba las imágenes SSTV de la ISS en {freq} MHz cuando pasa. Con un segundo RTL-SDR graba a la vez que los Meteor; con uno solo, los pasos de Meteor tienen prioridad.",
   "iss_sw_rtl" => "Necesita un receptor RTL-SDR.",
   "sw_on" => "Activado",
   "sw_off" => "Desactivado",
@@ -366,6 +366,6 @@ return array(
   "aprs_stations" => "estaciones",
   "lg_aprs" => "Mapa APRS: radioaficionados cuyos paquetes de posición retransmitió la ISS en {aprs_freq} MHz durante su paso (entre eventos SSTV)",
   "iss_sw_title_aprs" => "Imágenes SSTV y APRS de la ISS (extra)",
-  "iss_sw_hint_aprs" => "Durante los eventos ARISS (las fechas SSTV) graba las imágenes SSTV de la ISS en {freq} MHz; en sus demás pasos, las estaciones APRS que retransmite en {aprs_freq} MHz, mostradas en directo en el mapa de satélites. Los pasos de Meteor siempre tienen prioridad.",
+  "iss_sw_hint_aprs" => "Durante los eventos ARISS (las fechas SSTV) graba las imágenes SSTV de la ISS en {freq} MHz; en sus demás pasos, las estaciones APRS que retransmite en {aprs_freq} MHz, mostradas en directo en el mapa de satélites. Con un segundo RTL-SDR graba a la vez que los Meteor; con uno solo, los pasos de Meteor tienen prioridad.",
 );
 ?>

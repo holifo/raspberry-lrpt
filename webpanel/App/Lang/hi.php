@@ -315,7 +315,7 @@ return array(
   "meteor_sw_title" => "Meteor कैप्चर",
   "meteor_sw_hint" => "दोनों Meteor उपग्रहों को रिकॉर्ड करता है (METEOR-M2 3 और M2 4, 137.9 MHz पर LRPT)।",
   "iss_sw_title" => "ISS SSTV तस्वीरें (अतिरिक्त)",
-  "iss_sw_hint" => "ISS के गुज़रने पर {freq} MHz पर उसकी SSTV तस्वीरें रिकॉर्ड करता है। Meteor के पास हमेशा पहले आते हैं।",
+  "iss_sw_hint" => "ISS के गुज़रने पर {freq} MHz पर उसकी SSTV तस्वीरें रिकॉर्ड करता है। दूसरे RTL-SDR के साथ यह Meteor के साथ-साथ रिकॉर्ड करता है; केवल एक होने पर Meteor के पास पहले आते हैं।",
   "iss_sw_rtl" => "RTL-SDR रिसीवर चाहिए।",
   "sw_on" => "चालू",
   "sw_off" => "बंद",
@@ -366,6 +366,6 @@ return array(
   "aprs_stations" => "स्टेशन",
   "lg_aprs" => "APRS नक्शा: वे रेडियो शौकिया जिनके स्थिति पैकेट ISS ने ऊपर से गुज़रते समय {aprs_freq} MHz पर आगे भेजे (SSTV कार्यक्रमों के बीच)",
   "iss_sw_title_aprs" => "ISS SSTV तस्वीरें और APRS (अतिरिक्त)",
-  "iss_sw_hint_aprs" => "ARISS कार्यक्रमों (SSTV तिथियों) के दौरान {freq} MHz पर ISS की SSTV तस्वीरें रिकॉर्ड करता है; बाकी गुज़रों पर, {aprs_freq} MHz पर ISS द्वारा आगे भेजे गए APRS स्टेशन, जो उपग्रह नक्शे पर लाइव दिखते हैं। Meteor के गुज़र हमेशा पहले आते हैं।",
+  "iss_sw_hint_aprs" => "ARISS कार्यक्रमों (SSTV तिथियों) के दौरान {freq} MHz पर ISS की SSTV तस्वीरें रिकॉर्ड करता है; बाकी गुज़रों पर, {aprs_freq} MHz पर ISS द्वारा आगे भेजे गए APRS स्टेशन, जो उपग्रह नक्शे पर लाइव दिखते हैं। दूसरे RTL-SDR के साथ यह Meteor के साथ-साथ रिकॉर्ड करता है; केवल एक होने पर Meteor के गुज़र पहले आते हैं।",
 );
 ?>

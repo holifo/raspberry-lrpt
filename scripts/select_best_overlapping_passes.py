@@ -34,8 +34,8 @@ def delete_job(target_datetime_str):
             os.system("atrm {}".format(job_id))
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: {} <database_path> <prefer_meteor: true|false>".format(sys.argv[0]))
+    if len(sys.argv) not in (3, 4):
+        print("Usage: {} <database_path> <prefer_meteor: true|false> [iss_own_sdr: true|false]".format(sys.argv[0]))
         sys.exit(1)
 
     database_path = os.path.expanduser(sys.argv[1])
@@ -45,45 +45,33 @@ if __name__ == "__main__":
 
     cursor.execute("SELECT sat_name, pass_start, pass_end, max_elev, is_active, pass_start_azimuth, direction, azimuth_at_max, at_job_id FROM predict_passes ORDER BY pass_start")
     passes = cursor.fetchall()
+    # the ISS on its own RTL-SDR (iss_sdr_device) records alongside the Meteors: its passes
+    # don't compete with theirs, so they are left out of the comparison
+    if len(sys.argv) == 4 and sys.argv[3].lower() == "true":
+        passes = [p for p in passes if p[0] != "ISS"]
 
-    for i in range(len(passes) - 1):
-        pass_start_curr, pass_end_curr, max_elev_curr, sat_name_curr, at_job_id_curr = passes[i][1], passes[i][2], passes[i][3], passes[i][0], passes[i][8]
-        pass_start_next, max_elev_next, sat_name_next, at_job_id_next = passes[i + 1][1], passes[i + 1][3], passes[i + 1][0], passes[i + 1][8]
+    def loser(a, b):
+        """Of two overlapping passes (a starts first), the one to drop: Meteor wins over any other
+        satellite when prefer_meteor, otherwise the lower maximum elevation loses."""
+        meteor_a, meteor_b = "METEOR" in a[0], "METEOR" in b[0]
+        if prefer_meteor and meteor_a != meteor_b:
+            return b if meteor_a else a
+        return b if a[3] > b[3] else a
 
-        # Convert the integer timestamps to string format
-        pass_start_curr_str = datetime.fromtimestamp(pass_start_curr).strftime("%Y-%m-%d %H:%M:%S")
-        pass_start_next_str = datetime.fromtimestamp(pass_start_next).strftime("%Y-%m-%d %H:%M:%S")
-
-        if pass_start_curr < pass_start_next and pass_start_next < pass_end_curr:
-            if ("METEOR" in sat_name_curr or "METEOR" in sat_name_next) and prefer_meteor:
-                if "METEOR" in sat_name_curr and "METEOR" not in sat_name_next:
-                    if at_job_id_next != 0:
-                        delete_job(pass_start_next_str)
-                        cursor.execute("DELETE FROM predict_passes WHERE pass_start = ?", (pass_start_next,))
-                elif "METEOR" in sat_name_next and "METEOR" not in sat_name_curr:
-                    if at_job_id_curr != 0:
-                        delete_job(pass_start_curr_str)
-                        cursor.execute("DELETE FROM predict_passes WHERE pass_start = ?", (pass_start_curr,))
-                elif "METEOR" in sat_name_curr and "METEOR" in sat_name_next:
-                    if max_elev_curr > max_elev_next:
-                        if at_job_id_next != 0:
-                            delete_job(pass_start_next_str)
-                            cursor.execute("DELETE FROM predict_passes WHERE pass_start = ?", (pass_start_next,))
-                    else:
-                        if at_job_id_curr != 0:
-                            delete_job(pass_start_curr_str)
-                            cursor.execute("DELETE FROM predict_passes WHERE pass_start = ?", (pass_start_curr,))
-            else:
-                if max_elev_curr > max_elev_next:
-                    if at_job_id_next != 0:
-                        delete_job(pass_start_next_str)
-                        cursor.execute("DELETE FROM predict_passes WHERE pass_start = ?", (pass_start_next,))
-                else:
-                    if at_job_id_curr != 0:
-                        delete_job(pass_start_curr_str)
-                        cursor.execute("DELETE FROM predict_passes WHERE pass_start = ?", (pass_start_curr,))
-
-        conn.commit()
+    # each pass is compared with the last pass that was kept, not just its neighbour: with an ISS
+    # pass between two overlapping Meteor passes, dropping the ISS pass used to leave both Meteors
+    kept = None
+    for p in passes:
+        if kept is not None and kept[1] < p[1] < kept[2]:
+            drop = loser(kept, p)
+            if drop[8] != 0:
+                delete_job(datetime.fromtimestamp(drop[1]).strftime("%Y-%m-%d %H:%M:%S"))
+                cursor.execute("DELETE FROM predict_passes WHERE pass_start = ?", (drop[1],))
+                conn.commit()
+                if drop is kept:
+                    kept = p
+                continue
+        kept = p
 
     conn.close()
     print("Finished comparing and deleting rows based on max_elev and sat_name")

@@ -49,14 +49,16 @@ pictures. Between Meteor passes the station records the ISS's passes and decodes
 
 - **Frequency:** 437.550 MHz FM by default (ARISS's 2026 events, Robot 36), or 145.800 MHz (PD120);
   the decoder finds the mode itself and copes with weak, drifting signals.
-- **Meteor always comes first:** an overlapping ISS pass isn't recorded, and a Meteor pass stops an
-  ISS recording that is still running.
+- **One SDR or two:** with a second RTL-SDR the ISS gets its own and records at the same time as
+  the Meteors (chosen automatically, or by index, serial or model with `iss_sdr_device`). With one,
+  Meteor comes first: an overlapping ISS pass isn't recorded, and a Meteor pass stops an ISS
+  recording that is still running.
 - **On the site:** violet ISS cards on the Captures page (filter chip **ISS**), the ISS on the
   Satellites map, and Discord posts with the pictures. Passes with no pictures leave no trace.
 - **Between events, APRS:** outside the event dates it records the ISS's APRS digipeater
   (437.825 MHz since 2026, decoded with Dire Wolf): the stations heard show up live on the Satellites map,
   and each pass gets a page with a map and a list of the stations (`iss_aprs`).
-- RTL-SDR only; off by default, with an on/off switch on Admin > Passes (`iss_sstv`). See [ISS SSTV](docs/iss_sstv.md).
+- Needs an RTL-SDR (it can be a second one beside another receiver); off by default, with an on/off switch on Admin > Passes (`iss_sstv`). See [ISS SSTV](docs/iss_sstv.md).
 
 <p align="center">
   <img src="docs/assets/screenshots/passes-dark.jpg" alt="Passes page" width="49%">

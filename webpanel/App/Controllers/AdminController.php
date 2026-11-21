@@ -35,7 +35,7 @@ class AdminController extends \Lib\Controller {
     }
     $args = array_merge($args, array('pass' => $pass,
                                      'sw' => $sw,
-                                     'iss_switchable' => Config::RECEIVER_TYPE === 'rtlsdr',
+                                     'iss_switchable' => true,     # switch.sh refuses when no RTL-SDR is connected
                                      'admin_action' => 'passes'));
     View::renderTemplate('Admin/passes.html', $args);
   }
@@ -57,8 +57,7 @@ class AdminController extends \Lib\Controller {
       header('Location: /admin/passes');
       return;
     }
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !in_array($state, ['on', 'off'], true) || !$same_site
-        || ($what === 'iss' && Config::RECEIVER_TYPE !== 'rtlsdr')) {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !in_array($state, ['on', 'off'], true) || !$same_site) {
       header('Location: /admin/passes?sw=' . $what . '-fail');
       return;
     }

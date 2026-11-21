@@ -315,7 +315,7 @@ return array(
   "meteor_sw_title" => "Captures Meteor",
   "meteor_sw_hint" => "Enregistre les deux satellites Meteor (METEOR-M2 3 et M2 4, LRPT sur 137,9 MHz).",
   "iss_sw_title" => "Images SSTV de l'ISS (extra)",
-  "iss_sw_hint" => "Enregistre les images SSTV de l'ISS sur {freq} MHz à chacun de ses passages. Les passages Meteor restent prioritaires.",
+  "iss_sw_hint" => "Enregistre les images SSTV de l'ISS sur {freq} MHz à chacun de ses passages. Avec un second RTL-SDR, il enregistre en même temps que les Meteor ; avec un seul, les passages Meteor sont prioritaires.",
   "iss_sw_rtl" => "Nécessite un récepteur RTL-SDR.",
   "sw_on" => "Activé",
   "sw_off" => "Désactivé",
@@ -366,6 +366,6 @@ return array(
   "aprs_stations" => "stations",
   "lg_aprs" => "Carte APRS : radioamateurs dont l'ISS a relayé les paquets de position sur {aprs_freq} MHz pendant son passage (entre les événements SSTV)",
   "iss_sw_title_aprs" => "Images SSTV et APRS de l'ISS (extra)",
-  "iss_sw_hint_aprs" => "Pendant les événements ARISS (les dates SSTV), enregistre les images SSTV de l'ISS sur {freq} MHz ; lors de ses autres passages, les stations APRS qu'elle relaie sur {aprs_freq} MHz, affichées en direct sur la carte des satellites. Les passages Meteor restent prioritaires.",
+  "iss_sw_hint_aprs" => "Pendant les événements ARISS (les dates SSTV), enregistre les images SSTV de l'ISS sur {freq} MHz ; lors de ses autres passages, les stations APRS qu'elle relaie sur {aprs_freq} MHz, affichées en direct sur la carte des satellites. Avec un second RTL-SDR, il enregistre en même temps que les Meteor ; avec un seul, les passages Meteor sont prioritaires.",
 );
 ?>

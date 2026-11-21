@@ -163,9 +163,10 @@ polar_direction=0
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-# Meteor has priority over the ISS (iss_sstv): an ISS recording still holding the SDR is stopped
-# (its pictures so far are still decoded by receive_iss.sh)
-if pgrep -f "$ISS_RUNNING" >/dev/null 2>&1; then
+# Meteor has priority over the ISS (iss_sstv): an ISS recording on the Meteors' own RTL-SDR is
+# stopped (its pictures so far are still decoded by receive_iss.sh); one on its own dongle
+# (iss_sdr_device, a second RTL-SDR) keeps recording
+if pgrep -f "$ISS_RUNNING" >/dev/null 2>&1 && ! grep -q ' dedicated$' "$ISS_SDR_MARK" 2>/dev/null; then
   log "Stopping the ISS recording: the Meteor pass has priority" "WARN"
   pkill -f "rtl_fm -f (${ISS_FREQ}|${ISS_APRS_FREQ})M" 2>/dev/null
   for _ in 1 2 3 4 5 6; do pgrep -f "rtl_fm -f (${ISS_FREQ}|${ISS_APRS_FREQ})M" >/dev/null || break; sleep 0.5; done

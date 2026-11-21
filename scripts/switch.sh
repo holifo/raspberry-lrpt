@@ -31,8 +31,28 @@ onoff() { [ "$1" == "true" ] && echo on || echo off; }
 
 what="${1:-}"
 state="${2:-}"
-if [ -z "$what" ]; then
+# the RTL-SDRs and which one the ISS would use (iss_sdr_device)
+sdr_report() {
+  local list idx mode
+  list=$(python3 "$LRPT_HOME/scripts/tools/rtlsdr_list.py")
+  if [ -z "$list" ]; then
+    echo "RTL-SDRs: none connected (the ISS records with an RTL-SDR)"
+    return
+  fi
+  echo "RTL-SDRs (index, maker, model, serial):"
+  echo "$list" | sed 's/^/  /'
+  read -r idx mode <<< "$(iss_sdr)"
+  case "$mode" in
+    dedicated) echo "ISS: RTL-SDR #$idx, its own - records at the same time as the Meteors" ;;
+    shared)    echo "ISS: RTL-SDR #$idx, shared with the Meteors - Meteor passes come first" ;;
+    *)         echo "ISS: no usable RTL-SDR" ;;
+  esac
+  echo "(choose another with iss_sdr_device: an index, a serial or part of the model name)"
+}
+
+if [ -z "$what" ] || [ "$what $state" == "iss " ]; then
   echo "Meteor: $(onoff "$meteor_now")   ISS SSTV: $(onoff "$iss_now")   (change with: $0 meteor|iss on|off)"
+  sdr_report
   exit 0
 fi
 if [[ ! "$what" =~ ^(meteor|iss)$ ]] || [[ ! "$state" =~ ^(on|off)$ ]]; then
@@ -41,8 +61,8 @@ if [[ ! "$what" =~ ^(meteor|iss)$ ]] || [[ ! "$state" =~ ^(on|off)$ ]]; then
 fi
 
 want=$([ "$state" == "on" ] && echo true || echo false)
-if [ "$what" == "iss" ] && [ "$want" == "true" ] && [ "$RECEIVER_TYPE" != "rtlsdr" ]; then
-  echo "ISS SSTV records with rtl_fm and needs an RTL-SDR (this station has ${RECEIVER_TYPE})."
+if [ "$what" == "iss" ] && [ "$want" == "true" ] && [ "$(iss_sdr | cut -d' ' -f2)" == "none" ]; then
+  echo "The ISS records with rtl_fm and needs an RTL-SDR, and none is connected."
   exit 1
 fi
 

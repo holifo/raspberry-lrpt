@@ -17,7 +17,10 @@ class PassesController extends \Lib\Controller {
   public function indexAction($args) {
     $pass = $this->loadModel('Pass');
     $pass->getList();
-    $args = array_merge($args, array('pass' => $pass));
+    # the ISS on its own RTL-SDR records alongside the Meteors (schedule.sh writes iss-sdr.json):
+    # an ISS pass during a Meteor pass is then no conflict
+    $sdr = @json_decode((string) @file_get_contents(Config::IMAGE_PATH . '/iss-sdr.json'), true);
+    $args = array_merge($args, array('pass' => $pass, 'iss_own_sdr' => ($sdr['mode'] ?? '') === 'dedicated'));
     View::renderTemplate('Passes/index.html', $args);
   }
 
