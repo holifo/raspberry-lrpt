@@ -1,5 +1,14 @@
 # Changelog
 
+## Raspberry-LRPT v1.36.2 (2026-11-21)
+
+- **SDRplay: the service is restarted after the API is installed.** On a station where the service
+  had been failing, it started on its own half-way through the API install and then found no
+  receiver, so passes stopped after a second with "Could not find a handler for source type :
+  sdrplay". The install now reloads the udev rules and restarts the service whenever it installs
+  the API or changes the service. A station that already hit this needs `sudo systemctl restart
+  sdrplay` once (or a reboot).
+
 ## Raspberry-LRPT v1.36.1 (2026-11-21)
 
 - **Install no longer fails on the old PHP repository.** Stations that came from raspberry-noaa-v2

@@ -48,6 +48,7 @@
 - name: SDRplay API installed
   become: yes
   script: install_sdrplay_api.sh {{ sdrplay_arch }} {{ sdrplay_api_mm }}
+  register: sdrplay_api_installed
   when: not sdrplay_api_ok
 
 - name: SDRplay API service unit
@@ -58,13 +59,22 @@
     owner: root
     group: root
     mode: 0644
+  register: sdrplay_unit
+
+# restarted after a new API or unit (and udev rules reloaded first): a service that was already
+# crash-looping starts the moment the daemon appears, half-way through the API install, and then
+# finds no receiver ("Could not find a handler for source type : sdrplay", 21/11/2026)
+- name: SDRplay udev rules reloaded
+  become: yes
+  shell: udevadm control --reload-rules && udevadm trigger --subsystem-match=usb --attr-match=idVendor=1df7
+  when: sdrplay_api_installed is changed
 
 - name: SDRplay API service running
   become: yes
   systemd:
     name: sdrplay
     enabled: yes
-    state: started
+    state: "{{ 'restarted' if (sdrplay_api_installed is changed or sdrplay_unit is changed) else 'started' }}"
     daemon_reload: yes
 
 # ---- SatDump's plugin ---------------------------------------------------------------------------
