@@ -1,5 +1,14 @@
 # Changelog
 
+## Raspberry-LRPT v1.32.4 (2026-11-21)
+
+- **Faster orbit (TLE) updates when CelesTrak can't be reached.** Before downloading, the scheduler
+  pinged www.celestrak.org and logged "waiting for DNS resolution" every 5 s for a whole minute on
+  networks that block ping, then spent up to 5 more minutes retrying CelesTrak before it turned to
+  the SatNOGS backup. It now only checks that the name resolves (celestrak.org or db.satnogs.org),
+  tries CelesTrak three times with short timeouts, and moves on to SatNOGS in about a minute and a
+  half at most.
+
 ## Raspberry-LRPT v1.32.3 (2026-11-20)
 
 - **Install fix for Trixie stations that have Debian's own SatDump.** Debian 13 ships SatDump 1.2.2

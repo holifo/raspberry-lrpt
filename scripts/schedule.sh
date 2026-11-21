@@ -44,28 +44,19 @@ while getopts ":tx" opt; do
 done
 
 if [ "${update_tle}" == "1" ]; then
-  # wait for an IP to be assigned/DNS to be available so the TLE can be retrieved
-  tle_addr="www.celestrak.org"
-  max_iters_sec=60
-  sleep_iter_seconds=5
-  counter=0
-  while [ -z "${ip_addr}" ] && [ $counter -lt $max_iters_sec ]; do
-    ping -c 1 $tle_addr >/dev/null
-    if [ $? -eq 0 ]; then
+  # wait (at most a minute, e.g. just after a boot) until a TLE source's name resolves. This only
+  # checks DNS: ping is blocked on many networks and CelesTrak is unreachable from some, which
+  # used to cost a minute of "waiting for DNS" lines before every update.
+  waited=0
+  until getent hosts celestrak.org >/dev/null || getent hosts db.satnogs.org >/dev/null; do
+    if [ $waited -ge 60 ]; then
+      log "No DNS for celestrak.org or db.satnogs.org after ${waited} s - trying the downloads anyway" "WARN"
       break
-    else
-      log "Scheduler waiting for DNS resolution for TLE files..." "INFO"
-      ((counter+=$sleep_iter_seconds))
-      sleep $sleep_iter_seconds
     fi
+    [ $waited -eq 0 ] && log "Waiting for DNS before downloading TLEs (up to 60 s)..." "INFO"
+    sleep 5; ((waited+=5))
   done
-
-  if [ $counter -gt 60 ]; then
-    log "Scheduler failed to resolve TLE endpoint in ${counter} seconds" "ERROR"
-    exit
-  else
-    log "Scheduler resolved TLE endpoint in ${counter} seconds" "INFO"
-  fi
+  [ $waited -gt 0 ] && [ $waited -lt 60 ] && log "DNS ready after ${waited} s" "INFO"
 
   # get the txt files for orbit information. CelesTrak sometimes fails (HTTP 500): the old
   # files are only replaced by a download that holds both Meteors' TLEs, because an empty
@@ -74,15 +65,16 @@ if [ "${update_tle}" == "1" ]; then
   log "Downloading new TLE files from source" "INFO"
   tle_tmp=$(mktemp)
   got_tle=0
+  # CelesTrak: two tries over https (it sometimes answers HTTP 500 for a moment), one over http;
+  # then the SatNOGS DB. -t 1: wget's own retries would multiply the wait when a site is unreachable.
   for url in "https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=tle" \
+             "https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=tle" \
              "http://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=tle"; do
-    for try in 1 2 3; do
-      if wget -q -T 30 "$url" -O "$tle_tmp" >> $LRPT_LOG 2>&1 && tle_file_ok "$tle_tmp"; then
-        got_tle=1; break 2
-      fi
-      log "TLE download failed (try $try of 3): $url" "WARN"
-      sleep 20
-    done
+    if wget -q -t 1 -T 20 "$url" -O "$tle_tmp" >> $LRPT_LOG 2>&1 && tle_file_ok "$tle_tmp"; then
+      got_tle=1; break
+    fi
+    log "TLE download from CelesTrak failed: $url" "WARN"
+    sleep 5
   done
   # backup: the SatNOGS DB (Libre Space Foundation), when CelesTrak can't be reached
   if [ "$got_tle" = 0 ]; then
@@ -130,7 +122,7 @@ fi
 ISS_TLE="${LRPT_HOME}/tmp/iss.tle"
 if [ "$ISS_SSTV" == "true" ] && { [ "${update_tle}" == "1" ] || [ ! -s "$ISS_TLE" ]; }; then
   iss_tmp=$(mktemp)
-  if wget -q -T 30 "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle" -O "$iss_tmp" >> $LRPT_LOG 2>&1 &&
+  if wget -q -t 1 -T 20 "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle" -O "$iss_tmp" >> $LRPT_LOG 2>&1 &&
      sed -n '2p' "$iss_tmp" | grep -q '^1 25544'; then
     { echo "ISS"; sed -n '2,3p' "$iss_tmp"; } | tr -d '\r' > "$ISS_TLE"
     log "ISS orbit updated" "INFO"
