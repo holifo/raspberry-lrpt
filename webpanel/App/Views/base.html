@@ -40,28 +40,28 @@
       <div class="navbar navbar-expand navbar-dark bg-dark">
         <ul class="navbar-nav mr-auto">
           <li class="nav-item {% if page == 'passes' %} active {% endif %}">
-            <a class="nav-link" href="/passes">{{ lang['passes'] }}</a>
+            <a class="nav-link" href="/passes" title="{{ lang['passes'] }}" aria-label="{{ lang['passes'] }}"><i class="fas fa-calendar-alt nav-ic" aria-hidden="true"></i><span class="nav-long">{{ lang['passes'] }}</span></a>
           </li>
           {# order (v1.30.3): what's next, the results, the satellites, then the station log #}
           <li class="nav-item {% if page == 'captures' or page == 'capture'  %} active {% endif %}">
-            <a class="nav-link" href="/captures?page_no=1">{{ lang['captures'] }}</a>
+            <a class="nav-link" href="/captures?page_no=1" title="{{ lang['captures'] }}" aria-label="{{ lang['captures'] }}"><i class="fas fa-images nav-ic" aria-hidden="true"></i><span class="nav-long">{{ lang['captures'] }}</span></a>
           </li>
           {% if constant('Config\\Config::ENABLE_DAILY_MAP') is defined and constant('Config\\Config::ENABLE_DAILY_MAP') == 'true' %}
           <li class="nav-item {% if page == 'daily' %} active {% endif %}">
-            <a class="nav-link" href="/daily"><span class="nav-long">{{ lang['daily_map']|default('Daily map') }}</span><span class="nav-short">{{ lang['daily_map_short']|default('Map') }}</span></a>
+            <a class="nav-link" href="/daily" title="{{ lang['daily_map']|default('Daily map') }}" aria-label="{{ lang['daily_map']|default('Daily map') }}"><i class="fas fa-globe-europe nav-ic" aria-hidden="true"></i><span class="nav-long">{{ lang['daily_map']|default('Daily map') }}</span></a>
           </li>
           {% endif %}
           {% if constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') is defined
               and constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') == 'true' %}
           <li class="nav-item {% if page == 'satellite' %} active {% endif %}">
-            <a class="nav-link" href="/satellite"><span class="nav-long">{{ lang['nav_satellites']|default('Satellites') }}</span><span class="nav-short">{{ lang['nav_satellites_short']|default('Sats') }}</span></a>
+            <a class="nav-link" href="/satellite" title="{{ lang['nav_satellites']|default('Satellites') }}" aria-label="{{ lang['nav_satellites']|default('Satellites') }}"><i class="fas fa-satellite nav-ic" aria-hidden="true"></i><span class="nav-long">{{ lang['nav_satellites']|default('Satellites') }}</span></a>
           </li>
           {% endif %}
           <li class="nav-item {% if page == 'log' %} active {% endif %}">
-            <a class="nav-link" href="/log"><span class="nav-long">{{ lang['live_log']|default('Live log') }}</span><span class="nav-short">{{ lang['live_log_short']|default('Log') }}</span></a>
+            <a class="nav-link" href="/log" title="{{ lang['live_log']|default('Live log') }}" aria-label="{{ lang['live_log']|default('Live log') }}"><i class="fas fa-terminal nav-ic" aria-hidden="true"></i><span class="nav-long">{{ lang['live_log']|default('Live log') }}</span></a>
           </li>
           <li class="nav-item {% if page == 'about' %} active {% endif %}">
-            <a class="nav-link" href="/about"><span class="nav-long">{{ lang['nav_about']|default('About') }}</span><span class="nav-short" title="{{ lang['nav_about']|default('About') }}"><i class="fas fa-info-circle" aria-hidden="true"></i><span class="sr-only">{{ lang['nav_about_short']|default('About') }}</span></span></a>
+            <a class="nav-link" href="/about" title="{{ lang['nav_about']|default('About') }}" aria-label="{{ lang['nav_about']|default('About') }}"><i class="fas fa-info-circle nav-ic" aria-hidden="true"></i><span class="nav-long">{{ lang['nav_about']|default('About') }}</span></a>
           </li>
         </ul>
         {# live clocks: UTC and the station's local time (Config::TIMEZONE) #}

@@ -39,7 +39,10 @@ html[dir="rtl"] header .clocks { margin-right: 0; margin-left: 0.9rem; align-ite
 html[dir="rtl"] header #theme-toggle { margin-right: 0 !important; margin-left: 1rem !important; }
 html[dir="rtl"] #meteor-map, html[dir="rtl"] .sl-log, html[dir="rtl"] .clock-time { direction: ltr; }
 
-header .nav-short { display: none; }
+/* menu icons: beside the label on wide screens, alone on phones (the label is the link's title
+   and aria-label) */
+header .nav-ic { margin-inline-end: 0.4rem; opacity: 0.85; }
+header .nav-link:hover .nav-ic, header .active .nav-ic { opacity: 1; }
 
 /* phones: keep the menu on one line (scrolls sideways if needed), drop the time zone */
 @media (max-width: 575.98px) {
@@ -55,15 +58,17 @@ header .nav-short { display: none; }
   html[dir="rtl"] header .clocks { margin-left: 0.5rem; }
   html[dir="rtl"] header #theme-toggle { margin-left: 0 !important; }
   header .nav-long { display: none; }
-  header .nav-short { display: inline; }
+  header .nav-ic { margin-inline-end: 0; font-size: 1.2rem; }
+  header ul.navbar-nav li a { padding-left: 0.3rem; padding-right: 0.3rem; margin-right: 0.8rem; }
+  html[dir="rtl"] header ul.navbar-nav li a { margin-left: 0.8rem; }
   header #theme-toggle { margin-right: 0 !important; }
 }
 /* narrow phones: the clocks drop their labels (UTC on top, local below) and their seconds
    (clipped: hh:mm shows), and the links sit closer, so the six menu items fit */
 @media (max-width: 419.98px) {
   header .clock-label { display: none; }
-  header ul.navbar-nav li a { margin-right: 0.36rem; font-size: 0.8rem; }
-  html[dir="rtl"] header ul.navbar-nav li a { margin-left: 0.36rem; }
+  header ul.navbar-nav li a { margin-right: 0.75rem; }
+  html[dir="rtl"] header ul.navbar-nav li a { margin-left: 0.75rem; }
   header .clock-time { min-width: 0; max-width: 4.15ch; overflow: hidden; white-space: nowrap; }
   header .clocks { margin-right: 0.35rem; }
 }

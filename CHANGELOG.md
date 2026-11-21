@@ -1,5 +1,11 @@
 # Changelog
 
+## Raspberry-LRPT v1.36.4 (2026-11-21)
+
+- **Icons in the top menu.** Every menu item now has an icon next to its name. On phones the menu
+  shows the icons only, so it fits on one line with room to spare; the name appears when you hover
+  over an icon and is read out by screen readers.
+
 ## Raspberry-LRPT v1.36.3 (2026-11-21)
 
 - **About is now the last item in the top menu**, after Live log.
