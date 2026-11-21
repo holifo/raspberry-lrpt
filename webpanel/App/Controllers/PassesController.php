@@ -35,6 +35,13 @@ class PassesController extends \Lib\Controller {
         'sat' => $info['sat'] ?? '', 'start' => $info['start'] ?? null, 'end' => $info['end'] ?? null,
         'frequency' => $info['frequency'] ?? null, 'samplerate' => $info['samplerate'] ?? null,
         'max_elev' => $info['max_elev'] ?? null));
+      # live picture (live_preview.sh): only this pass's, with a version so the browser reloads it
+      $pv = @json_decode((string) @file_get_contents(Config::IMAGE_PATH . '/live-preview.json'), true);
+      if (is_array($pv) && ($pv['start'] ?? null) == ($info['start'] ?? 0) && is_file(Config::IMAGE_PATH . '/live-preview.jpg')) {
+        $out['preview'] = '/images/live-preview.jpg?v=' . (int) ($pv['made'] ?? 0);
+        $out['preview_channel'] = (int) ($pv['channel'] ?? 0);
+        $out['preview_lines'] = (int) ($pv['lines'] ?? 0);
+      }
       if (is_array($api)) {
         $psk = $api['psk_demod'] ?? array();
         $dec = $api['ccsds_conv_concat_decoder'] ?? array();

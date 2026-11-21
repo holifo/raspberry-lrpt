@@ -100,6 +100,12 @@ clocks. The browser remembers your language and theme. The footer shows the stat
   locked); Reed-Solomon corrections; the frequency offset; and a graph of the SNR through the pass,
   shaded where frames were synced. The constellation is **estimated from the SNR**: SatDump 1.2.3
   keeps its real one to itself. After LOS it says the images are being decoded, then hides.
+  - **Live picture** (`live_preview`, on a Pi with 4 or more cores): about every 45 seconds the
+    frames received so far are decoded at the lowest priority and shown as a small picture
+    (channel 2 by day, infrared at night, north up), with its line count. The first one appears
+    a minute or two into the pass, once frames are coming in. SatDump stops each of these
+    decodes before its slow products step, so one takes a few seconds. The finished images
+    still come after the pass.
 - **Pass list icons:**
 
   | Icon | Meaning |
@@ -307,6 +313,7 @@ web login, Discord webhook) are in `config/settings.local.yml` and win over it. 
 | `meteor_daytime_enhancements` / `…nighttime…` | (lists) | Order of the images on a capture's page |
 | `meteor_daytime_thumbnail` / `…nighttime…` | MSA / MCIR | Which image becomes the capture's card |
 | `produce_spectrogram` | true | The spectrogram per pass |
+| `live_preview` | true | A live picture of the frames decoded so far in the live decode panel (skipped on a Pi with fewer than 4 cores) |
 | `receiver_type` | rtlsdr | The receiver, picked from a list by the install; the gain settings mean different things per receiver ([receivers](receivers.md)) |
 | `sdr_extra_options` | | More SatDump options for every capture, e.g. `--amp` (HackRF) or `--lna_gain 20` (SDRplay) |
 | `station_title` | | Name in the station bar |

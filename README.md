@@ -27,7 +27,8 @@ ARISS events, and between events the APRS stations it relays, live on a map. Mad
   ([how](docs/discord.md)).
 - Web panel in nine languages (English, Deutsch, Français, Italiano, Español, Ελληνικά, 中文, हिन्दी, العربية), light or dark:
   - **Passes:** next-pass countdown, passes grouped by day, and a live decode panel while a pass
-    is recorded (spectrum and waterfall, SNR, Viterbi and frame-sync locks, BER).
+    is recorded (spectrum and waterfall, SNR, Viterbi and frame-sync locks, BER, and a live picture
+    of what has been decoded so far).
   - **Satellites** (`/satellite`): live ground-track map (full screen, zoom), the selected
     satellite's details (position, look angles, next pass, orbit) and the coming passes; tap a
     pass to see its track.

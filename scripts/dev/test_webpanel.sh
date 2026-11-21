@@ -229,6 +229,22 @@ elif have_im:
 json.dump({'base': 'ISS-live', 'start': now - 200, 'end': now + 400, 'frequency': '437.825'},
           open(os.path.join(srv, 'images', 'aprs-live.json'), 'w'))
 aprs_csv(os.path.join(srv, 'images', 'aprs-live.csv'), now - 180, 5)
+# TEST_LIVE_METEOR=1: a Meteor pass being recorded now, with its live picture (live_preview.sh),
+# so the live decode panel shows the picture box (SatDump's /api is absent: "Waiting for SatDump")
+if os.environ.get('TEST_LIVE_METEOR') == '1':
+    db.execute('INSERT INTO predict_passes (sat_name, pass_start, pass_end, max_elev, is_active, '
+               'pass_start_azimuth, direction, azimuth_at_max) VALUES (?,?,?,?,?,?,?,?)',
+               ('METEOR-M2 4', now - 240, now + 540, 61, 1, 190, 'Southbound', 100))
+    json.dump({'sat': 'METEOR-M2 4', 'start': now - 230, 'end': now + 530, 'samplerate': 1024000,
+               'frequency': 137.9, 'max_elev': 61, 'port': 9}, open(os.path.join(srv, 'images', 'live.json'), 'w'))
+    pic = os.environ.get('TEST_LIVE_PICTURE', '')
+    if pic and os.path.isfile(pic):
+        shutil.copy(pic, os.path.join(srv, 'images', 'live-preview.jpg'))
+    elif have_im:
+        subprocess.run(['convert', '-size', '480x620', 'plasma:gray20-white', '-colorspace', 'Gray',
+                        os.path.join(srv, 'images', 'live-preview.jpg')], check=False)
+    json.dump({'start': now - 230, 'made': now - 20, 'channel': 2, 'lines': 1640},
+              open(os.path.join(srv, 'images', 'live-preview.json'), 'w'))
 for i in range(6):
     fp = 'METEOR-M2-%d-sample%d' % (3 + i % 2, i)
     ps = now - 86400 * (i + 1)

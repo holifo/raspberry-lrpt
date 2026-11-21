@@ -184,7 +184,9 @@ esac
 cd "$WORK_DIR" || { log "Can't use the working folder $WORK_DIR" "ERROR"; exit 1; }
 # whatever happens, the folder doesn't stay behind (on the RAM disk it would hold memory)
 LIVE_FILE="${IMAGE_OUTPUT}/live.json"
-trap 'cd "$LRPT_HOME"; rm -rf "$WORK_DIR"; rm -f "$LIVE_FILE"' EXIT
+PREVIEW_FILES="${IMAGE_OUTPUT}/live-preview.jpg ${IMAGE_OUTPUT}/live-preview.json"
+preview_pid=""
+trap 'cd "$LRPT_HOME"; [ -n "$preview_pid" ] && kill "$preview_pid" 2>/dev/null; rm -rf "$WORK_DIR"; rm -f "$LIVE_FILE" $PREVIEW_FILES' EXIT
 audio_temporary_storage_directory="$WORK_DIR"
 # spectrogram: SatDump has no recording to analyse afterwards, so its built-in web server
 # serves the live spectrum and spectrogram.py samples it once a second during the pass
@@ -198,6 +200,15 @@ printf '{"sat":"%s","start":%s,"end":%s,"samplerate":%s,"frequency":%s,"max_elev
   "$SAT_NAME" "$(date +%s)" "$(( $(date +%s) + CAPTURE_TIME ))" "$(awk -v s="$samplerate" 'BEGIN { printf "%d", s }')" \
   "${METEOR_FREQUENCY}" "${SAT_MAX_ELEVATION:-0}" "$SPECTRO_PORT" > "$LIVE_FILE" 2>/dev/null
 chmod 644 "$LIVE_FILE" 2>/dev/null
+# live preview (live_preview): a small picture of the frames decoded so far, for the live panel
+rm -f $PREVIEW_FILES
+if [[ "${LIVE_PREVIEW}" == "true" ]]; then
+  flip=false
+  [ "$PASS_DIRECTION" == "Northbound" ] && [ "$FLIP_METEOR_IMG" == "true" ] && flip=true
+  "$LRPT_HOME/scripts/live_preview.sh" "$WORK_DIR/meteor_m2-x_lrpt${mode}.cadu" \
+    "$(sed -n 's/.*"start":\([0-9]*\).*/\1/p' "$LIVE_FILE")" "$daylight" "$flip" >> $LRPT_LOG 2>&1 &
+  preview_pid=$!
+fi
 if [[ "${PRODUCE_SPECTROGRAM}" == "true" ]]; then
   python3 "${IMAGE_PROC_DIR}/spectrogram.py" record "${SPECTRO_PORT}" "${samplerate}" "${CAPTURE_TIME}" "${SPECTRO_DATA}" "${METEOR_FREQUENCY}" >> $LRPT_LOG 2>&1 &
   spectro_pid=$!
@@ -206,6 +217,7 @@ fi
 log "$SATDUMP live meteor_m2-x_lrpt${mode} $audio_temporary_storage_directory --source $receiver --samplerate $samplerate $ppm_correction ${FREQ_OFFSET} --frequency ${METEOR_FREQUENCY}e6 $sdr_id_option $SDR_DEVICE_ID $gain_args $bias_tee_option $SDR_EXTRA_OPTIONS $finish_processing --fill_missing --timeout $CAPTURE_TIME $spectro_opts" "INFO"
 $SATDUMP live meteor_m2-x_lrpt${mode} "$audio_temporary_storage_directory" --source $receiver --samplerate $samplerate $ppm_correction ${FREQ_OFFSET} --frequency "${METEOR_FREQUENCY}e6" $sdr_id_option $SDR_DEVICE_ID $gain_args $bias_tee_option $SDR_EXTRA_OPTIONS $finish_processing --fill_missing --timeout $CAPTURE_TIME $spectro_opts >> $LRPT_LOG 2>&1
 rm -f "$LIVE_FILE"
+[ -n "$preview_pid" ] && { kill "$preview_pid" 2>/dev/null; wait "$preview_pid" 2>/dev/null; preview_pid=""; }
 [ -n "$spectro_pid" ] && wait "$spectro_pid"
 
 # draw the spectrogram straight away, so it exists even when nothing could be decoded

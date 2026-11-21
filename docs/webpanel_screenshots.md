@@ -33,7 +33,9 @@ On a phone:
 While a pass is being recorded, a live decode panel appears under the next-pass card: SatDump's
 spectrum and waterfall, the SNR, the Viterbi and frame-sync locks, the BER, the Reed-Solomon
 corrections and the frequency offset, updated every second. The constellation is estimated from
-the SNR, because SatDump 1.2.3 does not share its real one. (This picture was taken with a test
+the SNR, because SatDump 1.2.3 does not share its real one. Once frames are coming in, a
+**live picture** of what has been decoded so far appears too, updated about every 45 seconds
+(`live_preview`). (This picture was taken with a test
 signal, which never locks.)
 
 ![Live decode panel](assets/screenshots/live-decode.jpg)

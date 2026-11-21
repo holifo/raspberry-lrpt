@@ -132,9 +132,18 @@
     $(id).classList.toggle('on', !!on);
     $(id + '-t').textContent = on ? (T.locked || 'locked') : (T.searching || 'searching');
   }
+  var picSrc = '';
+  function showPicture(d) {               // live_preview.sh: the frames decoded so far
+    if (!d.preview) { return; }
+    $('live-pic').hidden = false;
+    $('live-pic-info').textContent = (T.channel || 'channel') + ' ' + d.preview_channel +
+      (d.preview_lines ? ' · ' + d.preview_lines + ' ' + (T.lines || 'lines') : '');
+    if (d.preview !== picSrc) { picSrc = d.preview; $('live-pic-img').src = d.preview; }
+  }
   function show(d) {
     last = d;
     card.hidden = false;
+    showPicture(d);
     var chip = $('live-sat');
     chip.textContent = (d.sat || '').replace('METEOR-', '');
     chip.className = 'sat-chip sat-' + (/4$/.test(d.sat || '') ? 'm24' : 'm23');
@@ -168,7 +177,10 @@
   // ---- polling --------------------------------------------------------------------------------
   function poll() {
     fetch('/passes/live', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
-      if (d.start && d.start !== lastPass) { lastPass = d.start; history = []; floor = top = null; }
+      if (d.start && d.start !== lastPass) {
+        lastPass = d.start; history = []; floor = top = null;
+        picSrc = ''; $('live-pic').hidden = true; $('live-pic-img').removeAttribute('src');
+      }
       if (d.live || d.end) { seen = true; show(d); }
     }).catch(function () {}).then(function () {
       if (polling) { timer = setTimeout(poll, document.hidden ? 5000 : 1000); }

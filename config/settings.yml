@@ -147,6 +147,8 @@ map_capitals: true
 
 # processing settings
 #   flip_meteor_image - whether the meteor image should be flipped
+#   live_preview - while a Meteor pass records, show a small picture of what has been decoded so
+#                  far in the live decode panel, updated about every 45 s (needs 4 CPU cores)
 #   produce_spectrogram - whether to produce a spectrogram (waterfall) of each pass, with SNR, decoder
 #        lock and elevation, sampled from SatDump's live spectrum (scripts/image_processors/spectrogram.py)
 #   image_annotation_location - where to place the annotation in images - valid options are:
@@ -188,6 +190,7 @@ antenna_information: 'QFH'
 show_sun_elevation: true
 show_pass_direction: true
 produce_spectrogram: true
+live_preview: true
 
 # images shown first on a capture's page, in this order: SatDump 1.2.3 file names (the composite
 # name with _ for spaces, then _corrected or _projected), space-separated. A pass only has the

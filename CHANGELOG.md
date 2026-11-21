@@ -1,5 +1,16 @@
 # Changelog
 
+## Raspberry-LRPT v1.35.0 (2026-11-21)
+
+- **Live picture while a Meteor pass records.** The live decode panel on the Passes page now shows
+  a small picture of what has been decoded so far, updated about every 45 seconds: channel 2 by day,
+  infrared at night, north up, with its line count. It appears a minute or two into the pass, once
+  frames are coming in, and grows as the satellite crosses the sky. Each update decodes the frames
+  received so far at the lowest priority and stops SatDump before its slow products step, so it
+  takes a few seconds and never gets in the way of the live decode. It is on by default
+  (`live_preview`) and skips itself on a Pi with fewer than 4 cores. On phones the picture comes
+  right after the spectrum.
+
 ## Raspberry-LRPT v1.34.0 (2026-11-21)
 
 - **ISS with one SDR or two, chosen automatically.** With two or more RTL-SDRs the ISS now gets
