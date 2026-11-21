@@ -79,7 +79,11 @@ still come out empty, go through these in order.
 
    The probe should list it (e.g. `RSP1A 2103…`). If it doesn't, restart SDRplay's service; it can
    miss a receiver that was plugged in after it started: `sudo systemctl restart sdrplay` (or
-   reboot). If the plugin is missing, run `./install_and_upgrade.sh` again.
+   reboot). If that isn't enough, stop the service, unplug the receiver for a few seconds, plug it
+   back in and start the service again (`sudo systemctl stop sdrplay`, replug,
+   `sudo systemctl start sdrplay`): a receiver left in a bad state, for example while the service
+   was failing to start, needs this (seen on an RSP1A, 21/11/2026). If the plugin is missing, run
+   `./install_and_upgrade.sh` again.
 
 2. **Did the pass record?** In the Live log, or with
    `grep -E "SNR|Viterbi" /var/log/raspberry-lrpt/output.log | tail`, a pass with a signal shows an
