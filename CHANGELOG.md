@@ -1,5 +1,20 @@
 # Changelog
 
+## Raspberry-LRPT v1.36.0 (2026-11-21)
+
+- **About tab, with an update check.** The Sat info tab is now **About** (`/about`; old `/meteor`
+  links still work). At the top it shows the station's software: the installed version, the latest
+  version on GitHub, when it was last checked and, when a new version is out, the command to update.
+  Further down are the credits and the Meteor-M and ISS information as before. The station looks for
+  a new version once a day and after each install (`scripts/update_check.sh`, a `git fetch` only:
+  it never updates itself). When an update is out, the footer of every page says "vX available" and
+  links to About. Turn it off with `update_check: false`. On phones the menu shows an ⓘ icon for
+  About, so all six items still fit.
+- **SDRplay: fixed the API service failing to start** ("sdrplay (stopped)" in the install summary).
+  On a station where SDRplay's own installer had been run before, the install found the API library,
+  skipped installing the API and started a service program that wasn't there. The install now checks
+  for the service program too and installs the API when either is missing.
+
 ## Raspberry-LRPT v1.35.0 (2026-11-21)
 
 - **Live picture while a Meteor pass records.** The live decode panel on the Passes page now shows

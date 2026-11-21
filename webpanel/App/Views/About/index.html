@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 
 {#
-  Sat info tab (/meteor): the Meteor-M series this station receives and, as an extra, the ISS. The facts (launches, status, plans,
-  sources) are in MeteorController::SERIES / SOURCES; this page lays them out: the satellites
+  About tab (/about; /meteor redirects here): the station and its software at the top (version,
+  the update check's result `update` from Lib\Update, credits), then the Meteor-M series this station receives and, as an extra, the ISS. The facts (launches, status, plans,
+  sources) are in AboutController::SERIES / SOURCES; this page lays them out: the satellites
   working now, a timeline of every launch and plan, the coming launches, the LRPT signal and the
   instruments. CSS: public/assets/css/meteor.css.
 #}
@@ -35,10 +36,53 @@
    and constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') == 'true' %}
 
 <div class="page-head">
-  <h1 class="page-title">{{ lang['sinfo_title']|default('Satellite info') }}</h1>
-  <div class="page-meta">{{ lang['mi_checked']|default('Checked') }} {{ checked|date(constant('Config\\Config::PASSES_DATE_FORMAT')) }}</div>
+  <h1 class="page-title">{{ lang['about_title']|default('About') }}</h1>
+  <div class="page-meta">{% if lrpt_version %}Raspberry-LRPT v{{ lrpt_version }} · {% endif %}{{ lang['mi_checked']|default('Checked') }} {{ checked|date(constant('Config\\Config::PASSES_DATE_FORMAT')) }}</div>
 </div>
-<nav class="mi-jump"><a href="#meteor"><span class="sat-dot m23"></span> Meteor-M</a>{% if iss %} <a href="#iss"><span class="sat-dot iss"></span> ISS</a>{% endif %} <a href="#about"><i class="fas fa-info-circle"></i> {{ lang['about_jump']|default('About') }}</a></nav>
+
+<nav class="mi-jump"><a href="#station"><i class="fas fa-satellite-dish"></i> {{ lang['about_jump_station']|default('Station') }}</a> <a href="#meteor"><span class="sat-dot m23"></span> Meteor-M</a>{% if iss %} <a href="#iss"><span class="sat-dot iss"></span> ISS</a>{% endif %}</nav>
+
+{# ---- the station and its software: version and the update check (scripts/update_check.sh) ---- #}
+<h2 class="mi-h mi-h1" id="station">{{ constant('Config\\Config::STATION_TITLE') }}</h2>
+{% set u = update %}
+{% set ust = u ? u.status : 'none' %}
+<div class="mi-box upd upd-{{ ust }}">
+  <div class="upd-head">
+    <span class="upd-icon">{% if ust == 'ok' %}<i class="fas fa-check-circle"></i>{% elseif ust == 'update' or ust == 'install' %}<i class="fas fa-arrow-circle-up"></i>{% elseif ust == 'error' %}<i class="fas fa-exclamation-triangle"></i>{% else %}<i class="fas fa-question-circle"></i>{% endif %}</span>
+    <span class="upd-status">
+      {% if ust == 'ok' %}{{ lang['upd_ok']|default('Up to date') }}
+      {% elseif ust == 'update' %}{{ (lang['upd_update']|default('Update available: v{v} ({n} new changes)'))|replace({'{v}': u.latest, '{n}': u.behind}) }}
+      {% elseif ust == 'install' %}{{ lang['upd_install']|default('Downloaded but not installed yet') }}
+      {% elseif ust == 'error' %}{{ lang['upd_error']|default('The update check failed') }}
+      {% elseif ust == 'off' %}{{ lang['upd_off']|default('The update check is off') }}
+      {% else %}{{ lang['upd_none']|default('Not checked yet') }}{% endif %}
+    </span>
+  </div>
+  <dl class="upd-facts">
+    <dt>{{ lang['upd_installed']|default('Installed') }}</dt><dd>{{ lrpt_version ? 'v' ~ lrpt_version : '–' }}</dd>
+    {% if u and u.latest %}<dt>{{ lang['upd_latest']|default('Latest on GitHub') }}</dt><dd>v{{ u.latest }}</dd>{% endif %}
+    {% if u and u.checked %}<dt>{{ lang['upd_checked']|default('Last checked') }}</dt><dd>{{ u.checked|date(constant('Config\\Config::DATETIME_FORMAT')) }}</dd>{% endif %}
+  </dl>
+  {% if ust == 'error' and u.error %}<p class="mi-dim upd-err">{{ u.error }}</p>{% endif %}
+  {% if ust == 'update' or ust == 'install' %}
+    <p>{{ ust == 'install' ? lang['upd_how_install']|default('The new version is on the station but the install has not run since. To finish, run on the station:') : lang['upd_how']|default('To update, run on the station:') }}</p>
+    <pre class="upd-cmd">{{ ust == 'install' ? 'cd ~/raspberry-lrpt && ./install_and_upgrade.sh' : 'cd ~/raspberry-lrpt && git pull && ./install_and_upgrade.sh' }}</pre>
+    {% if u.dirty %}<p class="mi-dim">{{ (lang['upd_dirty']|default('{n} tracked files were changed on the station: git pull may refuse to update them.'))|replace({'{n}': u.dirty}) }}</p>{% endif %}
+  {% endif %}
+  {% if u and u.releases %}<p><a href="{{ u.releases }}" rel="noopener" target="_blank"><i class="fas fa-tag"></i> {{ lang['upd_notes']|default('Release notes') }}</a></p>{% endif %}
+  <p class="mi-dim">{{ lang['upd_how_check']|default('The station looks for a new version once a day and after each install; it never updates itself.') }}</p>
+</div>
+
+{# ---- about this software: who made it, and that AI was used ---- #}
+<h2 class="mi-h" id="about">{{ lang['about_h']|default('About this software') }}</h2>
+<div class="mi-box mi-about">
+  <p>{{ (lang['about_p']|default('Raspberry-LRPT is free, open-source ground station software for the Meteor-M weather satellites, made by {author} and based on {upstream}.'))|e|replace({
+        '{author}': '<a href="https://github.com/holifo" rel="noopener" target="_blank">holifo</a>',
+        '{upstream}': '<a href="https://github.com/jekhokie/raspberry-noaa-v2" rel="noopener" target="_blank">raspberry-noaa-v2</a>'})|raw }}</p>
+  <p><i class="fas fa-robot"></i> {{ (lang['about_ai']|default('Made with the help of AI. Much of the code, the documentation and the translations on this site were written by {claude}, an AI assistant made by Anthropic (most recently the Claude Opus 5.5 model, used through Claude Code), working to holifo\'s instructions. holifo decided what to build and tested it on a working station.'))|e|replace({
+        '{claude}': '<a href="https://www.anthropic.com/claude" rel="noopener" target="_blank">Claude</a>'})|raw }}</p>
+  <p class="mi-dim">{{ lang['about_ai_note']|default('The satellite facts on this page were checked against the sources above on the date shown at the top, but AI can make mistakes: if something looks wrong, please say so on GitHub.') }}</p>
+</div>
 <h2 class="mi-h mi-h1" id="meteor">{{ lang['mi_title']|default('The Meteor-M series') }}</h2>
 <p class="mi-intro">{{ lang['mi_intro']|default("Russia's polar-orbiting weather satellites, built by VNIIEM for Roshydromet and Roscosmos. Each flies a sun-synchronous orbit about 820 km up and sends its MSU-MR images down on 137.9 MHz as LRPT, which this station receives.") }}</p>
 
@@ -183,14 +227,4 @@
   {% if iss %}{% for src in iss.sources %}<li><a href="{{ src[1] }}" rel="noopener" target="_blank">{{ src[0] }}</a></li>{% endfor %}{% endif %}
 </ul>
 
-{# ---- about this software: who made it, and that AI was used ---- #}
-<h2 class="mi-h mi-h1" id="about">{{ lang['about_h']|default('About this software') }}</h2>
-<div class="mi-box mi-about">
-  <p>{{ (lang['about_p']|default('Raspberry-LRPT is free, open-source ground station software for the Meteor-M weather satellites, made by {author} and based on {upstream}.'))|e|replace({
-        '{author}': '<a href="https://github.com/holifo" rel="noopener" target="_blank">holifo</a>',
-        '{upstream}': '<a href="https://github.com/jekhokie/raspberry-noaa-v2" rel="noopener" target="_blank">raspberry-noaa-v2</a>'})|raw }}</p>
-  <p><i class="fas fa-robot"></i> {{ (lang['about_ai']|default('Made with the help of AI. Much of the code, the documentation and the translations on this site were written by {claude}, an AI assistant made by Anthropic (most recently the Claude Opus 5.5 model, used through Claude Code), working to holifo\'s instructions. holifo decided what to build and tested it on a working station.'))|e|replace({
-        '{claude}': '<a href="https://www.anthropic.com/claude" rel="noopener" target="_blank">Claude</a>'})|raw }}</p>
-  <p class="mi-dim">{{ lang['about_ai_note']|default('The satellite facts on this page were checked against the sources above on the date shown at the top, but AI can make mistakes: if something looks wrong, please say so on GitHub.') }}</p>
-</div>
 {% endblock %}

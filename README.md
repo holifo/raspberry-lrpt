@@ -32,7 +32,8 @@ ARISS events, and between events the APRS stations it relays, live on a map. Mad
   - **Satellites** (`/satellite`): live ground-track map (full screen, zoom), the selected
     satellite's details (position, look angles, next pass, orbit) and the coming passes; tap a
     pass to see its track.
-  - **Sat info** (`/meteor`): the Meteor-M series at a glance (the satellites working now, every
+  - **About** (`/about`): the station's software version and whether an update is out (checked
+    daily with `git fetch`; the footer says so too, it never updates itself), then the Meteor-M series at a glance (the satellites working now, every
     launch and the planned ones, the LRPT signal and the instruments) and, as an extra, the ISS:
     its orbit, its amateur radio frequencies and the year's ARISS SSTV events.
   - **Captures:** image grid per pass with a zoomable viewer.

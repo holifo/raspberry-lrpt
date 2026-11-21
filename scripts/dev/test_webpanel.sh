@@ -32,7 +32,7 @@ set -u
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${PWD}/webpanel-test-output"
 KEEP=0
-PAGES="/passes /satellite /meteor /captures?page_no=1 /captures/listImages?pass_id=1 /captures/listImages?pass_id=2 /daily /satellite/map /admin/passes /admin/captures?page_no=1 /log"
+PAGES="/passes /satellite /about /captures?page_no=1 /captures/listImages?pass_id=1 /captures/listImages?pass_id=2 /daily /satellite/map /admin/passes /admin/captures?page_no=1 /log"
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/rl1-webtest"
 
 while getopts ":o:kp:" opt; do
@@ -245,6 +245,18 @@ if os.environ.get('TEST_LIVE_METEOR') == '1':
                         os.path.join(srv, 'images', 'live-preview.jpg')], check=False)
     json.dump({'start': now - 230, 'made': now - 20, 'channel': 2, 'lines': 1640},
               open(os.path.join(srv, 'images', 'live-preview.json'), 'w'))
+# the update check's result (scripts/update_check.sh): TEST_UPDATE=ok (default) | update | install |
+# error | off | none (no file)
+ust = os.environ.get('TEST_UPDATE', 'ok')
+if ust != 'none':
+    ver = open(os.path.join(repo, 'VERSION')).read().strip()
+    nxt = ver.rsplit('.', 1)[0] + '.' + str(int(ver.rsplit('.', 1)[1]) + 1)
+    json.dump({'status': ust, 'installed': ver, 'repo': nxt if ust == 'install' else ver,
+               'latest': '' if ust in ('off', 'error') else (nxt if ust in ('update', 'install') else ver),
+               'behind': 4 if ust == 'update' else 0, 'dirty': 0,
+               'releases': 'https://github.com/holifo/raspberry-lrpt/releases', 'checked': now - 3600,
+               'error': 'fatal: unable to access the repository: Could not resolve host: github.com' if ust == 'error' else ''},
+              open(os.path.join(srv, 'images', 'update.json'), 'w'))
 for i in range(6):
     fp = 'METEOR-M2-%d-sample%d' % (3 + i % 2, i)
     ps = now - 86400 * (i + 1)
@@ -422,6 +434,14 @@ for page in $PAGES; do
       "http://127.0.0.1:$PORT$page" >/dev/null 2>&1
   done
 done
+
+# /meteor (the old Sat info tab) must send old links to /about
+loc=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "http://127.0.0.1:$PORT/meteor")
+if [ "$loc" == "301 http://127.0.0.1:$PORT/about" ]; then
+  printf "  \033[32mPASS\033[0m  %-36s\n" "/meteor -> /about"
+else
+  printf "  \033[31mFAIL\033[0m  %-36s %s\n" "/meteor -> /about" "$loc"; FAILED=1
+fi
 
 if grep -q -i -E "PHP (Fatal|Warning|Parse)" "$WORK/php.log"; then
   echo "PHP server log errors:"; grep -i -E "PHP (Fatal|Warning|Parse)" "$WORK/php.log" | head -5

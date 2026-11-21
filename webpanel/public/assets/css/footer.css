@@ -8,3 +8,5 @@ footer .lrpt-logo { display: block; margin: 0 auto; width: 300px; max-width: 80v
 footer .footer-credit { margin-top: 4px; font-size: 0.75rem; color: #7f8b99; }
 footer .footer-version { white-space: nowrap; }
 footer .footer-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+footer .footer-credit a.footer-update, html[data-theme="dark"] footer .footer-credit a.footer-update { white-space: nowrap; margin-left: 6px; color: #d98a1c; font-weight: 600; text-decoration: none; }
+footer .footer-credit a.footer-update:hover { color: #b8720f; }

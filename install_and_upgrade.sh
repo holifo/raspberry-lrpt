@@ -188,6 +188,8 @@ sched_opt=""
 grep -q '^1 57166' "$LRPT_HOME/tmp/orbit.tle" 2>/dev/null && grep -q '^1 59051' "$LRPT_HOME/tmp/orbit.tle" &&
   grep -q '^1 59051' "$LRPT_HOME/tmp/weather.txt" 2>/dev/null || sched_opt="-t"
 if ./scripts/schedule.sh $sched_opt; then ok "Passes scheduled"; else warn "The scheduler reported a problem - see $LRPT_LOG"; fi
+# the About page's update status (git fetch only; daily from cron too)
+./scripts/update_check.sh >/dev/null 2>&1 || true
 
 # ---- summary ------------------------------------------------------------------------
 svc() { systemctl is-active --quiet "$1" && echo "${GREEN}$1${RESET}" || echo "${RED}$1 (stopped)${RESET}"; }

@@ -56,14 +56,15 @@ On a phone the details and the list sit under the map:
 
 <img src="assets/screenshots/satellites-phone.jpg" alt="Satellites tab on a phone" width="390">
 
-## Meteor-M
+## About
 
-The Sat info tab: the Meteor-M series (the two satellites this station receives, a timeline of every
+The About tab: at the top the station's software (installed version, the daily update check's
+result and the command to update when a new version is out), then the Meteor-M series (the two satellites this station receives, a timeline of every
 launch and plan, the LRPT signal and the instruments) and, further down, the ISS as an extra (its
 orbit, amateur radio frequencies and the year's ARISS SSTV events), with the sources the facts come
 from.
 
-![Sat info tab](assets/screenshots/meteor.jpg)
+![About tab](assets/screenshots/meteor.jpg)
 
 ## ISS APRS
 

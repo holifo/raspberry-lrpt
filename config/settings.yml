@@ -192,6 +192,11 @@ show_pass_direction: true
 produce_spectrogram: true
 live_preview: true
 
+# look for a newer Raspberry-LRPT on GitHub once a day and after each install (scripts/update_check.sh:
+# git fetch only, it never updates by itself); the About page shows the result and the footer says
+# when an update is available
+update_check: true
+
 # images shown first on a capture's page, in this order: SatDump 1.2.3 file names (the composite
 # name with _ for spaces, then _corrected or _projected), space-separated. A pass only has the
 # composites whose channels the satellite sent. Images it made that aren't listed follow after.

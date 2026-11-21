@@ -148,7 +148,7 @@ const [base, out, exe, METEOR_ID] = process.argv.slice(2);
     await p.click('.cap-card >> nth=0'); await p.waitForTimeout(1200);
     await p.click('.iv [data-z="in"]'); await p.waitForTimeout(500); } });
   await page({ name: 'iss-aprs', url: '/captures/listImages?pass_id=2', full: true });
-  await page({ name: 'meteor', url: '/meteor', viewport: { width: 1280, height: 1100 } });
+  await page({ name: 'meteor', url: '/about', viewport: { width: 1280, height: 1100 } });
   await page({ name: 'daily', url: '/daily', viewport: { width: 1400, height: 900 } });
   await page({ name: 'live-log', url: '/log', wait: 4000 });
   await page({ name: 'live-log-light', url: '/log', theme: 'light', wait: 4000 });

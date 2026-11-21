@@ -23,6 +23,8 @@ class View {
       # the station software's version (VERSION, copied next to the web panel by the install)
       $vf = dirname(__DIR__) . '/VERSION';
       $twig->addGlobal('lrpt_version', is_readable($vf) ? trim(file_get_contents($vf)) : '');
+      # the update check's result (Lib\Update), for the footer's "update available" note
+      $twig->addGlobal('lrpt_update', Update::status());
       # weekday(ts) / weekday(ts, 'EEEE'): the weekday name in the page's language
       $twig->addFilter(new \Twig\TwigFilter('weekday', function ($ts, $pattern = 'EEE') {
         if (class_exists('IntlDateFormatter')) {

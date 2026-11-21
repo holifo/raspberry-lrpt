@@ -9,6 +9,7 @@
   loop:
     - { name: schedule passes daily, minute: "1", hour: "0", job: "{{ lrpt_home }}/scripts/schedule.sh -t" }
     - { name: schedule passes after reboot, special_time: reboot, job: "{{ lrpt_home }}/scripts/schedule.sh" }
+    - { name: check for a newer Raspberry-LRPT daily, minute: "17", hour: "4", job: "{{ lrpt_home }}/scripts/update_check.sh >/dev/null 2>&1" }
     - { name: Correct /run/user/uid perms after reboot, special_time: reboot, job: "{{ lrpt_home }}/scripts/tools/scratch_perms.sh" }
   loop_control:
     label: "{{ item.name }}"

@@ -1,4 +1,4 @@
-/* Meteor-M tab (/meteor). Shared colours are in site.css; the --pl-* values switch in dark mode,
+/* About tab (/about: station, update check, Meteor-M, ISS). Shared colours are in site.css; the --pl-* values switch in dark mode,
    the status colours below work on both themes */
 
 .mi-intro { max-width: 70ch; color: var(--pl-dim); margin: 2px 0 10px; }
@@ -88,3 +88,18 @@ html[data-theme="dark"] .st-planned.mi-st { color: #7fb8ec; border-color: #7fb8e
 .mi-about p { margin: 0 0 8px; line-height: 1.5; }
 .mi-about p:last-child { margin-bottom: 0; }
 .mi-about .fa-robot { color: var(--pl-dim); margin-right: 2px; }
+
+/* Station & software box: the update check's result (Lib\Update). Status colours work on both themes. */
+.upd { margin-bottom: 14px; }
+.upd p { margin: 8px 0 0; }
+.upd-head { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 1.05rem; }
+.upd-icon { font-size: 1.3rem; color: var(--pl-dim); }
+.upd-ok .upd-icon { color: #2f9e5b; }
+.upd-update .upd-icon, .upd-install .upd-icon { color: #d98a1c; }
+.upd-error .upd-icon { color: #d9534f; }
+.upd-facts { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; margin: 10px 0 0; font-size: .92rem; }
+.upd-facts dt { color: var(--pl-dim); font-weight: 400; }
+.upd-facts dd { margin: 0; font-variant-numeric: tabular-nums; }
+.upd-cmd { margin: 6px 0 0; padding: 8px 10px; border-radius: 8px; background: var(--pl-track); color: inherit;
+  font-size: .85rem; white-space: pre; overflow-x: auto; }
+.upd-err { word-break: break-word; }

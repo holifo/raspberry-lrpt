@@ -57,8 +57,8 @@
             <a class="nav-link" href="/satellite"><span class="nav-long">{{ lang['nav_satellites']|default('Satellites') }}</span><span class="nav-short">{{ lang['nav_satellites_short']|default('Sats') }}</span></a>
           </li>
           {% endif %}
-          <li class="nav-item {% if page == 'meteor' %} active {% endif %}">
-            <a class="nav-link" href="/meteor"><span class="nav-long">{{ lang['nav_meteor']|default('Sat info') }}</span><span class="nav-short">{{ lang['nav_meteor_short']|default('Info') }}</span></a>
+          <li class="nav-item {% if page == 'about' %} active {% endif %}">
+            <a class="nav-link" href="/about"><span class="nav-long">{{ lang['nav_about']|default('About') }}</span><span class="nav-short" title="{{ lang['nav_about']|default('About') }}"><i class="fas fa-info-circle" aria-hidden="true"></i><span class="sr-only">{{ lang['nav_about_short']|default('About') }}</span></span></a>
           </li>
           <li class="nav-item {% if page == 'log' %} active {% endif %}">
             <a class="nav-link" href="/log"><span class="nav-long">{{ lang['live_log']|default('Live log') }}</span><span class="nav-short">{{ lang['live_log_short']|default('Log') }}</span></a>
@@ -118,6 +118,7 @@
           {{ lang['based_on']|default('Based on') }}
           <a href="https://github.com/jekhokie/raspberry-noaa-v2" rel="noopener">raspberry-noaa-v2</a>
           {% if lrpt_version %}<span class="footer-version">· Raspberry-LRPT v{{ lrpt_version }}</span>{% endif %}
+          {% if lrpt_update and lrpt_update.status == 'update' %}<a class="footer-update" href="/about#station"><i class="fas fa-arrow-circle-up"></i> {{ (lang['upd_footer']|default('v{v} available'))|replace({'{v}': lrpt_update.latest}) }}</a>{% endif %}
         </div>
       </div>
     </footer>

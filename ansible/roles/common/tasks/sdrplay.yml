@@ -21,10 +21,20 @@
     sdrplay_arch: "{{ {'arm64': 'arm64', 'amd64': 'amd64', 'armhf': 'armhf'}[system_architecture] }}"
     sdrplay_api_mm: "{{ sdrplay_api_version.split('.')[:2] | join('.') }}"
 
+# both the library and the daemon: a station that had SDRplay's own installer run before has the
+# library in /usr/local/lib but the daemon in /opt/sdrplay_api, which our service unit does not
+# start (status 203/EXEC in a loop, seen on a user's station 21/11/2026)
 - name: SDRplay API check
   stat:
-    path: /usr/local/lib/libsdrplay_api.so.{{ sdrplay_api_mm }}
-  register: sdrplay_api_lib
+    path: "{{ item }}"
+  loop:
+    - /usr/local/lib/libsdrplay_api.so.{{ sdrplay_api_mm }}
+    - /usr/local/bin/sdrplay_apiService
+  register: sdrplay_api_files
+
+- name: SDRplay API installed?
+  set_fact:
+    sdrplay_api_ok: "{{ sdrplay_api_files.results | rejectattr('stat.exists') | list | length == 0 }}"
 
 - name: SDRplay API installer downloaded (sdrplay.com)
   get_url:
@@ -33,12 +43,12 @@
     checksum: "sha256:{{ sdrplay_api_sha256 }}"
     mode: 0644
     timeout: 120
-  when: not sdrplay_api_lib.stat.exists
+  when: not sdrplay_api_ok
 
 - name: SDRplay API installed
   become: yes
   script: install_sdrplay_api.sh {{ sdrplay_arch }} {{ sdrplay_api_mm }}
-  when: not sdrplay_api_lib.stat.exists
+  when: not sdrplay_api_ok
 
 - name: SDRplay API service unit
   become: yes
