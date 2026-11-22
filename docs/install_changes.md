@@ -54,6 +54,12 @@ A first install reboots at the end, after asking (`--no-reboot` skips it).
 ## Taking it off again
 
 `~/.rl1_utils/rl1_uninstall.sh` removes what the install added: the station's folders and
-settings, its cron jobs, and the SatDump, predict, rtl-sdr, nginx and PHP packages. On a Pi that
-uses nginx or PHP for something else, read its lists at the top of the script first. Back up
-before with `~/.rl1_utils/rl1_backup_restore.sh` if you want to keep your captures.
+settings, its cron jobs (your other cron jobs stay), its sudo rules, and the SatDump and predict
+packages. It **asks** before removing software other programs may use, and Enter keeps it:
+
+- **the web server (nginx and PHP).** If you keep it, the web panel's site is taken out and
+  your own site comes back if the install saved a copy (`default.before-raspberry-lrpt-<date>`);
+  nginx is then reloaded.
+- **the RTL-SDR driver package (`rtl-sdr`).**
+
+Back up first with `~/.rl1_utils/rl1_backup_restore.sh` if you want to keep your captures.

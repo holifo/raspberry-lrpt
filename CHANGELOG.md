@@ -1,5 +1,15 @@
 # Changelog
 
+## Raspberry-LRPT v1.36.9 (2026-11-22)
+
+- **The uninstaller asks before removing shared software.** `rl1_uninstall.sh` now asks
+  whether to remove the web server (nginx and PHP) and the RTL-SDR driver package, which other
+  programs may use; Enter keeps them. With nginx kept, the web panel's site goes and your own
+  site comes back if the install saved a copy. It also leaves your other cron jobs alone and
+  removes all of the station's sudo rules and its logrotate file.
+- **New page: [what the install changes on your Pi](docs/install_changes.md)**: everything it
+  removes, replaces, blocks and adds, and when.
+
 ## Raspberry-LRPT v1.36.8 (2026-11-22)
 
 - **The install asks before replacing your own website.** The web panel uses nginx's `default`
