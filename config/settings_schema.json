@@ -89,7 +89,7 @@
     "drop_dark_images":                              { "type": "boolean" },
     "rain_images":                                   { "type": "boolean" },
     "capitals_map":                                  { "type": "boolean" },
-    "capitals_map_area":       { "type": "string", "pattern": "^-?[0-9.]+ -?[0-9.]+ -?[0-9.]+ -?[0-9.]+$" },
+    "capitals_map_area":       { "type": "string", "pattern": "^(-?[0-9.]+ -?[0-9.]+ -?[0-9.]+ -?[0-9.]+)?$" },
     "antenna_information":                           { "type": "string" },
     "meteor_jpg_image_quality": {
       "type": "number",

@@ -245,41 +245,44 @@ rain_images() {
   return 0
 }
 
-# capitals_map DIR DAYLIGHT EPOCH: the pass projected onto CAPITALS_MAP_AREA ("west east south
-# north", 0.01°/px) with the borders, the station and the capitals' names (green: SatDump's
-# default_cities_color, set by Ansible), MSA by day and MCIR at night, as
-# DIR/msu_mr_Capitals_map_projected.png, which the label/thumbnail loop then picks up like the
-# others. Only with a map (orbit known) and line times that fit the pass; dropped when the pass
-# covers under 15 % of the area (the borders count too). Never fails the pass.
+# capitals_map DIR DAYLIGHT EPOCH: the whole pass projected north up with the borders, the station
+# and the capitals' names (green: SatDump's default_cities_color, set by Ansible), MSA by day and
+# MCIR at night, as DIR/msu_mr_Capitals_map_projected.png, which the label/thumbnail loop then
+# picks up like the others. SatDump can't fit a projection to the pass by itself, so it projects
+# onto a box wide enough for any pass heard here (90° x 75° around the station, 0.025°/px) and
+# crop_to_swath.py cuts that down to the pass (the borders and names drawn outside it don't
+# count). With capitals_map_area ("west east south north") it projects that area at 0.01°/px
+# instead. Only with a map (orbit known) and line times that fit the pass. Never fails the pass.
 capitals_map() {
   [ "${CAPITALS_MAP:-true}" == "true" ] || return 0
-  local dir=$1 comp=MCIR out="$1/msu_mr_Capitals_map_projected.png" w e s n tmp
+  local dir=$1 comp=MCIR out="$1/msu_mr_Capitals_map_projected.png" w e s n res tmp line
   [ -f "$dir/product.cbor" ] && ls "$dir"/*map.png >/dev/null 2>&1 || return 0
   satdump_times_ok "$(dirname "$dir")" "$3" || return 0
-  read -r w e s n <<< "${CAPITALS_MAP_AREA:-15 35 33 46}"
-  [ -n "$n" ] || { log "Capitals map: capitals_map_area should be 'west east south north'" "WARN"; return 0; }
   [ "$2" == "1" ] && comp=MSA
+  read -r w e s n <<< "${CAPITALS_MAP_AREA:-}"
+  if [ -n "$n" ]; then
+    res=0.01
+  else
+    # the whole pass: a box around the station, cropped to the pass afterwards
+    read -r w e s n <<< "$(awk -v la="$LAT" -v lo="$LON" 'BEGIN {
+      s = la - 35; n = la + 40; if (s < -85) s = -85; if (n > 85) n = 85
+      printf "%.2f %.2f %.2f %.2f", lo - 45, lo + 45, s, n }')"
+    res=0.025
+  fi
   tmp="$dir/capitals_map.tmp.png"
   nice -n 10 $SATDUMP project -layer --type product --file "$dir/product.cbor" --composite "$comp" \
-    -target --type equirec --offset_x "$w" --offset_y "$n" --scalar_x 0.01 --scalar_y -0.01 \
-            --width "$(awk -v a="$w" -v b="$e" 'BEGIN{printf "%d", (b-a)/0.01}')" \
-            --height "$(awk -v a="$s" -v b="$n" 'BEGIN{printf "%d", (b-a)/0.01}')" \
+    -target --type equirec --offset_x "$w" --offset_y "$n" --scalar_x "$res" --scalar_y "-$res" \
+            --width "$(awk -v a="$w" -v b="$e" -v r="$res" 'BEGIN{printf "%d", (b-a)/r}')" \
+            --height "$(awk -v a="$s" -v b="$n" -v r="$res" 'BEGIN{printf "%d", (b-a)/r}')" \
             --draw_map_overlay --draw_qth_overlay \
             --draw_cities_overlay --cities_type 0 --cities_scale_rank 3 --cities_size 24 \
             --file "$tmp" >> "$LRPT_LOG" 2>&1
-  if [ -s "$tmp" ] && python3 - "$tmp" <<'EOF'
-import sys
-import numpy as np
-from PIL import Image
-a = np.asarray(Image.open(sys.argv[1]).convert('RGBA'))[..., 3]
-sys.exit(0 if (a > 0).mean() >= 0.15 else 1)
-EOF
-  then
-    $CONVERT "$tmp" -background '#0b1220' -flatten "$out" >> "$LRPT_LOG" 2>&1 &&
-      log "Capitals map ($comp) made" "INFO"
-  else
-    log "Capitals map: the pass hardly covers the area ($w $e $s $n) - none made" "INFO"
+  if [ -s "$tmp" ]; then
+    while IFS= read -r line; do [ -n "$line" ] && log "$line" "INFO"; done < <(
+      python3 "$LRPT_HOME/scripts/image_processors/crop_to_swath.py" "$tmp" "$out" \
+        $([ -n "${CAPITALS_MAP_AREA:-}" ] && echo --keep) 2>&1)
   fi
+  [ -s "$out" ] || log "Capitals map ($comp): none made" "INFO"
   rm -f "$tmp"
   return 0
 }

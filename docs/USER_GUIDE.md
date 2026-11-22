@@ -159,10 +159,10 @@ in the same style, so they look alike:
 Days drawn before v1.39.0 keep their old look (AVHRR 221 by day, 3.9 µm IR at night) until they
 are redrawn: `scripts/daily_map.sh --all` redraws every day whose passes are still kept (2 days).
 
-**Capitals map** (setting `capitals_map`): every pass with a map also gets a picture of
-`capitals_map_area` ("west east south north", default 15–35° E, 33–46° N), north up, with the
-borders and the capital cities in green; MSA by day, MCIR at night. It is skipped when the pass
-covers little of the area.
+**Capitals map** (setting `capitals_map`): every pass with a map also gets a picture of the whole
+pass, north up, with the borders and the capital cities in green; MSA by day, MCIR at night. To
+draw a fixed area instead, set `capitals_map_area` to "west east south north" in degrees (empty =
+the whole pass).
 
 ```
   7°W                                              63°E

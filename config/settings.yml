@@ -146,11 +146,11 @@ iss_bias_tee: false
 daily_map: true
 # write the names of capital cities on the map images and the daily map
 map_capitals: true
-# a "Capitals map" picture for every pass: the pass projected onto the area below (MSA by day,
-# MCIR at night) with the borders and the capital cities' names in green
+# a "Capitals map" picture for every pass: the whole pass projected north up (MSA by day, MCIR
+# at night) with the borders and the capital cities' names in green
 capitals_map: true
-#   capitals_map_area - the area as "west east south north" in degrees (default: around Greece)
-capitals_map_area: "15 35 33 46"
+#   capitals_map_area - empty: the whole pass; or a fixed area as "west east south north" in degrees
+capitals_map_area: ""
 
 # processing settings
 #   flip_meteor_image - whether the meteor image should be flipped

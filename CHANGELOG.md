@@ -1,5 +1,12 @@
 # Changelog
 
+## Raspberry-LRPT v1.39.2 (2026-11-22)
+
+- The **Capitals map** now shows the **whole pass** instead of a fixed area around Greece. SatDump
+  projects onto a box wide enough for any pass heard at the station, and the new
+  `scripts/image_processors/crop_to_swath.py` cuts it down to the pass. `capitals_map_area` is now
+  empty by default; set it to "west east south north" to draw a fixed area instead.
+
 ## Raspberry-LRPT v1.39.1 (2026-11-22)
 
 - The clocks in the top bar showed their last minute digit cut off on some phones (narrow screens
