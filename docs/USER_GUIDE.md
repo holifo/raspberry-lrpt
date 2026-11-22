@@ -78,17 +78,19 @@ the composites those channels allow.
 | Page | Address | What it shows |
 |---|---|---|
 | **Passes** | `/passes` | Station bar (name, grid square, Recording / Waiting), next pass countdown, live decode panel while recording, passes grouped by day |
-| **Satellites** | `/satellite` | Live map of both satellites, the selected one's details, the coming passes |
-| **About** | `/about` | The installed version and the daily update check (up to date, or "update available" with the command to run; the footer shows "vX available" too; `update_check: false` turns it off), credits; in tabs: Station (this), Meteor-M (satellites working now, every launch and plan, the LRPT signal, the instruments), ISS as an extra (orbit, amateur radio frequencies, the year's ARISS SSTV events) and Sources. `/about#meteor`, `#iss` and `#sources` open a tab directly |
 | **Captures** | `/captures` | Every capture as a card, grouped by day; "About the images" explains the channels and every image type |
 | **One capture** | click a card | Pass details, every image (zoomable viewer), graphs, spectrogram, recording download |
 | **Daily map** | `/daily` | One map per day of all day passes, one of all night passes, and the day's time-lapse |
+| **Satellites** | `/satellite` | Live map of both satellites, the selected one's details, the coming passes |
 | **Live log** | `/log` | CPU, temperature, memory, SDR, disks, next pass, and the station log live |
+| **About** | `/about` | The installed version and the daily update check (up to date, or "update available" with the command to run; the footer shows "vX available" too; `update_check: false` turns it off), credits, a photo of your station if you add one (`./scripts/station_photo.sh`); in tabs: Station (this), Meteor-M (satellites working now, every launch and plan, the LRPT signal, the instruments), ISS as an extra (orbit, amateur radio frequencies, the year's ARISS SSTV events) and Sources. `/about#meteor`, `#iss` and `#sources` open a tab directly |
 | **Admin** | `/admin/passes` (type it) | Delete passes and captures; needs the admin password |
 
 **On every page:** the language menu (flag, top right: English, Deutsch, Français, Italiano,
 Español, Ελληνικά, 中文, हिन्दी, العربية), the moon / sun button for dark mode, and the UTC and local
-clocks. The browser remembers your language and theme. The footer shows the station's version.
+clocks. The browser remembers your language and theme. The top menu has an icon for each page; on
+a phone it shows only the icons (hold or hover for the name). The footer shows the station's
+version, linked to the project on GitHub, and says "vX available" when an update is out.
 
 **Passes page**
 
@@ -293,6 +295,9 @@ on the page. It is kept in `/srv/images/station/`, which the clean-up of old ima
 recording, or after an update that changes the images. `-y` skips the "replace?" question.
 
 ## Settings worth knowing
+
+Before installing on a Pi that does other jobs too, read
+[what the install changes](install_changes.md).
 
 Settings live in `config/settings.yml`; your install answers (station, location, receiver, gains,
 web login, Discord webhook) are in `config/settings.local.yml` and win over it. After changing either, run

@@ -99,7 +99,8 @@ and ends by printing the web panel's address.
 **On a Pi that does other jobs too:** the web panel uses nginx's `default` site. If your Pi
 already serves its own site there, the install shows it and asks before replacing it (it keeps a
 copy as `default.before-raspberry-lrpt-<date>`); answer no and nothing is changed. A Pi that
-already keeps its clock with chrony or openntpd keeps it.
+already keeps its clock with chrony or openntpd keeps it. Everything the install removes, replaces
+or adds is listed in [what the install changes](docs/install_changes.md).
 
 ## Coming from raspberry-noaa-v2
 
@@ -152,6 +153,7 @@ processes number 2. `./scripts/daily_map.sh --all` redraws the daily maps that c
 - **[User guide](docs/USER_GUIDE.md)**: how the station works, every page, commands, settings and
   troubleshooting
 - [Screenshots of every view](docs/webpanel_screenshots.md)
+- [What the install changes on your Pi](docs/install_changes.md)
 - [Changelog](CHANGELOG.md)
 - [Annotation](docs/annotation.md), [pruning](docs/pruning.md), [database backups](docs/db_backups.md),
   [TLS for the web panel](docs/tls_webserver.md), [posting to Discord](docs/discord.md),
