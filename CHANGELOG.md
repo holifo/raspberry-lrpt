@@ -1,5 +1,12 @@
 # Changelog
 
+## Raspberry-LRPT v1.37.4 (2026-11-22)
+
+- **Verification tool: no false "not installed".** On a Pi that also has 32-bit (armhf) copies of a
+  package (left over from older raspberry-noaa-v2 installs), the package check got one status per
+  copy and reported `pkg-config`, `libxft-dev`, `libxft2` and `zlib1g-dev` as missing although they
+  were installed. It now passes when any copy is installed.
+
 ## Raspberry-LRPT v1.37.3 (2026-11-22)
 
 - **ISS APRS passes no longer leave processes running.** Each APRS pass starts a small log reader

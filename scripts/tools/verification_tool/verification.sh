@@ -203,8 +203,9 @@ loggit "INFO" "*************************************************"
 pkg_installed() {
   local p
   for p in ${1//|/ }; do
-    if [[ "$(dpkg-query -W -f='${db:Status-Status}' "$p" 2>/dev/null)" == "installed" ]]; then
-      echo "$p $(dpkg-query -W -f='${Version}' "$p")"; return 0
+    # one line per installed architecture (a Pi with old 32-bit armhf copies lists two)
+    if dpkg-query -W -f='${db:Status-Status}\n' "$p" 2>/dev/null | grep -qx installed; then
+      echo "$p $(dpkg-query -W -f='${Version}\n' "$p" | head -1)"; return 0
     fi
   done
   return 1
