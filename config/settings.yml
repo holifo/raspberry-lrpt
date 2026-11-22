@@ -17,6 +17,8 @@ station_title: 'My Meteor station'
 # ntp configurations
 #   ntp_server - if you have a local server (e.g. stratum1), you can use this setting
 #        to specify a hostname or ip address to communicate with the ntp server
+#        (the install keeps the clock with ntpsec; a Pi that already runs chrony or openntpd,
+#        for example as a GPS stratum-1 server, keeps its own and this setting is not used)
 ntp_server: 'pool.ntp.org'
 
 # receiver settings

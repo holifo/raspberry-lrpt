@@ -1,38 +1,58 @@
 ---
-# Bookworm replaced ntp with ntpsec: the config is /etc/ntpsec/ntp.conf and the service is ntpsec
-# (ntp.service is an alias). Installing it removes systemd-timesyncd.
-- name: ntpsec
-  become: yes
-  apt:
-    name: ntpsec
-    state: present
-
-- name: systemd-timesyncd check
-  command: systemctl cat systemd-timesyncd.service
-  register: timesyncd_unit
+# The station keeps its clock with ntpsec (Bookworm replaced ntp with it: config
+# /etc/ntpsec/ntp.conf, service ntpsec, ntp.service is an alias). Installing ntpsec removes the
+# other time daemons, so when the Pi already runs its own (chrony, openntpd, or ntpsec set up by
+# hand), the install leaves the time service alone: a Pi that is also a GPS stratum-1 server lost
+# its chrony this way (public repo issue #1, 20/11/2026).
+- name: Other time service check
+  shell: |
+    for p in chrony openntpd; do
+      [ "$(dpkg-query -W -f='${db:Status-Status}' "$p" 2>/dev/null)" = installed ] && echo "$p"
+    done | head -1
+  register: other_timed
   changed_when: false
   failed_when: false
 
-- name: systemd-timesyncd off (ntpsec keeps the time)
-  become: yes
-  service:
-    name: systemd-timesyncd
-    state: stopped
-    enabled: no
-  when: timesyncd_unit.rc == 0
+- name: Time service left alone
+  debug:
+    msg: "{{ other_timed.stdout }} is installed: the install leaves the time service alone (ntp_server is not used)"
+  when: other_timed.stdout | length > 0
 
-- name: NTP servers
-  become: yes
-  template:
-    src: ntp.conf.j2
-    dest: /etc/ntpsec/ntp.conf
-    owner: root
-    group: root
-    mode: 0644
-  notify: restart ntp
+- name: Time service tasks
+  when: other_timed.stdout | length == 0
+  block:
+    - name: ntpsec
+      become: yes
+      apt:
+        name: ntpsec
+        state: present
 
-- name: Old ntp config removed (ntpsec ignores it)
-  become: yes
-  file:
-    path: /etc/ntp.conf
-    state: absent
+    - name: systemd-timesyncd check
+      command: systemctl cat systemd-timesyncd.service
+      register: timesyncd_unit
+      changed_when: false
+      failed_when: false
+
+    - name: systemd-timesyncd off (ntpsec keeps the time)
+      become: yes
+      service:
+        name: systemd-timesyncd
+        state: stopped
+        enabled: no
+      when: timesyncd_unit.rc == 0
+
+    - name: NTP servers
+      become: yes
+      template:
+        src: ntp.conf.j2
+        dest: /etc/ntpsec/ntp.conf
+        owner: root
+        group: root
+        mode: 0644
+      notify: restart ntp
+
+    - name: Old ntp config removed (ntpsec ignores it)
+      become: yes
+      file:
+        path: /etc/ntp.conf
+        state: absent

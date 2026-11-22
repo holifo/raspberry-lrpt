@@ -298,6 +298,11 @@ Settings live in `config/settings.yml`; your install answers (station, location,
 web login, Discord webhook) are in `config/settings.local.yml` and win over it. After changing either, run
 `./install_and_upgrade.sh`.
 
+**The clock.** Passes are scheduled to the second, so the station keeps its clock with ntpsec
+(`ntp_server`, a pool by default). If your Pi already runs its own time service, chrony or
+openntpd (for example a GPS stratum-1 NTP server), the install leaves it alone and does not
+install ntpsec; `ntp_server` is then not used.
+
 | Setting | Default | What it does |
 |---|---|---|
 | `meteor_m2_3_sat_min_elevation`, `meteor_m2_4_sat_min_elevation` | 15 | Lowest pass elevation scheduled (suits a QFH) |

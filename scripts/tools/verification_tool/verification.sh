@@ -176,6 +176,8 @@ while IFS= read -r line; do
 done < ${PERMISSIONS_LIST}
 
 while IFS= read -r line; do
+  # ntpsec's config only exists when the install manages the time (not with the Pi's own chrony)
+  case "$line" in *"/etc/ntpsec/"*) dpkg-query -W -f='${db:Status-Status}' ntpsec 2>/dev/null | grep -q '^installed' || continue ;; esac
   perms ${line}
 done < ${PERMISSIONS_OTHER_LIST}
 

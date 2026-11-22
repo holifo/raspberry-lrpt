@@ -218,7 +218,10 @@ else echo "   SDR       : ${YELLOW}no ${sdr_name} found on USB${RESET}"; fi
 php_fpm=$(systemctl list-unit-files --no-legend 'php*-fpm.service' 2>/dev/null | awk '{print $1}' | sort -V | tail -1)
 php_fpm=${php_fpm%.service}
 [ "$receiver" == "sdrplay" ] && sdrplay_svc=" $(svc sdrplay)"
-echo "   Services  : $(svc nginx) $(svc "${php_fpm:-php-fpm}") $(svc atd) $(svc ntpsec)${sdrplay_svc}"
+# the time service: ntpsec, or the Pi's own chrony / openntpd, which the install leaves alone
+timed=ntpsec
+for t in chrony openntpd; do systemctl list-unit-files --no-legend "$t.service" 2>/dev/null | grep -q . && timed=$t && break; done
+echo "   Services  : $(svc nginx) $(svc "${php_fpm:-php-fpm}") $(svc atd) $(svc $timed)${sdrplay_svc}"
 echo "   Log       : $LOG"
 
 if [ "$install_type" == 'install' ]; then

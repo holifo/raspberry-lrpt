@@ -1,5 +1,13 @@
 # Changelog
 
+## Raspberry-LRPT v1.36.6 (2026-11-22)
+
+- **The install no longer replaces your own time service** (issue #1). Installing ntpsec, which
+  keeps the station's clock, removed chrony, so a Pi that was also a GPS stratum-1 NTP server lost
+  it. If chrony or openntpd is installed, the install now leaves the time service alone and says
+  so; `ntp_server` is then not used. The install summary and the verification tool show and check
+  the service you have.
+
 ## Raspberry-LRPT v1.36.5 (2026-11-22)
 
 - **About page in tabs.** About now has four tabs: **Station** (version, update check and credits),
