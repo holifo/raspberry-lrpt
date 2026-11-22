@@ -43,6 +43,7 @@ def record(port, samplerate, timeout_s, out_file, freq_mhz=137.1):
   started = time.time()
   seen = False
   fails = 0
+  frozen = 0
   while time.time() - started < timeout_s + 120:
     try:
       d = poll(url)
@@ -54,8 +55,17 @@ def record(port, samplerate, timeout_s, out_file, freq_mhz=137.1):
       time.sleep(1)
       continue
     v = d.get('fft_values')
+    if v and rows and np.array_equal(np.asarray(v, dtype=np.float32), rows[-1]):
+      # the same spectrum again: SatDump stopped receiving (the pass is over and it is making
+      # the products, its web server still answering with the last values). Not a new row.
+      frozen += 1
+      if frozen >= 10:
+        break
+      time.sleep(1)
+      continue
     if v:
       seen = True
+      frozen = 0
       demod = d.get('psk_demod', {})
       dec = d.get('ccsds_conv_concat_decoder', {})
       t_rows.append(time.time())
@@ -122,6 +132,11 @@ def render(data_file, out_file, sat_name, tle_file, lat, lon, min_elev):
                        'axes.labelcolor': DIM, 'xtick.color': DIM, 'ytick.color': DIM})
   d = np.load(data_file)
   t, fft, snr, dlock, vlock = d['t'], d['fft'], d['snr'], d['dlock'], d['vlock']
+  # spectra repeated at the end (SatDump done receiving, still answering) are not signal
+  n = len(fft)
+  while n > 1 and np.array_equal(fft[n - 1], fft[n - 2]):
+    n -= 1
+  t, fft, snr, dlock, vlock = t[:n], fft[:n], snr[:n], dlock[:n], vlock[:n]
   # the first spectra after SatDump starts are not settled yet (far too strong): drop them
   med = np.median(fft, axis=1)
   good = med < np.median(med) + 6

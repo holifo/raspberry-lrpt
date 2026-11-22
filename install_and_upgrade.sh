@@ -51,7 +51,8 @@ cd "$REPO" || die "Can't change to $REPO"
 # only one install at a time
 exec 9>"/tmp/rl1-install.lock"
 if ! flock -n 9; then
-  holder=$(fuser /tmp/rl1-install.lock 2>/dev/null | tr -s " " "\n" | grep -vx "$$" | grep . | xargs -r ps -o pid=,etime=,args= -p 2>/dev/null)
+  # the other install's processes (this run's own subshells close the lock first, so only $$ is ours)
+  holder=$( { exec 9>&-; fuser /tmp/rl1-install.lock 2>/dev/null | tr -s " " "\n" | grep -vx "$$" | grep . | xargs -r ps -o pid=,etime=,args= -p 2>/dev/null; } )
   die "Another install is already running${holder:+:
 $holder}"
 fi

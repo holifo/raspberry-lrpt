@@ -1,5 +1,15 @@
 # Changelog
 
+## Raspberry-LRPT v1.37.1 (2026-11-22)
+
+- **Spectrogram: no striped band at the end.** When a pass ends, SatDump stops receiving but
+  takes a minute or two to make the images, and meanwhile its web server keeps answering with the
+  last spectrum. The spectrogram recorded those repeats as new rows, which showed as vertical
+  stripes after the end of the pass. It now leaves out a spectrum identical to the one before,
+  stops after 10 of them, and trims any at the end when drawing.
+- The install's "Another install is already running" message no longer lists its own check
+  among the running processes.
+
 ## Raspberry-LRPT v1.37.0 (2026-11-22)
 
 - **New: Admin > Settings.** Every station setting on one page (`/admin/settings`), in ten
