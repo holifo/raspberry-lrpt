@@ -64,12 +64,14 @@ header .nav-link:hover .nav-ic, header .active .nav-ic { opacity: 1; }
   header #theme-toggle { margin-right: 0 !important; }
 }
 /* narrow phones: the clocks drop their labels (UTC on top, local below) and their seconds
-   (clipped: hh:mm shows), and the links sit closer, so the six menu items fit */
+   (.clock-sec hidden, so hh:mm always shows whole), and the links sit closer, so the six menu
+   items fit */
 @media (max-width: 419.98px) {
   header .clock-label { display: none; }
   header ul.navbar-nav li a { margin-right: 0.75rem; }
   html[dir="rtl"] header ul.navbar-nav li a { margin-left: 0.75rem; }
-  header .clock-time { min-width: 0; max-width: 4.15ch; overflow: hidden; white-space: nowrap; }
+  header .clock-time { min-width: 0; white-space: nowrap; }
+  header .clock-sec { display: none; }
   header .clocks { margin-right: 0.35rem; }
 }
 

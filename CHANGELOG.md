@@ -1,5 +1,11 @@
 # Changelog
 
+## Raspberry-LRPT v1.39.1 (2026-11-22)
+
+- The clocks in the top bar showed their last minute digit cut off on some phones (narrow screens
+  hid the seconds by clipping the text, which clipped too much with a wider font). The seconds are
+  now a separate part that narrow screens hide, so hh:mm always shows whole.
+
 ## Raspberry-LRPT v1.39.0 (2026-11-22)
 
 - **Daily maps look the same day and night:** the day map is now MSA and the night map MCIR (the

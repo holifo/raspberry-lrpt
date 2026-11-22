@@ -66,8 +66,8 @@
         </ul>
         {# live clocks: UTC and the station's local time (Config::TIMEZONE) #}
         <span class="navbar-text clocks" id="clocks" data-tz="{{ constant('Config\\Config::TIMEZONE') }}">
-          <span class="clock" title="UTC"><span class="clock-label">UTC</span><span class="clock-time" id="clock-utc">{{ 'now'|date('H:i:s', 'UTC') }}</span></span>
-          <span class="clock" title="{{ lang['local_time']|default('Local') }}"><span class="clock-label">{{ lang['local_time']|default('Local') }}</span><span class="clock-time" id="clock-local">{{ 'now'|date('H:i:s') }}</span></span>
+          <span class="clock" title="UTC"><span class="clock-label">UTC</span><span class="clock-time" id="clock-utc">{{ 'now'|date('H:i', 'UTC') }}<span class="clock-sec">{{ 'now'|date(':s', 'UTC') }}</span></span></span>
+          <span class="clock" title="{{ lang['local_time']|default('Local') }}"><span class="clock-label">{{ lang['local_time']|default('Local') }}</span><span class="clock-time" id="clock-local">{{ 'now'|date('H:i') }}<span class="clock-sec">{{ 'now'|date(':s') }}</span></span></span>
         </span>
         {# language menu: picking one sets a cookie the server reads (Lib\\Lang), then the page
            reloads in that language #}
@@ -167,10 +167,19 @@
           catch (e) { return null; }
         };
         var fu = fmt('UTC'), fl = fmt(tz), utc = document.getElementById('clock-utc'), loc = document.getElementById('clock-local');
+        // hh:mm, then the seconds in their own span (hidden on narrow phones)
+        function show(el, f, d) {
+          var s = f.format(d);
+          el.textContent = s.slice(0, 5);
+          var sec = document.createElement('span');
+          sec.className = 'clock-sec';
+          sec.textContent = s.slice(5);
+          el.appendChild(sec);
+        }
         function tick() {
           var d = new Date();
-          if (fu) { utc.textContent = fu.format(d); }
-          if (fl) { loc.textContent = fl.format(d); }
+          if (fu) { show(utc, fu, d); }
+          if (fl) { show(loc, fl, d); }
           setTimeout(tick, 1000 - d.getMilliseconds() + 5);
         }
         tick();
