@@ -117,6 +117,32 @@ install_type='install'
 { [ -f "$HOME/.raspberry-lrpt.conf" ] || [ -f /etc/modprobe.d/rtlsdr.conf ]; } && install_type='upgrade'
 ok "Mode: $install_type"
 
+# nginx's default site becomes the web panel. If the Pi already serves its own site there (not
+# the web panel, not Debian's untouched sample), ask before replacing it, and keep a copy.
+sites="${NGINX_SITES:-/etc/nginx/sites-available}"
+stock=$(dpkg-query -W -f='${Conffiles}\n' nginx-common 2>/dev/null | awk '$1 ~ /sites-available\/default$/ {print $2}')
+own_sites=()
+for f in "$sites/default" "$sites/default-tls"; do
+  [ -f "$f" ] || continue
+  grep -qE 'Raspberry-LRPT web panel|/var/www/wx-new' "$f" && continue        # ours (or raspberry-noaa-v2's)
+  [ -n "$stock" ] && [ "$(md5sum < "$f" | cut -d' ' -f1)" == "$stock" ] && continue   # Debian's sample
+  own_sites+=("$f")
+done
+if [ ${#own_sites[@]} -gt 0 ]; then
+  warn "nginx on this Pi already serves its own site, which the web panel would replace:"
+  printf '     %s\n' "${own_sites[@]}"
+  echo "   A copy is kept next to it as <name>.before-raspberry-lrpt-$(date +%Y%m%d). To keep your"
+  echo "   site running too, move it to a file of its own name in $sites first."
+  replace=false
+  if $ASSUME_YES; then replace=true
+  else read -r -p " Replace it with the web panel? [y/N] " a < /dev/tty; [[ "$a" =~ ^[Yy] ]] && replace=true; fi
+  $replace || die "Stopped - nothing was changed"
+  for f in "${own_sites[@]}"; do
+    sudo cp -p "$f" "$f.before-raspberry-lrpt-$(date +%Y%m%d)" || die "Could not keep a copy of $f"
+  done
+  ok "nginx: your site is kept as a copy and will be replaced"
+fi
+
 step "Station settings"
 sudo apt-get install -qq -y python3-yaml python3-jsonschema >/dev/null \
   || die "Could not install the Python modules needed to check the settings"

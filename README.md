@@ -96,6 +96,11 @@ answers are saved in `config/settings.local.yml` (not in git), which overrides
 The install then checks the system, runs Ansible, sets up the web panel and schedules the passes,
 and ends by printing the web panel's address.
 
+**On a Pi that does other jobs too:** the web panel uses nginx's `default` site. If your Pi
+already serves its own site there, the install shows it and asks before replacing it (it keeps a
+copy as `default.before-raspberry-lrpt-<date>`); answer no and nothing is changed. A Pi that
+already keeps its clock with chrony or openntpd keeps it.
+
 ## Coming from raspberry-noaa-v2
 
 A raspberry-noaa-v2 station keeps its settings and Meteor captures:

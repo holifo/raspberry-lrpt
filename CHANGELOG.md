@@ -1,5 +1,14 @@
 # Changelog
 
+## Raspberry-LRPT v1.36.8 (2026-11-22)
+
+- **The install asks before replacing your own website.** The web panel uses nginx's `default`
+  site. If the Pi already serves its own site there, the install now shows it and asks
+  "Replace it with the web panel?" (default no). Yes keeps a copy as
+  `default.before-raspberry-lrpt-<date>`; no stops before anything is changed. A Pi with nginx's
+  untouched sample page, or an earlier web panel, is not asked.
+- **The install no longer checks for or removes remote-access programs** you may have installed.
+
 ## Raspberry-LRPT v1.36.7 (2026-11-22)
 
 - **The install leaves more of your Pi alone.** It no longer switches off or removes any of the
