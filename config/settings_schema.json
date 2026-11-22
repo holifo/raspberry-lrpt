@@ -87,6 +87,7 @@
     "produce_polar_direction_graph":                 { "type": "boolean" },
     "ground_station_location":                       { "type": "string" },
     "drop_dark_images":                              { "type": "boolean" },
+    "rain_images":                                   { "type": "boolean" },
     "antenna_information":                           { "type": "string" },
     "meteor_jpg_image_quality": {
       "type": "number",
@@ -226,6 +227,7 @@
     "sdrplay_licence_accepted",
     "meteor_m2_4_80k_interleaving",
     "antenna_information",
-    "drop_dark_images"]
+    "drop_dark_images",
+    "rain_images"]
 }
 

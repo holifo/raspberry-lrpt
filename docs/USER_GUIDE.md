@@ -322,6 +322,7 @@ install ntpsec; `ntp_server` is then not used.
 | `storage` | sd | What the Pi runs from, asked by the install. `sd`: each pass is decoded on a RAM disk to spare the SD card. `ssd`: no RAM disk |
 | `delete_older_than_n` | 30 | Captures older than this many days are deleted |
 | `flip_meteor_image` | true | Turn northbound passes the right way up |
+| `rain_images` | true | Rain images: SatDump "Rain Likelihood" composites from cloud-top temperature (only when the satellite sends calibration, which the METEORs don't at the moment), and for night passes a relative "Coldest cloud tops" image from channel 4. Estimates, not measurements |
 | `drop_dark_images` | true | Delete a pass's images made from a channel with no picture in it: at night channels 1-3 need sunlight, so MSA, AVHRR 221, Natural Color, ... come out white or yellow (the pictures are checked, so dawn and dusk passes keep theirs) |
 | `annotation_width_percent` | 50 | Width of the station label, as a share of the image; its text is in `config/annotation/annotation.yml` ([label](annotation.md)) |
 | `annotation_style` | light | The label's look: `light`, `dark`, `auto` (light by day, dark at night), `white`, `black` or `clear` ([label](annotation.md#choosing-a-look)) |

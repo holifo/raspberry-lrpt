@@ -34,6 +34,7 @@ dongle can't be used as a TV tuner.
 | Packages: SatDump, predict, nginx, PHP-FPM, ImageMagick, ffmpeg, sox, Direwolf, Python libraries and build tools (the full list is in `ansible/roles/common/tasks/dependencies.yml`); `envbash` and `sstv` from pip | apt, pip |
 | The receiver's own pieces: the Airspy or HackRF tools, udev rules, or SDRplay's API with its `sdrplay` service and SatDump's SDRplay plugin | Only for that receiver |
 | Cron jobs: schedule passes daily at 00:01 and after a reboot, check for a new version daily, fix `/run/user` permissions after a reboot | your user's crontab |
+| SatDump's rain colour table and two "Rain Likelihood" composites (setting `rain_images`; taken out again when it is off) | `/usr/share/satdump/resources/lut/cal/rl1_rain.png`, `/usr/share/satdump/satdump_cfg.json` |
 | sudo rules so the web panel can remove scheduled passes, use the Meteor / ISS switches and the settings page (only those commands: `switch.sh --web …` and `settings_web.sh show` / `apply`, as the station user) | `/etc/sudoers.d/020_*`, `030_*` |
 | Your user added to the `www-data` group; your home folder set to mode 755 so nginx can reach the web panel | |
 | A 1000 MB RAM disk at `/var/ramfs` in `/etc/fstab` (removed again with `storage: ssd`) | SD-card systems |

@@ -64,6 +64,28 @@
     regexp: '("msu_mr":\s*\{\s*"handler":\s*"image_handler",\s*"name":\s*"MSU-MR",\s*"rgb_composites":\s*\{)(?!\s*"MSU-MR Channel 1")'
     replace: '\g<1>{% for n in range(1, 7) %}"MSU-MR Channel {{ n }}": {"equation": "ch{{ n }}", "geo_correct": true, "normalize": true}, {% endfor %}'
 
+# Rain likelihood from cloud-top temperature (setting rain_images): two composites with the
+# station's own colour table (files/rl1_rain_lut.png, 190-300 K: magenta below -60 C, then red,
+# orange, yellow, green down to -15 C, plain IR above). SatDump makes them only when the pass carries
+# calibration (the METEORs sent none in 11/2026), so they appear by themselves when it comes back.
+# receive_meteor.sh drops the 3.7 um one by day (reflected sunlight).
+- name: SatDump rain colour table
+  become: yes
+  copy:
+    src: rl1_rain_lut.png
+    dest: /usr/share/satdump/resources/lut/cal/rl1_rain.png
+    mode: "0644"
+
+- name: SatDump config - rain likelihood composites
+  become: yes
+  replace:
+    path: /usr/share/satdump/satdump_cfg.json
+    regexp: "{{ ('(\"MSU-MR Channel 6\": \\{[^}]*\\}, )(?!\"Rain Likelihood)') if rain_images | default(true) | bool else (rain_composites | regex_escape) }}"
+    replace: "{{ ('\\g<1>' ~ rain_composites) if rain_images | default(true) | bool else '' }}"
+  vars:
+    rain_composites: >-
+      "Rain Likelihood (10.8 um)": {"channels": "cch5", "lut": "lut/cal/rl1_rain.png", "geo_correct": true, "calib_cfg": {"cch5": {"type": "temperature", "min": 190, "max": 300}}}, "Rain Likelihood (3.7 um night)": {"channels": "cch4", "lut": "lut/cal/rl1_rain.png", "geo_correct": true, "calib_cfg": {"cch4": {"type": "temperature", "min": 190, "max": 300}}},
+
 # Capital cities' names on the projected (map) images, which are always north up, when
 # map_capitals is on. Not on the "_map" swath images: a northbound pass's swath is turned 180°
 # after SatDump draws on it, which would put the names upside down. v1.9 added the names to

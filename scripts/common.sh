@@ -227,3 +227,20 @@ drop_dark_images() {
   done < <(python3 "$LRPT_HOME/scripts/image_processors/drop_dark_images.py" "$1" 2>&1)
   return 0
 }
+
+# rain_images DIR DAYLIGHT: setting rain_images. Night passes get the relative "Coldest cloud tops"
+# image from channel 4 (cold_tops.py; the satellites send no calibration now, so no temperatures).
+# SatDump's own "Rain Likelihood" composites (configs.yml) appear by themselves when calibration
+# comes back; the 3.7 um one is dropped by day, when that channel also sees reflected sunlight.
+rain_images() {
+  [ "${RAIN_IMAGES:-true}" == "true" ] || return 0
+  local dir=$1 line ch4="$1/msu_mr_MSU-MR_Channel_4_corrected.png"
+  if [ "$2" == "1" ]; then
+    rm -f "$dir"/*Rain_Likelihood_\(3.7_um_night\)*
+  elif [ -f "$ch4" ]; then
+    while IFS= read -r line; do
+      [ -n "$line" ] && log "$line" "INFO"
+    done < <(python3 "$LRPT_HOME/scripts/image_processors/cold_tops.py" "$ch4" "$dir/msu_mr_rgb_Cold_Cloud_Tops_corrected.png" 2>&1)
+  fi
+  return 0
+}

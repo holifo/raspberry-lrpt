@@ -429,5 +429,7 @@ return array(
   "set_undo" => "Annulla modifiche",
   "set_save" => "Salva",
   "about_security" => "Usalo a tuo rischio: questo software non è stato sottoposto a una revisione di sicurezza. Se il pannello web è raggiungibile da Internet, servilo via HTTPS con una password admin robusta.",
+  "lg_rain" => "Dove è probabile la pioggia, dalla temperatura della sommità delle nubi: dal verde (pioggia debole) al magenta (temporali). Solo quando il satellite invia la calibrazione; quella a 3,7 µm solo di notte",
+  "lg_coldtops" => "Passaggi notturni: le sommità delle nubi più fredde del passaggio a colori, dove rovesci e temporali sono probabili. Relativo al passaggio, non una misura di pioggia",
 );
 ?>

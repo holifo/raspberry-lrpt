@@ -311,5 +311,7 @@ return array(
   "set_undo" => "Undo changes",
   "set_save" => "Save",
   "about_security" => "Use it at your own risk: this software has not had a security review. Serve the web panel over HTTPS with a strong admin password if it can be reached from the internet.",
+  "lg_rain" => "Where rain is likely, from cloud-top temperature: green light rain up to magenta storms. Made only when the satellite sends calibration; the 3.7 µm one only at night",
+  "lg_coldtops" => "Night passes: the coldest cloud tops of the pass in colour, where showers and storms are likely. Relative to the pass, not a rain measurement",
 );
 ?>

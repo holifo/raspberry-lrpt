@@ -1,5 +1,18 @@
 # Changelog
 
+## Raspberry-LRPT v1.38.0 (2026-11-22)
+
+- **Rain images.** Two kinds, both estimates rather than measurements:
+  - **Rain Likelihood** (10.8 µm, and 3.7 µm at night): SatDump composites in the station's own
+    colours, from cloud-top temperature: green (light rain possible, below −15 °C) through yellow,
+    orange and red to magenta (storms, below −60 °C), plain IR elsewhere. SatDump makes them only
+    when the satellite sends its calibration data. The METEORs have not been sending it (SatDump
+    says "Calibration is disabled"), so these appear by themselves once it comes back.
+  - **Coldest cloud tops** (night passes, now): the pass's coldest clouds in green, yellow and red
+    from channel 4, relative to the rest of the pass. Tall, cold-topped clouds are where showers and
+    storms are likely. The picture says it is relative and not a rain measurement.
+  - Setting `rain_images` (on); both are in the night image order and the image legend.
+
 ## Raspberry-LRPT v1.37.4 (2026-11-22)
 
 - **Verification tool: no false "not installed".** On a Pi that also has 32-bit (armhf) copies of a

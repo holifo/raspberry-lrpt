@@ -429,5 +429,7 @@ return array(
   "set_undo" => "Deshacer cambios",
   "set_save" => "Guardar",
   "about_security" => "Úsalo bajo tu propio riesgo: este software no ha pasado una revisión de seguridad. Si el panel web es accesible desde Internet, sírvelo por HTTPS y con una contraseña de administrador fuerte.",
+  "lg_rain" => "Dónde es probable la lluvia, según la temperatura de la cima de las nubes: del verde (lluvia débil) al magenta (tormentas). Solo cuando el satélite envía calibración; la de 3,7 µm solo de noche",
+  "lg_coldtops" => "Pasos nocturnos: las cimas de nubes más frías del paso en color, donde son probables chubascos y tormentas. Relativo al paso, no es una medida de lluvia",
 );
 ?>

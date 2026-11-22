@@ -91,6 +91,7 @@ FORM = [
     ('meteor_nighttime_enhancements', '', 'Night-time image order', 'The same for night-time passes.'),
     ('meteor_daytime_thumbnail', '', 'Daytime thumbnail', 'Image names tried in order for a daytime capture\'s card.'),
     ('meteor_nighttime_thumbnail', '', 'Night-time thumbnail', 'Image names tried in order for a night-time capture\'s card.'),
+    ('rain_images', 'i', 'Rain images', 'Rain likelihood from cloud-top temperature when the satellite sends calibration (it doesn\'t at the moment), and for night passes a relative "Coldest cloud tops" image. Estimates, not measurements.'),
     ('drop_dark_images', '', 'Drop images without a picture', 'Delete the images made from an empty channel: at night the sunlight channels 1-3 make white or yellow images. The pictures are checked, so dawn and dusk passes keep theirs.'),
     ('flip_meteor_image', '', 'Turn northbound passes', 'Rotate the images of northbound passes so north is up.'),
     ('meteor_jpg_image_quality', '', 'JPEG quality', '0-100.'),

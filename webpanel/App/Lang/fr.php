@@ -429,5 +429,7 @@ return array(
   "set_undo" => "Annuler les modifications",
   "set_save" => "Enregistrer",
   "about_security" => "À utiliser à vos risques : ce logiciel n'a pas fait l'objet d'un audit de sécurité. Si l'interface web est accessible depuis Internet, servez-la en HTTPS avec un mot de passe admin solide.",
+  "lg_rain" => "Où la pluie est probable, d'après la température du sommet des nuages : du vert (pluie faible) au magenta (orages). Seulement quand le satellite envoie l'étalonnage ; celle à 3,7 µm seulement la nuit",
+  "lg_coldtops" => "Passages de nuit : les sommets de nuages les plus froids du passage en couleur, là où averses et orages sont probables. Relatif au passage, pas une mesure de pluie",
 );
 ?>

@@ -25,7 +25,7 @@ case "${OS}" in
 esac
 WEB_PACKAGES="nginx php${PHP}-intl php${PHP}-sqlite3 php${PHP}-mbstring php${PHP}-fpm"
 WEB_SERVICES="phpsessionclean.service phpsessionclean.timer nginx.service"
-PATHS="/srv/audio /srv/videos /srv/images $HOME/.config/composer $HOME/.config/gmic $HOME/.config/matplotlib $HOME/.config/satdump $HOME/raspberry-lrpt $HOME/.predict $HOME/.raspberry-lrpt.conf /usr/local/bin/rtl_* /var/log/raspberry-lrpt /etc/logrotate.d/raspberry-lrpt /etc/sudoers.d/020_www-data-atrm-nopasswd /etc/sudoers.d/030_www-data-switch /var/www/wx-new /tmp/rtl-sdr /etc/modprobe.d/rtlsdr.conf"
+PATHS="/srv/audio /srv/videos /srv/images $HOME/.config/composer $HOME/.config/gmic $HOME/.config/matplotlib $HOME/.config/satdump $HOME/raspberry-lrpt $HOME/.predict $HOME/.raspberry-lrpt.conf /usr/local/bin/rtl_* /var/log/raspberry-lrpt /etc/logrotate.d/raspberry-lrpt /etc/sudoers.d/020_www-data-atrm-nopasswd /etc/sudoers.d/030_www-data-switch /var/www/wx-new /tmp/rtl-sdr /etc/modprobe.d/rtlsdr.conf /usr/share/satdump/resources/lut/cal/rl1_rain.png"
 SITES=${NGINX_SITES:-/etc/nginx/sites-available}
 ENABLED=${NGINX_ENABLED:-/etc/nginx/sites-enabled}
 

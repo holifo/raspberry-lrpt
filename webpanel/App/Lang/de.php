@@ -429,5 +429,7 @@ return array(
   "set_undo" => "Änderungen verwerfen",
   "set_save" => "Speichern",
   "about_security" => "Nutzung auf eigene Gefahr: Diese Software wurde keiner Sicherheitsprüfung unterzogen. Ist die Weboberfläche aus dem Internet erreichbar, nur über HTTPS und mit einem starken Admin-Passwort betreiben.",
+  "lg_rain" => "Wo Regen wahrscheinlich ist, aus der Wolkenobergrenzen-Temperatur: grün leichter Regen bis magenta Gewitter. Nur wenn der Satellit Kalibrierdaten sendet; die 3,7-µm-Version nur nachts",
+  "lg_coldtops" => "Nachtüberflüge: die kältesten Wolkenobergrenzen des Überflugs in Farbe, wo Schauer und Gewitter wahrscheinlich sind. Relativ zum Überflug, keine Regenmessung",
 );
 ?>

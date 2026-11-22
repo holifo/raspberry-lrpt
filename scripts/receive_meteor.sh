@@ -238,6 +238,8 @@ CADU_FILE="$WORK_DIR/meteor_m2-x_lrpt${mode}.cadu"
 save_daily_product . "$FILENAME_BASE" "$EPOCH_START"
 # night passes: no images from the channels that need sunlight (before the raw channels go)
 drop_dark_images "MSU-MR (Filled)"
+# coldest cloud tops at night; the 3.7 um rain composite only at night
+rain_images "MSU-MR (Filled)" "$daylight"
 find "MSU-MR (Filled)/" -type f ! -name "*projected*" ! -name "*corrected*" -delete
 
 log "Deleting SatDump projected composites which have been generated, but the channels aren't broadcast" "INFO"
