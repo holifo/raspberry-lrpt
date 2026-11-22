@@ -16,6 +16,6 @@ for img_path in $(sqlite3 ${DB_FILE} "select file_path from decoded_passes where
   sqlite3 "${DB_FILE}" "delete from decoded_passes where file_path = \"$img_path\";"
   log "  Database entry pruned" "INFO"
 done
-find /srv/images /srv/images/thumb -type f \( -name '*.jpg' -o -name '*.png' \) -mtime +$PRUNE_OLDER_THAN -delete
+find /srv/images /srv/images/thumb -type f \( -name '*.jpg' -o -name '*.png' \) -not -path '*/images/station/*' -mtime +$PRUNE_OLDER_THAN -delete
 find "$IMAGE_OUTPUT/daily" -maxdepth 1 -type f -name '*.json' -mtime +$PRUNE_OLDER_THAN -delete 2>/dev/null   # daily maps (their images go above)
 find "$IMAGE_OUTPUT/daily/timelapse" -maxdepth 1 -type f -mtime +$PRUNE_OLDER_THAN -delete 2>/dev/null       # daily time-lapses

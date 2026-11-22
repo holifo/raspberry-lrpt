@@ -1,5 +1,20 @@
 # Changelog
 
+## Raspberry-LRPT v1.36.5 (2026-11-22)
+
+- **About page in tabs.** About now has four tabs: **Station** (version, update check and credits),
+  **Meteor-M**, **ISS** (when the ISS is switched on) and **Sources**, so each part fits on one
+  screen instead of one long page. Links can open a tab directly: `/about#meteor`, `/about#iss`,
+  `/about#sources`; the footer's "update available" note opens the Station tab.
+- **A photo of your station on About.** `./scripts/station_photo.sh photo.jpg "QFH on the roof"`
+  puts a picture of your station at the top of the Station tab (tap it to see it full size).
+  The script turns it upright, shrinks it and removes all its metadata, including any GPS
+  position, because the page is public. `--caption` changes the caption and `--remove` takes it
+  off. The clean-up of old images leaves it alone.
+- **Link to the project on GitHub.** The footer's "Raspberry-LRPT vX" on every page now links to
+  the public repository (github.com/holifo/raspberry-lrpt), and About this software has a line
+  pointing there for the code, updates and issue reports.
+
 ## Raspberry-LRPT v1.36.4 (2026-11-21)
 
 - **Icons in the top menu.** Every menu item now has an icon next to its name. On phones the menu

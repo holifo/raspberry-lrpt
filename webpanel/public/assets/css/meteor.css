@@ -77,8 +77,11 @@ html[data-theme="dark"] .st-planned.mi-st { color: #7fb8ec; border-color: #7fb8e
 }
 
 /* Sat info: jump links, section heads, the ISS card (an extra, in violet) */
-.mi-jump { display: flex; gap: 14px; margin: -4px 0 8px; font-size: .9rem; }
-.mi-jump a { color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor; }
+/* tabs (v1.36.5): one pane at a time, the shared .subnav look; each pane's first heading has no rule */
+.ab-tabs { flex-wrap: wrap; row-gap: 4px; }
+.ab-tabs a { cursor: pointer; }
+.ab-pane[hidden] { display: none !important; }
+.ab-pane > .mi-h1:first-child { border-top: 0; margin-top: 6px; }
 .mi-h1 { font-size: 1.25rem; margin-top: 28px; padding-top: 4px; border-top: 1px solid var(--pl-line); }
 .mi-h1:first-of-type { border-top: 0; margin-top: 8px; }
 .mi-h3 { font-size: 1rem; font-weight: 600; margin: 18px 0 8px; }
@@ -103,3 +106,9 @@ html[data-theme="dark"] .st-planned.mi-st { color: #7fb8ec; border-color: #7fb8e
 .upd-cmd { margin: 6px 0 0; padding: 8px 10px; border-radius: 8px; background: var(--pl-track); color: inherit;
   font-size: .85rem; white-space: pre; overflow-x: auto; }
 .upd-err { word-break: break-word; }
+
+/* station photo (scripts/station_photo.sh), top of the Station tab */
+.cap-grid.ab-photo { display: block; margin: 0 0 14px; }
+.cap-grid.ab-photo .cap-card { width: 100%; max-width: 680px; }
+.ab-photo img { width: 100%; height: auto; max-height: 60vh; object-fit: cover; display: block; }
+.ab-photo-cap { padding: 8px 12px; font-size: .9rem; color: var(--pl-dim); }

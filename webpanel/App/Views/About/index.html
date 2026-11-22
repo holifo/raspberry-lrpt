@@ -40,10 +40,25 @@
   <div class="page-meta">{% if lrpt_version %}Raspberry-LRPT v{{ lrpt_version }} · {% endif %}{{ lang['mi_checked']|default('Checked') }} {{ checked|date(constant('Config\\Config::PASSES_DATE_FORMAT')) }}</div>
 </div>
 
-<nav class="mi-jump"><a href="#station"><i class="fas fa-satellite-dish"></i> {{ lang['about_jump_station']|default('Station') }}</a> <a href="#meteor"><span class="sat-dot m23"></span> Meteor-M</a>{% if iss %} <a href="#iss"><span class="sat-dot iss"></span> ISS</a>{% endif %}</nav>
+<nav class="subnav ab-tabs" role="tablist">
+  <a href="#station" data-pane="station" role="tab"><i class="fas fa-satellite-dish"></i> {{ lang['about_jump_station']|default('Station') }}</a>
+  <a href="#meteor" data-pane="meteor" role="tab"><span class="sat-dot m23"></span> Meteor-M</a>
+  {% if iss %}<a href="#iss" data-pane="iss" role="tab"><span class="sat-dot iss"></span> ISS</a>{% endif %}
+  <a href="#sources" data-pane="sources" role="tab"><i class="fas fa-book"></i> {{ lang['mi_sources']|default('Sources') }}</a>
+</nav>
 
+<section class="ab-pane" id="pane-station" data-tab="station" role="tabpanel">
 {# ---- the station and its software: version and the update check (scripts/update_check.sh) ---- #}
-<h2 class="mi-h mi-h1" id="station">{{ constant('Config\\Config::STATION_TITLE') }}</h2>
+<h2 class="mi-h mi-h1">{{ constant('Config\\Config::STATION_TITLE') }}</h2>
+{% if photo %}
+{# the station photo (scripts/station_photo.sh); opens full size in the image viewer #}
+<div class="cap-grid ab-photo" data-viewer>
+  <a class="cap-card" href="{{ photo.url }}" target="_blank" rel="noopener">
+    <img src="{{ photo.url }}" alt="{{ photo.caption ?: (lang['about_photo']|default('The station')) }}" loading="lazy"{% if photo.w %} width="{{ photo.w }}" height="{{ photo.h }}"{% endif %}>
+    {% if photo.caption %}<span class="ab-photo-cap">{{ photo.caption }}</span>{% endif %}
+  </a>
+</div>
+{% endif %}
 {% set u = update %}
 {% set ust = u ? u.status : 'none' %}
 <div class="mi-box upd upd-{{ ust }}">
@@ -81,9 +96,14 @@
         '{upstream}': '<a href="https://github.com/jekhokie/raspberry-noaa-v2" rel="noopener" target="_blank">raspberry-noaa-v2</a>'})|raw }}</p>
   <p><i class="fas fa-robot"></i> {{ (lang['about_ai']|default('Made with the help of AI. Much of the code, the documentation and the translations on this site were written by {claude}, an AI assistant made by Anthropic (most recently the Claude Opus 5.5 model, used through Claude Code), working to holifo\'s instructions. holifo decided what to build and tested it on a working station.'))|e|replace({
         '{claude}': '<a href="https://www.anthropic.com/claude" rel="noopener" target="_blank">Claude</a>'})|raw }}</p>
-  <p class="mi-dim">{{ lang['about_ai_note']|default('The satellite facts on this page were checked against the sources above on the date shown at the top, but AI can make mistakes: if something looks wrong, please say so on GitHub.') }}</p>
+  <p><i class="fab fa-github"></i> {{ (lang['about_repo']|default('Source code, updates and issue reports: {repo}.'))|e|replace({
+        '{repo}': '<a href="' ~ lrpt_repo ~ '" rel="noopener" target="_blank">github.com/holifo/raspberry-lrpt</a>'})|raw }}</p>
+  <p class="mi-dim">{{ lang['about_ai_note']|default('The satellite facts on this page were checked against the sources in the Sources tab on the date shown at the top, but AI can make mistakes: if something looks wrong, please say so on GitHub.') }}</p>
 </div>
-<h2 class="mi-h mi-h1" id="meteor">{{ lang['mi_title']|default('The Meteor-M series') }}</h2>
+</section>
+
+<section class="ab-pane" id="pane-meteor" data-tab="meteor" role="tabpanel">
+<h2 class="mi-h mi-h1">{{ lang['mi_title']|default('The Meteor-M series') }}</h2>
 <p class="mi-intro">{{ lang['mi_intro']|default("Russia's polar-orbiting weather satellites, built by VNIIEM for Roshydromet and Roscosmos. Each flies a sun-synchronous orbit about 820 km up and sends its MSU-MR images down on 137.9 MHz as LRPT, which this station receives.") }}</p>
 
 {# ---- working now ---- #}
@@ -169,10 +189,13 @@
   </section>
 </div>
 
+</section>
+
 {# ---- extra: the ISS (iss_sstv) ---- #}
 {% if iss %}
+<section class="ab-pane" id="pane-iss" data-tab="iss" role="tabpanel">
 {% set df = constant('Config\\Config::PASSES_DATE_FORMAT') %}
-<h2 class="mi-h mi-h1" id="iss">{{ lang['iss_h']|default('Extra: the International Space Station') }}</h2>
+<h2 class="mi-h mi-h1">{{ lang['iss_h']|default('Extra: the International Space Station') }}</h2>
 <p class="mi-intro">{{ lang['iss_intro']|default("Not a weather satellite: during ARISS events the ISS sends slow-scan TV pictures, which this station records between Meteor passes. It flies much lower than the Meteors, so its passes are shorter (about 10 minutes).") }}</p>
 <div class="mi-two">
   <div class="mi-card sat-iss">
@@ -218,13 +241,66 @@
   {% endfor %}
 </ol>
 <p class="mi-note"><i class="fas fa-info-circle"></i> {{ lang['iss_next']|default('The next event is not announced yet. ARISS announces them a few weeks ahead on ariss.org and its social media; set iss_sstv_frequency to match.') }}</p>
+</section>
 {% endif %}
 
 {# ---- sources ---- #}
-<h2 class="mi-h">{{ lang['mi_sources']|default('Sources') }}</h2>
+<section class="ab-pane" id="pane-sources" data-tab="sources" role="tabpanel">
+<h2 class="mi-h mi-h1">{{ lang['mi_sources']|default('Sources') }}</h2>
 <ul class="mi-sources">
   {% for src in sources %}<li><a href="{{ src[1] }}" rel="noopener" target="_blank">{{ src[0] }}</a></li>{% endfor %}
   {% if iss %}{% for src in iss.sources %}<li><a href="{{ src[1] }}" rel="noopener" target="_blank">{{ src[0] }}</a></li>{% endfor %}{% endif %}
 </ul>
+</section>
 
+{# tabs: one pane at a time, chosen by the address's #fragment (#station, #meteor, #iss,
+   #sources, or any id inside a pane such as #about); without JS every pane shows #}
+<script>
+(function () {
+  var tabs = document.querySelectorAll('.ab-tabs a');
+  var panes = document.querySelectorAll('.ab-pane');
+  if (!tabs.length) return;
+  function paneFor(id) {
+    // the panes' own ids are pane-<tab>, so #iss etc. match no element and the browser does
+    // not jump down the page; other ids (#about) are found inside their pane
+    var el = id && (document.querySelector('.ab-pane[data-tab="' + id + '"]') || document.getElementById(id));
+    while (el && !(el.classList && el.classList.contains('ab-pane'))) el = el.parentNode;
+    return el || panes[0];
+  }
+  function show(id, scroll) {
+    var pane = paneFor(id);
+    panes.forEach(function (p) { p.hidden = p !== pane; });
+    tabs.forEach(function (t) {
+      var on = t.getAttribute('data-pane') === pane.getAttribute('data-tab');
+      t.classList.toggle('active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    var target = id && document.getElementById(id);
+    if (scroll && target && !target.classList.contains('ab-pane')) target.scrollIntoView();
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function (e) {
+      e.preventDefault();
+      var id = t.getAttribute('data-pane');
+      try { history.replaceState(null, '', '#' + id); } catch (err) {}
+      show(id, false);
+    });
+  });
+  window.addEventListener('hashchange', function () {
+    var id = location.hash.slice(1);
+    show(id, true);
+    if (document.querySelector('.ab-tabs a[data-pane="' + id + '"]')) window.scrollTo(0, 0);
+  });
+  // a tab's own #fragment opens that tab at the top of the page (the browser's jump to the pane
+  // would hide the tabs under the menu); any other id inside a pane is scrolled to
+  var h = location.hash.slice(1);
+  var isTab = !!document.querySelector('.ab-tabs a[data-pane="' + h + '"]');
+  show(h, h && !isTab);
+})();
+</script>
+
+{% endblock %}
+
+{% block js_includes %}
+  {% if photo %}<script src="{{ asset('/assets/js/viewer.js') }}"></script>{% endif %}
 {% endblock %}

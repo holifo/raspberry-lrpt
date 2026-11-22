@@ -117,7 +117,7 @@
         <div class="footer-credit">
           {{ lang['based_on']|default('Based on') }}
           <a href="https://github.com/jekhokie/raspberry-noaa-v2" rel="noopener">raspberry-noaa-v2</a>
-          {% if lrpt_version %}<span class="footer-version">· Raspberry-LRPT v{{ lrpt_version }}</span>{% endif %}
+          <span class="footer-version">· <a href="{{ lrpt_repo }}" rel="noopener" target="_blank" title="{{ lang['about_repo_title']|default('Source code on GitHub') }}"><i class="fab fa-github"></i> Raspberry-LRPT{% if lrpt_version %} v{{ lrpt_version }}{% endif %}</a></span>
           {% if lrpt_update and lrpt_update.status == 'update' %}<a class="footer-update" href="/about#station"><i class="fas fa-arrow-circle-up"></i> {{ (lang['upd_footer']|default('v{v} available'))|replace({'{v}': lrpt_update.latest}) }}</a>{% endif %}
         </div>
       </div>

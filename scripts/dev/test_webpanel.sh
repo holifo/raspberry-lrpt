@@ -257,6 +257,27 @@ if ust != 'none':
                'releases': 'https://github.com/holifo/raspberry-lrpt/releases', 'checked': now - 3600,
                'error': 'fatal: unable to access the repository: Could not resolve host: github.com' if ust == 'error' else ''},
               open(os.path.join(srv, 'images', 'update.json'), 'w'))
+# a station photo for the About page (scripts/station_photo.sh) with TEST_STATION_PHOTO=1, or
+# TEST_STATION_PHOTO=file to use a real picture
+sp = os.environ.get('TEST_STATION_PHOTO', '')
+if sp:
+    from PIL import Image, ImageDraw
+    os.makedirs(os.path.join(srv, 'images', 'station'), exist_ok=True)
+    out = os.path.join(srv, 'images', 'station', 'photo.jpg')
+    if os.path.isfile(sp):
+        im = Image.open(sp).convert('RGB'); im.thumbnail((1600, 1600)); im.save(out, quality=85)
+    else:
+        w, h = 1200, 800
+        im = Image.new('RGB', (w, h)); d = ImageDraw.Draw(im)
+        for y in range(h):   # evening sky
+            t = y / h; d.line([(0, y), (w, y)], fill=(int(30 + 200 * t), int(60 + 90 * t), int(140 - 40 * t)))
+        d.rectangle([0, 620, w, h], fill=(40, 46, 38))
+        d.rectangle([592, 300, 608, 640], fill=(70, 70, 70))          # mast
+        for k in range(6):                                            # a QFH-ish helix
+            y = 200 + k * 18; d.arc([560, y, 640, y + 40], 0, 180, fill=(220, 220, 220), width=4)
+        im.save(out, quality=85)
+    json.dump({'caption': 'QFH antenna on the roof (test picture)', 'made': now},
+              open(os.path.join(srv, 'images', 'station', 'photo.json'), 'w'))
 for i in range(6):
     fp = 'METEOR-M2-%d-sample%d' % (3 + i % 2, i)
     ps = now - 86400 * (i + 1)

@@ -13,4 +13,4 @@ for img_path in $(sqlite3 ${DB_FILE} "select file_path from decoded_passes limit
   sqlite3 "${DB_FILE}" "delete from decoded_passes where file_path = \"$img_path\";"
   log "  Database entry pruned" "INFO"
 done
-find /srv/images /srv/images/thumb -type f \( -name '*.jpg' -o -name '*.png' \) -mtime -$PRUNE_OLDEST -delete
+find /srv/images /srv/images/thumb -type f \( -name '*.jpg' -o -name '*.png' \) -not -path '*/images/station/*' -mtime -$PRUNE_OLDEST -delete

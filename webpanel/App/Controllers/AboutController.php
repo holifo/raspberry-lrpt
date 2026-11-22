@@ -102,9 +102,25 @@ class AboutController extends \Lib\Controller {
       ));
     }
     View::renderTemplate('About/index.html', array_merge($args, array(
-      'page' => 'about', 'update' => \Lib\Update::status(), 'sats' => $sats, 'sources' => self::SOURCES, 'iss' => $iss,
+      'page' => 'about', 'update' => \Lib\Update::status(), 'photo' => self::photo(), 'sats' => $sats, 'sources' => self::SOURCES, 'iss' => $iss,
       'checked' => strtotime(self::CHECKED . ' 12:00'), 'now_year' => (int) date('Y'),
       'now_pos' => round(((int) date('Y') + ((int) date('z')) / 365 - 2009) / 25 * 100, 2))));
+  }
+
+  # The station photo for the Station tab (scripts/station_photo.sh writes IMAGE_PATH/station/photo.jpg
+  # and photo.json with the caption); null when there is none.
+  private static function photo() {
+    $dir = \Config\Config::IMAGE_PATH . '/station';
+    $f = $dir . '/photo.jpg';
+    if (!is_file($f)) { return null; }
+    $meta = @json_decode((string) @file_get_contents($dir . '/photo.json'), true);
+    $size = @getimagesize($f);
+    return [
+      'url' => '/images/station/photo.jpg?v=' . filemtime($f),
+      'caption' => is_array($meta) && isset($meta['caption']) ? (string) $meta['caption'] : '',
+      'w' => $size ? $size[0] : null,
+      'h' => $size ? $size[1] : null,
+    ];
   }
 }
 

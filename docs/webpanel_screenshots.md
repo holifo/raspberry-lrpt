@@ -58,11 +58,11 @@ On a phone the details and the list sit under the map:
 
 ## About
 
-The About tab: at the top the station's software (installed version, the daily update check's
-result and the command to update when a new version is out), then the Meteor-M series (the two satellites this station receives, a timeline of every
-launch and plan, the LRPT signal and the instruments) and, further down, the ISS as an extra (its
-orbit, amateur radio frequencies and the year's ARISS SSTV events), with the sources the facts come
-from.
+The About tab, in four tabs: **Station** (the station's software: installed version, the daily
+update check's result and the command to update when a new version is out, and the credits),
+**Meteor-M** (the two satellites this station receives, a timeline of every launch and plan, the
+LRPT signal and the instruments), **ISS** as an extra (its orbit, amateur radio frequencies and the
+year's ARISS SSTV events) and **Sources** (where the facts come from).
 
 ![About tab](assets/screenshots/meteor.jpg)
 

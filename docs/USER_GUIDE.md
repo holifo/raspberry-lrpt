@@ -79,7 +79,7 @@ the composites those channels allow.
 |---|---|---|
 | **Passes** | `/passes` | Station bar (name, grid square, Recording / Waiting), next pass countdown, live decode panel while recording, passes grouped by day |
 | **Satellites** | `/satellite` | Live map of both satellites, the selected one's details, the coming passes |
-| **About** | `/about` | The installed version and the daily update check (up to date, or "update available" with the command to run; the footer shows "vX available" too; `update_check: false` turns it off), credits, then the Meteor-M series (satellites working now, every launch and plan, the LRPT signal, the instruments) and, as an extra, the ISS (orbit, amateur radio frequencies, the year's ARISS SSTV events) |
+| **About** | `/about` | The installed version and the daily update check (up to date, or "update available" with the command to run; the footer shows "vX available" too; `update_check: false` turns it off), credits; in tabs: Station (this), Meteor-M (satellites working now, every launch and plan, the LRPT signal, the instruments), ISS as an extra (orbit, amateur radio frequencies, the year's ARISS SSTV events) and Sources. `/about#meteor`, `#iss` and `#sources` open a tab directly |
 | **Captures** | `/captures` | Every capture as a card, grouped by day; "About the images" explains the channels and every image type |
 | **One capture** | click a card | Pass details, every image (zoomable viewer), graphs, spectrogram, recording download |
 | **Daily map** | `/daily` | One map per day of all day passes, one of all night passes, and the day's time-lapse |
@@ -278,10 +278,15 @@ Run them on the Pi as your normal user (not with `sudo`).
 | Redraw a day's maps | `./scripts/daily_map.sh 2026-11-13` |
 | Redraw every day that can be | `./scripts/daily_map.sh --all` |
 | Make the time-lapse now | `./scripts/animation.sh` for today, `./scripts/animation.sh 2026-11-14` for one day, `--all` for every day it can (add `--redo` after changing the area) |
+| Show a photo of your station on About | copy it to the Pi (`scp station.jpg pi@<pi-address>:~/`), then `./scripts/station_photo.sh ~/station.jpg "QFH on the roof"`; `--caption "…"` changes the caption, `--remove` takes it off, no argument shows what is set |
 | Send a test post to Discord | `./scripts/push_discord.sh --test` |
 | Post earlier captures to Discord | `./scripts/discord_post.sh -l` to list them, then `./scripts/discord_post.sh 123`, `--last 3` or `--today` |
 | Follow the log | `tail -f /var/log/raspberry-lrpt/output.log` (or open `/log`) |
 | Check the orbit data | `grep -c 59051 ~/.config/satdump/satdump_tles.txt` (should be 1 or more) |
+
+**Station photo:** the script turns the photo upright, shrinks it to 1600 px and removes all of
+its metadata (camera details and any GPS position, since the About page is public) before it goes
+on the page. It is kept in `/srv/images/station/`, which the clean-up of old images leaves alone.
 
 **Re-processing** decodes a kept recording again, offline, and replaces the capture on the site
 (new images, labels, graphs and a redrawn day map). Use it when a live pass failed after
