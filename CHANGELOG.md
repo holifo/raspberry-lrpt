@@ -1,5 +1,13 @@
 # Changelog
 
+## Raspberry-LRPT v1.37.2 (2026-11-22)
+
+- **No more broken thumbnail on night passes.** When none of the night thumbnail images was made
+  (for example a pass whose satellite clock was off, so MCIR and the maps were left out, and whose
+  sunlight images were dropped as empty), the capture had no card picture. The station now falls
+  back to any corrected image, IR first. The default night list also gained
+  `3.9_um_Shortwave_IR_(Uncalibrated)_corrected` and `MSU-MR_Channel_4_corrected`.
+
 ## Raspberry-LRPT v1.37.1 (2026-11-22)
 
 - **Spectrogram: no striped band at the end.** When a pass ends, SatDump stops receiving but

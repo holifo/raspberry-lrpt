@@ -375,6 +375,12 @@ if [ -n "$(find /srv/images -maxdepth 1 -type f -name "$(basename "$IMAGE_FILE_B
           break
       fi
   done
+  # none of them made (e.g. a night pass without MCIR because the satellite's clock was off):
+  # any corrected image, IR first, so the capture's card never shows a broken picture
+  if [ ! -f "${IMAGE_THUMB_BASE}-website-thumbnail.jpg" ]; then
+    fallback=$(ls "${IMAGE_THUMB_BASE}"-*IR*_corrected.jpg "${IMAGE_THUMB_BASE}"-*_corrected.jpg 2>/dev/null | head -1)
+    [ -n "$fallback" ] && cp "$fallback" "${IMAGE_THUMB_BASE}-website-thumbnail.jpg"
+  fi
 
   log "Some images were produced, adding them to the database" "INFO"
   [ -f "${IMAGE_FILE_BASE}-spectrogram.png" ] && spectrogram=1

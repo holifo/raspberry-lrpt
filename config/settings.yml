@@ -204,7 +204,7 @@ meteor_nighttime_enhancements: 'MCIR_corrected 10.8um_Thermal_IR_(Uncalibrated)_
 #   space-separated SatDump image names, tried in order - the first one produced is used
 #   (falls back to the built-in list if none of these exist)
 meteor_daytime_thumbnail: 'MSA_corrected AVHRR_221_False_Color_corrected Natural_Color_corrected MCIR_corrected'
-meteor_nighttime_thumbnail: 'MCIR_corrected 10.8um_Thermal_IR_(Uncalibrated)_corrected Enhanced_IR_corrected 3.9_um_Shortwave_IR_(Calibrated)_corrected'
+meteor_nighttime_thumbnail: 'MCIR_corrected 10.8um_Thermal_IR_(Uncalibrated)_corrected Enhanced_IR_corrected 3.9_um_Shortwave_IR_(Calibrated)_corrected 3.9_um_Shortwave_IR_(Uncalibrated)_corrected MSU-MR_Channel_4_corrected'
 flip_meteor_image: true
 # delete a pass's images made from a channel with no picture in it: on night passes channels 1-3
 # (reflected sunlight) are empty, so MSA, AVHRR 221, Natural Color, ... come out white or yellow.
