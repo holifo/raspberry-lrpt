@@ -1,5 +1,10 @@
 # Changelog
 
+## Raspberry-LRPT v1.36.7 (2026-11-22)
+
+- **The install leaves more of your Pi alone.** It no longer switches off or removes any of the
+  Pi's own network protection, so a Pi that does other jobs keeps its own setup.
+
 ## Raspberry-LRPT v1.36.6 (2026-11-22)
 
 - **The install no longer replaces your own time service** (issue #1). Installing ntpsec, which

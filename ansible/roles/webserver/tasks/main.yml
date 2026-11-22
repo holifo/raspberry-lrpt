@@ -11,24 +11,6 @@
       - php{{ php_version }}-mbstring
       - php{{ php_version }}-sqlite3
 
-# The station has no firewall of its own: it sits behind the router, which forwards only the web
-# panel's port. Older installs turned UFW on; switch it off and remove it.
-- name: Firewall (UFW) off
-  become: yes
-  shell: |
-    command -v ufw >/dev/null || exit 0
-    ufw status | grep -q "Status: active" || exit 0
-    ufw --force disable >/dev/null && echo disabled
-  register: ufw_off
-  changed_when: "'disabled' in ufw_off.stdout"
-
-- name: Firewall (UFW) removed
-  become: yes
-  apt:
-    name: ufw
-    state: absent
-    purge: yes
-
 - name: User in the www-data group
   become: yes
   user:
