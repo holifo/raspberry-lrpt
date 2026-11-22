@@ -138,7 +138,9 @@ fi
 
 # publish the TLEs for the web panel's ground-track map (Satellites tab); the ISS goes on it too
 if [ -f "${TLE_OUTPUT}" ] && [ -d "${WEB_HOME}/App/Static" ]; then
-  { cat "${TLE_OUTPUT}"; [ "$ISS_SSTV" == "true" ] && [ -s "$ISS_TLE" ] && cat "$ISS_TLE"; } \
+  # (the ISS test is an if: as "[ … ] && cat" it ended the group with "false" whenever the ISS
+  # was off, and that was logged as a failed copy although the file was written)
+  { cat "${TLE_OUTPUT}"; if [ "$ISS_SSTV" == "true" ] && [ -s "$ISS_TLE" ]; then cat "$ISS_TLE"; fi; } \
     > "${WEB_HOME}/App/Static/meteor.tle" 2>> $LRPT_LOG ||
     log "Could not copy TLE file for the web panel map" "WARN"
 fi

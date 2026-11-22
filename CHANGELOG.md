@@ -1,5 +1,11 @@
 # Changelog
 
+## Raspberry-LRPT v1.38.1 (2026-11-22)
+
+- No more false "Could not copy TLE file for the web panel map" warning when the ISS is off: the
+  map's orbit file was written every time, but the line that adds the ISS orbit ended with "false"
+  when there was nothing to add, and that was logged as a failed copy.
+
 ## Raspberry-LRPT v1.38.0 (2026-11-22)
 
 - **Rain images.** Two kinds, both estimates rather than measurements:
