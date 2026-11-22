@@ -18,3 +18,5 @@ webpanel-test-output/
 
 # install_and_upgrade.sh output
 install.log
+# written by SatDump when it runs with scripts/ as its folder
+scripts/telemetry.json

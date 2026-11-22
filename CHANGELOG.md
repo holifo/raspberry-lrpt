@@ -1,5 +1,15 @@
 # Changelog
 
+## Raspberry-LRPT v1.37.3 (2026-11-22)
+
+- **ISS APRS passes no longer leave processes running.** Each APRS pass starts a small log reader
+  for the packets; the command meant to stop it never matched (the `+` in `tail -n +1` counts as a
+  pattern character), so the reader and two copies of `receive_iss.sh` stayed behind after every
+  pass. They made the Meteor/ISS switches and the settings page answer "A pass is being recorded"
+  when nothing was. The reader now also ends by itself when the recording script ends.
+- `scripts/telemetry.json`, an old upstream file that SatDump overwrites, is no longer tracked,
+  so `git pull` no longer warns about it.
+
 ## Raspberry-LRPT v1.37.2 (2026-11-22)
 
 - **No more broken thumbnail on night passes.** When none of the night thumbnail images was made
