@@ -132,7 +132,9 @@ process() {
   # keep the product for the daily map, then the same clean-up and naming as a live pass
   save_daily_product "$work" "$base" "$epoch_start"
   drop_dark_images "$dir"
-  rain_images "$dir" "$daylight"
+  local flip=false
+  [ "$PASS_DIRECTION" == "Northbound" ] && [ "$FLIP_METEOR_IMG" == "true" ] && flip=true
+  rain_images "$dir" "$daylight" "$flip"
   capitals_map "$dir" "$daylight" "$epoch_start"
   find "$dir" -type f -name "*.png" ! -name "*projected*" ! -name "*corrected*" -delete
   local f

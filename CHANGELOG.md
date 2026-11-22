@@ -1,5 +1,11 @@
 # Changelog
 
+## Raspberry-LRPT v1.39.3 (2026-11-22)
+
+- The **Coldest cloud tops** legend was upside down on northbound passes: the station turns those
+  passes' images 180° after the legend is drawn. It is now drawn upside down in the opposite
+  corner for them (`cold_tops.py --flip`), so it ends up upright in the top-left corner.
+
 ## Raspberry-LRPT v1.39.2 (2026-11-22)
 
 - The **Capitals map** now shows the **whole pass** instead of a fixed area around Greece. SatDump

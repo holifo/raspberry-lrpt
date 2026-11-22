@@ -33,7 +33,7 @@ DISTINCT = 0.25                    # the cold tail must reach this far below the
 FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
 
 
-def main(src, dst):
+def main(src, dst, flip=False):
     a = np.asarray(Image.open(src).convert('L')).astype(np.float32)
     valid = a > 0                                         # fill (missing lines) is 0
     if valid.mean() < 0.05:
@@ -59,7 +59,7 @@ def main(src, dst):
         coloured = float(masks[0].sum()) / float(valid.sum())
 
     img = Image.fromarray(rgb.astype(np.uint8), 'RGB')
-    legend(img, coloured > 0)
+    legend(img, coloured > 0, flip)
     tmp = dst + '.tmp.png'
     img.save(tmp)
     os.replace(tmp, dst)
@@ -71,7 +71,9 @@ def main(src, dst):
     return 0
 
 
-def legend(img, any_colour):
+def legend(img, any_colour, flip=False):
+    """The legend box, top left. With flip (a northbound pass the station turns 180° afterwards)
+    it is drawn upside down in the bottom-right corner, so it ends up top left and upright."""
     w = img.width
     s = max(1.0, w / 1568)                                # sized for a full-width MSU-MR image
     try:
@@ -85,7 +87,9 @@ def legend(img, any_colour):
     lines = ['Coldest cloud tops', 'relative to this pass, not a rain measurement']
     box_w = int(430 * s)
     box_h = pad * 2 + int(22 * s) + int(20 * s) + (len(rows) * int(26 * s) if any_colour else int(24 * s))
-    x0, y0 = pad, pad
+    box = Image.new('RGBA', (box_w + 1, box_h + 1), (0, 0, 0, 0))
+    d = ImageDraw.Draw(box, 'RGBA')
+    x0, y0 = 0, 0
     d.rounded_rectangle([x0, y0, x0 + box_w, y0 + box_h], radius=int(8 * s), fill=(11, 18, 32, 200))
     y = y0 + pad
     d.text((x0 + pad, y), lines[0], font=bold, fill=(255, 255, 255))
@@ -94,18 +98,24 @@ def legend(img, any_colour):
     y += int(26 * s)
     if not any_colour:
         d.text((x0 + pad, y), 'none distinctly cold in this pass', font=font, fill=(255, 255, 255))
-        return
-    for colour, text in rows:
-        d.rectangle([x0 + pad, y + 2, x0 + pad + sw, y + int(18 * s)], fill=colour + (255,))
-        d.text((x0 + pad * 2 + sw, y), text, font=font, fill=(255, 255, 255))
-        y += int(26 * s)
+    else:
+        for colour, text in rows:
+            d.rectangle([x0 + pad, y + 2, x0 + pad + sw, y + int(18 * s)], fill=colour + (255,))
+            d.text((x0 + pad * 2 + sw, y), text, font=font, fill=(255, 255, 255))
+            y += int(26 * s)
+    if flip:
+        box = box.rotate(180)
+        img.paste(box, (img.width - pad - box.width, img.height - pad - box.height), box)
+    else:
+        img.paste(box, (pad, pad), box)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        sys.exit('Usage: cold_tops.py CHANNEL4_CORRECTED.png OUT.png')
+    args = [a for a in sys.argv[1:] if a != '--flip']
+    if len(args) != 2:
+        sys.exit('Usage: cold_tops.py CHANNEL4_CORRECTED.png OUT.png [--flip]')
     try:
-        sys.exit(main(sys.argv[1], sys.argv[2]))
+        sys.exit(main(args[0], args[1], '--flip' in sys.argv))
     except Exception as e:                               # never stop the pass for this
         print('Cold cloud tops: not made (%s)' % e)
         sys.exit(0)

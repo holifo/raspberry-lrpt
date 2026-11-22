@@ -239,7 +239,7 @@ save_daily_product . "$FILENAME_BASE" "$EPOCH_START"
 # night passes: no images from the channels that need sunlight (before the raw channels go)
 drop_dark_images "MSU-MR (Filled)"
 # coldest cloud tops at night; the 3.7 um rain composite only at night
-rain_images "MSU-MR (Filled)" "$daylight"
+rain_images "MSU-MR (Filled)" "$daylight" "$([ -n "$FLIP" ] && echo true || echo false)"
 # the pass on the station's area with the capitals in green
 capitals_map "MSU-MR (Filled)" "$daylight" "$EPOCH_START"
 find "MSU-MR (Filled)/" -type f ! -name "*projected*" ! -name "*corrected*" -delete

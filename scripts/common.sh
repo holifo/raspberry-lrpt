@@ -228,7 +228,8 @@ drop_dark_images() {
   return 0
 }
 
-# rain_images DIR DAYLIGHT: setting rain_images. Night passes get the relative "Coldest cloud tops"
+# rain_images DIR DAYLIGHT [FLIP]: setting rain_images (FLIP true: a northbound pass that is turned
+# 180° afterwards, so the legend is drawn upside down to end up upright). Night passes get the relative "Coldest cloud tops"
 # image from channel 4 (cold_tops.py; the satellites send no calibration now, so no temperatures).
 # SatDump's own "Rain Likelihood" composites (configs.yml) appear by themselves when calibration
 # comes back; the 3.7 um one is dropped by day, when that channel also sees reflected sunlight.
@@ -240,7 +241,8 @@ rain_images() {
   elif [ -f "$ch4" ]; then
     while IFS= read -r line; do
       [ -n "$line" ] && log "$line" "INFO"
-    done < <(python3 "$LRPT_HOME/scripts/image_processors/cold_tops.py" "$ch4" "$dir/msu_mr_rgb_Cold_Cloud_Tops_corrected.png" 2>&1)
+    done < <(python3 "$LRPT_HOME/scripts/image_processors/cold_tops.py" "$ch4" "$dir/msu_mr_rgb_Cold_Cloud_Tops_corrected.png" \
+               $([ "${3:-false}" == "true" ] && echo --flip) 2>&1)
   fi
   return 0
 }
