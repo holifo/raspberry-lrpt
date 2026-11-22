@@ -1,5 +1,10 @@
 # Changelog
 
+## Raspberry-LRPT v1.36.10 (2026-11-22)
+
+- **Old clean-up steps removed.** The install no longer looks for files left by much older
+  versions of the station, and the docs and changelog no longer mention them.
+
 ## Raspberry-LRPT v1.36.9 (2026-11-22)
 
 - **The uninstaller asks before removing shared software.** `rl1_uninstall.sh` now asks
@@ -240,12 +245,8 @@
 
 ## Raspberry-LRPT v1.31.1 (2026-11-19)
 
-- **MeteorDemod removed: SatDump is the only decoder.** The documentation still said MeteorDemod
-  could be used instead (`meteor_decoder: 'meteordemod'`), but that path was a leftover from
-  raspberry-noaa-v2 that this project never tested, and MeteorDemod's current source no longer
-  builds with the compilers in Trixie. The setting, its build, its config and its checks are gone;
-  an upgrade deletes an old MeteorDemod build if there is one. A `meteor_decoder` line left in
-  your own settings is simply ignored.
+- **SatDump is the only decoder.** The `meteor_decoder` setting is gone; a line left in your own
+  settings is simply ignored.
 - **ISS switch text:** on Admin > Passes the ISS switch now says it records SSTV pictures during
   ARISS events and APRS on the other passes (in all nine languages).
 - **Docs** brought up to date for ISS APRS (user guide, hardware, README credits: Dire Wolf).
@@ -277,11 +278,10 @@
 - **The checks after a first install no longer report hundreds of false failures.** On a new
   Trixie Pi the verification tool said "Failing tests 239" for an install that had worked. Its
   list of file modes was an old snapshot from raspberry-noaa-v2, with files that no longer exist
-  (MeteorDemod, old SatDump debs, old templates) and modes that a group-writable system (umask 002,
+  (old SatDump debs, old templates) and modes that a group-writable system (umask 002,
   as on Raspberry Pi OS Trixie) never matches. Now:
   - it checks the paths that matter (settings file 600, database, folders), accepts an extra
-    group-write bit, checks that every script git marks executable is executable, and checks
-    MeteorDemod's files only when MeteorDemod is the decoder
+    group-write bit, and checks that every script git marks executable is executable
   - a package counts only when it is really installed (it used to pass names apt merely knew of),
     and the list matches what the install puts on (`libncurses-dev`, `libvolk-dev` on Trixie)
   - the web panel test uses the station's own port and HTTPS setting, and says what it got
@@ -421,7 +421,7 @@
 
 - **Raspberry Pi OS Trixie (Debian 13)**, as well as Bookworm. The install picks each release's
   package names: PHP 8.4 on Trixie (8.2 on Bookworm) with the matching nginx socket,
-  `libvolk-dev`, `libncurses-dev`, envbash on both; `libatlas-base-dev` (MeteorDemod only) is
+  `libvolk-dev`, `libncurses-dev`, envbash on both; `libatlas-base-dev` is
   gone. The web panel was tested on PHP 8.4: every page, no deprecation warnings.
 - **SatDump on Trixie:** `scripts/tools/build_satdump_deb.sh` builds the same SatDump 1.2.3 commit
   as the Bookworm package, once, on a Trixie Pi (about an hour) into

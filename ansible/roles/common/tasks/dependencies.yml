@@ -154,15 +154,3 @@
     owner: "{{ target_user }}"
     group: "{{ target_user }}"
     mode: 0700
-
-# MeteorDemod was removed in v1.31.1 (SatDump is the only decoder): one-time clean-up of a
-# build left by an earlier install
-- name: Old MeteorDemod removed
-  become: yes
-  file:
-    path: "{{ item }}"
-    state: absent
-  loop:
-    - /usr/local/bin/meteordemod
-    - /home/{{ target_user }}/.config/meteordemod
-    - /home/{{ target_user }}/MeteorDemod

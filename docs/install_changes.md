@@ -14,7 +14,6 @@ check it before you run it. Each line says when it happens.
 | nginx's `default` site, replaced by the web panel. **If it is your own site, the install asks first** (default no) and keeps a copy as `default.before-raspberry-lrpt-<date>`; no stops the install before anything changes | Always (asks only for your own site) |
 | systemd's time sync (`systemd-timesyncd`) stopped and disabled, ntpsec installed instead, `/etc/ntp.conf` deleted | Only when the Pi has no chrony or openntpd: those are left alone |
 | A left-over sury PHP repository entry in `/etc/apt/sources.list.d` (from raspberry-noaa-v2) | If present |
-| MeteorDemod (`/usr/local/bin/meteordemod`, `~/.config/meteordemod`, `~/MeteorDemod`) and `~/.rn2_utils` | Older installs, if present |
 | The web panel folder `/var/www/wx-new` is mirrored from the repo: files you put there yourself are deleted | Every run |
 
 ## Kernel drivers blocked

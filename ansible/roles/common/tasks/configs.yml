@@ -181,12 +181,6 @@
     mode: 0755
   loop: [rl1_backup_restore.sh, rl1_uninstall.sh]
 
-# one-time clean-up (v1.18.0): the folder's old name, before the rn2 -> rl1 rename
-- name: Old utilities folder removed
-  file:
-    path: /home/{{ target_user }}/.rn2_utils
-    state: absent
-
 - name: Script permissions
   file:
     path: "{{ lrpt_home }}/scripts/{{ item }}"
