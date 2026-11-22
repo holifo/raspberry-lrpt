@@ -215,3 +215,15 @@ ${DISCORD_SITE_URL%/}/captures/listImages?pass_id=${id}"
     ( nohup "$LRPT_HOME/scripts/push_discord.sh" "$msg" "${files[@]}" > /dev/null 2>&1 & )
   fi
 }
+
+# drop_dark_images DIR: delete the images made from a channel with no picture in it (night passes:
+# channels 1-3 need sunlight), checked against the raw MSU-MR-N.png channels in DIR. Setting
+# drop_dark_images; it never fails the pass.
+drop_dark_images() {
+  [ "${DROP_DARK_IMAGES:-true}" == "true" ] || return 0
+  local line
+  while IFS= read -r line; do
+    [ -n "$line" ] && log "$line" "INFO"
+  done < <(python3 "$LRPT_HOME/scripts/image_processors/drop_dark_images.py" "$1" 2>&1)
+  return 0
+}

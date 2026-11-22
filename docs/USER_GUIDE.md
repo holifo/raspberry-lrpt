@@ -84,7 +84,7 @@ the composites those channels allow.
 | **Satellites** | `/satellite` | Live map of both satellites, the selected one's details, the coming passes |
 | **Live log** | `/log` | CPU, temperature, memory, SDR, disks, next pass, and the station log live |
 | **About** | `/about` | The installed version and the daily update check (up to date, or "update available" with the command to run; the footer shows "vX available" too; `update_check: false` turns it off), credits, a photo of your station if you add one (`./scripts/station_photo.sh`); in tabs: Station (this), Meteor-M (satellites working now, every launch and plan, the LRPT signal, the instruments), ISS as an extra (orbit, amateur radio frequencies, the year's ARISS SSTV events) and Sources. `/about#meteor`, `#iss` and `#sources` open a tab directly |
-| **Admin** | `/admin/passes` (type it) | Delete passes and captures; needs the admin password |
+| **Admin** | `/admin/passes` (type it) | Delete passes and captures, switch Meteor / the ISS on or off, and **Settings** (`/admin/settings`): every station setting on one page ([how](admin_settings.md)); needs the admin password. Not security-reviewed: use it over HTTPS |
 
 **On every page:** the language menu (flag, top right: English, Deutsch, Français, Italiano,
 Español, Ελληνικά, 中文, हिन्दी, العربية), the moon / sun button for dark mode, and the UTC and local
@@ -301,7 +301,8 @@ Before installing on a Pi that does other jobs too, read
 
 Settings live in `config/settings.yml`; your install answers (station, location, receiver, gains,
 web login, Discord webhook) are in `config/settings.local.yml` and win over it. After changing either, run
-`./install_and_upgrade.sh`.
+`./install_and_upgrade.sh`. Or use **Admin > Settings** in the web panel: it saves to the same
+`settings.local.yml` and applies most settings at once ([how](admin_settings.md)).
 
 **The clock.** Passes are scheduled to the second, so the station keeps its clock with ntpsec
 (`ntp_server`, a pool by default). If your Pi already runs its own time service, chrony or
@@ -321,6 +322,7 @@ install ntpsec; `ntp_server` is then not used.
 | `storage` | sd | What the Pi runs from, asked by the install. `sd`: each pass is decoded on a RAM disk to spare the SD card. `ssd`: no RAM disk |
 | `delete_older_than_n` | 30 | Captures older than this many days are deleted |
 | `flip_meteor_image` | true | Turn northbound passes the right way up |
+| `drop_dark_images` | true | Delete a pass's images made from a channel with no picture in it: at night channels 1-3 need sunlight, so MSA, AVHRR 221, Natural Color, ... come out white or yellow (the pictures are checked, so dawn and dusk passes keep theirs) |
 | `annotation_width_percent` | 50 | Width of the station label, as a share of the image; its text is in `config/annotation/annotation.yml` ([label](annotation.md)) |
 | `annotation_style` | light | The label's look: `light`, `dark`, `auto` (light by day, dark at night), `white`, `black` or `clear` ([label](annotation.md#choosing-a-look)) |
 | `annotation_transparency` | 70 | How see-through the label's panel is, 0 (solid) to 100 |

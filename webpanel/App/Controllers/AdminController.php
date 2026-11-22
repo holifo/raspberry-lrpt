@@ -48,11 +48,7 @@ class AdminController extends \Lib\Controller {
   public function switchAction($args) {
     $what = $_POST['what'] ?? '';
     $state = $_POST['state'] ?? '';
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? ($_SERVER['HTTP_REFERER'] ?? '');
-    $host = $_SERVER['HTTP_HOST'] ?? '';
-    $o_host = parse_url($origin, PHP_URL_HOST);
-    $o_port = parse_url($origin, PHP_URL_PORT);
-    $same_site = $o_host && $host !== '' && $o_host . ($o_port ? ':' . $o_port : '') === $host;
+    $same_site = $this->sameSite();
     if (!in_array($what, ['meteor', 'iss'], true)) {
       header('Location: /admin/passes');
       return;
@@ -73,6 +69,118 @@ class AdminController extends \Lib\Controller {
       opcache_invalidate(dirname(__DIR__, 2) . '/Config/Config.php', true);
     }
     header('Location: /admin/passes?sw=' . $what . '-' . $result);
+  }
+
+  # Settings page (Admin > Settings). scripts/settings_web.sh show|apply runs as the station user
+  # (sudo rule 030_www-data-switch; no sudo when PHP already runs as that user, e.g. in tests).
+  # The admin login and the Discord webhook are never sent here. Not security-reviewed: see the
+  # notice on the page.
+  private function settingsCmd($what) {
+    $me = function_exists('posix_geteuid') ? (posix_getpwuid(posix_geteuid())['name'] ?? '') : '';
+    $sudo = $me === Config::STATION_USER ? '' : 'sudo -n -H -u ' . escapeshellarg(Config::STATION_USER) . ' ';
+    return $sudo . escapeshellarg(Config::LRPT_HOME . '/scripts/settings_web.sh') . ' ' . $what;
+  }
+
+  private function settingsRun($what, $input = '') {
+    $proc = proc_open($this->settingsCmd($what), [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+    if (!is_resource($proc)) { return [null, 1]; }
+    fwrite($pipes[0], $input);
+    fclose($pipes[0]);
+    $out = stream_get_contents($pipes[1]);
+    $err = stream_get_contents($pipes[2]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    $code = proc_close($proc);
+    if ($err !== '') { error_log('settings_web.sh ' . $what . ': ' . trim($err)); }
+    $json = null;
+    foreach (array_reverse(explode("\n", trim($out))) as $line) {    # the JSON result line
+      if (substr(ltrim($line), 0, 1) === '{') { $json = json_decode($line, true); break; }
+    }
+    return [$json, $code];
+  }
+
+  # the form's text for a value, as the page shows and posts it
+  private static function settingText($v) {
+    if (is_bool($v)) { return $v ? 'true' : 'false'; }
+    if ($v === null) { return ''; }
+    return (string)$v;
+  }
+
+  private function sameSite() {
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? ($_SERVER['HTTP_REFERER'] ?? '');
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    $o_host = parse_url($origin, PHP_URL_HOST);
+    $o_port = parse_url($origin, PHP_URL_PORT);
+    return $o_host && $host !== '' && $o_host . ($o_port ? ':' . $o_port : '') === $host;
+  }
+
+  const SETTINGS_RESULTS = ['saved', 'none'];
+  public function settingsAction($args) {
+    list($data, $code) = $this->settingsRun('show');
+    $sections = is_array($data) ? ($data['sections'] ?? null) : null;
+    $result = null;
+    $errors = [];
+    $posted = [];
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sections !== null) {
+      $in = is_array($_POST['s'] ?? null) ? $_POST['s'] : [];
+      $changes = [];
+      foreach ($sections as $sec) {
+        foreach ($sec['settings'] as $row) {
+          $key = $row['key'];
+          if (!empty($row['secret']) || !empty($row['locked']) || !array_key_exists($key, $in) || !is_string($in[$key])) { continue; }
+          $new = trim(str_replace(["\r\n", "\r", "\n"], ' ', $in[$key]));
+          $posted[$key] = $new;
+          $cur = $row['value'];
+          $same = (is_int($cur) || is_float($cur)) ? (is_numeric($new) && (float)$new == (float)$cur)
+                                                   : $new === self::settingText($cur);
+          if (!$same) { $changes[$key] = $new; }
+        }
+      }
+      if (!$this->sameSite()) {
+        $result = 'fail';
+      } elseif (!$changes) {
+        header('Location: /admin/settings?r=none');
+        return;
+      } else {
+        list($res, $code) = $this->settingsRun('apply', json_encode($changes));
+        if (function_exists('opcache_invalidate')) {
+          opcache_invalidate(dirname(__DIR__, 2) . '/Config/Config.php', true);
+        }
+        if (is_array($res) && !empty($res['ok'])) {
+          header('Location: /admin/settings?r=saved&n=' . count($res['saved'])
+                 . '&i=' . count($res['install']) . '&sch=' . (empty($res['reschedule']) ? 0 : 1));
+          return;
+        }
+        if (is_array($res) && !empty($res['busy'])) {
+          $result = 'busy';
+        } elseif (is_array($res) && !empty($res['errors'])) {
+          $result = 'invalid';
+          $errors = $res['errors'];
+        } else {
+          $result = 'fail';
+          error_log('Settings apply failed (' . $code . ')');
+        }
+      }
+    } elseif (isset($args['r']) && in_array($args['r'], self::SETTINGS_RESULTS, true)) {
+      $result = $args['r'];
+    }
+    if ($sections !== null) {
+      foreach ($sections as &$sec) {
+        foreach ($sec['settings'] as &$row) {
+          if (!array_key_exists('value', $row)) { continue; }
+          $row['text'] = array_key_exists($row['key'], $posted) ? $posted[$row['key']] : self::settingText($row['value']);
+          $row['error'] = $errors[$row['key']] ?? null;
+        }
+      }
+      unset($sec, $row);
+    }
+    $args = array_merge($args, array('sections' => $sections,
+                                     'result' => $result,
+                                     'saved_n' => (int)($args['n'] ?? 0),
+                                     'install_n' => (int)($args['i'] ?? 0),
+                                     'resched' => ($args['sch'] ?? '') === '1',
+                                     'admin_action' => 'settings'));
+    View::renderTemplate('Admin/settings.html', $args);
   }
 
   # TODO: This is not very DRY between this and the above function - do

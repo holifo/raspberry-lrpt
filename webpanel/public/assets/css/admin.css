@@ -57,3 +57,54 @@
 .st-switch.is-on .sw-knob { left: 21px; }
 .sw-label { min-width: 2.2em; text-align: left; }
 .st-switch .sw:focus-visible .sw-track { outline: 2px solid var(--sw-on); outline-offset: 2px; }
+
+/* Admin > Settings (Views/Admin/settings.html); colours from site.css / dark.css variables */
+.set-risk { display: flex; gap: 10px; align-items: baseline; font-size: 0.9rem; }
+.set-intro { color: var(--pl-dim); font-size: 0.9rem; margin: 0 0 10px; }
+.set-cmd { white-space: nowrap; }
+.set-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 12px; }
+.set-jump { display: flex; flex-wrap: wrap; gap: 6px; flex: 1 1 auto; }
+.set-jump a { font-size: 0.82rem; padding: 2px 10px; border: 1px solid var(--pl-line); border-radius: 999px; color: var(--pl-dim); }
+.set-jump a:hover { text-decoration: none; background: var(--pl-hover); color: inherit; }
+#set-find { flex: 0 1 240px; }
+.set-sec { background: var(--pl-card); border: 1px solid var(--pl-line); border-radius: 10px; padding: 4px 16px 8px;
+  margin-bottom: 14px; scroll-margin-top: 4.5rem; }
+.set-sec h2 { font-size: 1.05rem; font-weight: 700; margin: 10px 0 2px; }
+.set-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 6px 20px; align-items: start;
+  padding: 10px 0; border-top: 1px solid var(--pl-line); }
+.set-sec > h2 + .set-row { border-top: 0; }
+.set-row.is-changed { box-shadow: inset 3px 0 0 var(--m23); padding-left: 10px; }
+.set-row.has-error { box-shadow: inset 3px 0 0 #d9534f; padding-left: 10px; }
+.set-label label { font-weight: 600; margin: 0 6px 0 0; }
+.set-key { font-size: 0.75rem; color: var(--pl-faint); background: none; padding: 0; }
+.set-help { color: var(--pl-dim); font-size: 0.84rem; line-height: 1.35; margin-top: 2px; }
+.set-error { color: #d9534f; font-size: 0.84rem; margin-top: 3px; }
+.set-badge { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0 7px; border-radius: 999px;
+  margin-right: 6px; vertical-align: 1px; border: 1px solid currentColor; }
+.set-badge.install { color: #c07a12; }
+.set-badge.pending { color: #fff; background: #c07a12; border-color: #c07a12; }
+.set-badge.sched { color: var(--pl-dim); }
+.set-fixed { font-weight: 600; }
+.set-long { font-family: SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.78rem; }
+.set-num { max-width: 160px; }
+.set-toggle { position: relative; display: inline-block; width: 42px; height: 24px; margin: 2px 0 0; cursor: pointer; }
+.set-toggle input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.set-toggle span { position: absolute; inset: 0; border-radius: 999px; background: var(--pl-track); border: 1px solid var(--pl-line); transition: background .15s; }
+.set-toggle span::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .15s; }
+.set-toggle input:checked + span { background: #2e9e5b; border-color: #2e9e5b; }
+.set-toggle input:checked + span::after { transform: translateX(18px); }
+.set-toggle input:focus-visible + span { outline: 2px solid #4a90d9; outline-offset: 2px; }
+.set-adv { margin: 4px 0 2px; border-top: 1px dashed var(--pl-line); }
+.set-adv > summary { cursor: pointer; color: var(--pl-dim); font-size: 0.88rem; font-weight: 600; padding: 8px 0; }
+.set-adv[open] > summary { margin-bottom: 0; }
+.set-bar { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  padding: 10px 14px; margin: 0 -2px 10px; background: var(--pl-card); border: 1px solid var(--pl-line); border-radius: 10px;
+  box-shadow: 0 -4px 14px rgba(0,0,0,.08); }
+.set-count { margin-right: auto; color: var(--m23); font-weight: 600; font-size: 0.9rem; }
+#set-form:not(.is-dirty) #set-save, #set-form:not(.is-dirty) #set-undo { opacity: 0.55; }
+@media (max-width: 767.98px) {
+  .set-row { grid-template-columns: minmax(0, 1fr); }
+  .set-num { max-width: none; }
+  #set-find { flex: 1 1 100%; }
+}

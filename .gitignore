@@ -10,6 +10,7 @@ config/settings.yml
 # answers to the setup questions and the install's merged copy (contain the admin password)
 config/settings.local.yml
 config/.settings.merged.yml
+config/.settings.pending.yml
 
 __pycache__/
 *.pyc

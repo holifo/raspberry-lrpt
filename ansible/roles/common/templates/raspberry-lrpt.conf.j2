@@ -7,7 +7,7 @@ IMAGE_OUTPUT={{ images_output }}
 METEOR_AUDIO_OUTPUT={{ audio_output }}/meteor
 ANIMATION_OUTPUT={{ animation_output }}
 ENABLE_ANIMATION={{ enable_animation|lower }}
-ANIMATION_AREA="{{ animation_area }}"
+ANIMATION_AREA={{ animation_area|string|quote }}
 MAP_PROJECTION={{ map_projection }}
 STATION_TITLE={{ station_title | quote }}
 RAMFS_AUDIO={{ ramfs_path }}
@@ -57,7 +57,7 @@ KEEP_RECORDINGS={{ keep_recordings }}
 
 # ISS SSTV (ARISS events)
 ISS_SSTV={{ iss_sstv|default(false)|lower }}
-ISS_SSTV_DATES="{{ iss_sstv_dates|default('') }}"
+ISS_SSTV_DATES={{ iss_sstv_dates|default('')|string|quote }}
 ISS_SSTV_MIN_ELEV={{ iss_sstv_min_elevation|default(20)|int }}
 ISS_SSTV_FREQ={{ '%.4f'|format(iss_sstv_frequency|default(437.55)|float) }}
 ISS_SSTV_GAIN={{ iss_sstv_gain|default(40) }}
@@ -79,6 +79,7 @@ UPDATE_CHECK={{ 'true' if update_check|default(true) else 'false' }}
 PRODUCE_POLAR_AZ_EL={{ produce_polar_az_el_graph|lower }}
 PRODUCE_POLAR_DIRECTION={{ produce_polar_direction_graph|lower }}
 FLIP_METEOR_IMG={{ flip_meteor_image|lower }}
+DROP_DARK_IMAGES={{ 'true' if drop_dark_images|default(true) else 'false' }}
 
 # Image Quality and Pruning
 METEOR_IMAGE_QUALITY={{ meteor_jpg_image_quality }}
@@ -90,7 +91,7 @@ RECEIVER_TYPE={{ receiver_type }}
 SDR_EXTRA_OPTIONS={{ sdr_extra_options|default('') | quote }}
 
 # Telemetry and Annotations
-IMAGE_ANNOTATION_LOCATION={{ image_annotation_location }}
+IMAGE_ANNOTATION_LOCATION={{ image_annotation_location|string|quote }}
 ANNOTATION_WIDTH_PERCENT={{ annotation_width_percent|default(0) }}
 ANNOTATION_STYLE={{ annotation_style|default('light') }}
 ANNOTATION_TRANSPARENCY={{ annotation_transparency|default(70) }}
@@ -100,11 +101,11 @@ ANNOTATION_BORDER_COLOUR={{ annotation_border_colour|default('') | quote }}
 EXTEND_FOR_ANNOTATION={{ extend_for_annotation|lower }}
 
 # Ground Station and Enhancements
-GROUND_STATION_LOCATION='{{ ground_station_location }}'
-METEOR_DAY_ENHANCEMENTS='{{ meteor_daytime_enhancements }}'
-METEOR_NIGHT_ENHANCEMENTS='{{ meteor_nighttime_enhancements }}'
-METEOR_DAY_THUMBNAIL='{{ meteor_daytime_thumbnail|default("") }}'
-METEOR_NIGHT_THUMBNAIL='{{ meteor_nighttime_thumbnail|default("") }}'
+GROUND_STATION_LOCATION={{ ground_station_location|default('')|string|quote }}
+METEOR_DAY_ENHANCEMENTS={{ meteor_daytime_enhancements|string|quote }}
+METEOR_NIGHT_ENHANCEMENTS={{ meteor_nighttime_enhancements|string|quote }}
+METEOR_DAY_THUMBNAIL={{ meteor_daytime_thumbnail|default('')|string|quote }}
+METEOR_NIGHT_THUMBNAIL={{ meteor_nighttime_thumbnail|default('')|string|quote }}
 
 # Discord (empty webhook = don't post)
 DISCORD_WEBHOOK={{ discord_webhook|default('') | quote }}
@@ -114,12 +115,12 @@ DISCORD_SKY_TRACK={{ discord_sky_track|default(true)|lower }}
 
 
 # Network Time Protocol
-NTP_SERVER={{ ntp_server }}
+NTP_SERVER={{ ntp_server|string|quote }}
 
 # Web Server Configuration
-WEB_SERVER_NAME={{ web_server_name }}
+WEB_SERVER_NAME={{ web_server_name|string|quote }}
 WEBPANEL_PORT={{ web_port }}
 WEBPANEL_TLS_PORT={{ web_tls_port }}
-WEB_SERVER_NAME={{ web_server_name }}
+WEB_SERVER_NAME={{ web_server_name|string|quote }}
 ENABLE_TLS={{ enable_tls|lower }}
 ENABLE_NON_TLS={{ enable_non_tls|lower }}

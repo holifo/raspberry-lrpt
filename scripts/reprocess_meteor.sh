@@ -131,6 +131,7 @@ process() {
 
   # keep the product for the daily map, then the same clean-up and naming as a live pass
   save_daily_product "$work" "$base" "$epoch_start"
+  drop_dark_images "$dir"
   find "$dir" -type f -name "*.png" ! -name "*projected*" ! -name "*corrected*" -delete
   local f
   for f in "$dir"/rgb_msu_mr_rgb_*_projected.png; do

@@ -13,6 +13,11 @@ A Raspberry Pi ground station for the **METEOR-M2 3** and **METEOR-M2 4** weathe
 **Extra:** between Meteor passes it also catches the slow-scan TV pictures the **ISS** sends during
 ARISS events, and between events the APRS stations it relays, live on a map. Made by holifo (SV5QNF).
 
+> **Use at your own risk.** This code has not had a security review. It is a hobby project, much of it
+> written with the help of AI and tested on one working station. Don't expose the web panel to the
+> internet without HTTPS ([how](docs/tls_webserver.md)) and a strong admin password, and keep the Pi's
+> other services in mind.
+
 ## What it does
 
 - Schedules every METEOR-M2 3 / M2 4 pass above 15° with `at`, from CelesTrak orbits (the SatNOGS DB as the backup).
@@ -43,7 +48,9 @@ ARISS events, and between events the APRS stations it relays, live on a map. Mad
     daytime passes and one for the night (SatDump's projection tool), plus a time-lapse of the
     day's passes over Greece. Days fold open and shut.
   - **Live log** (`/log`): system dashboard (CPU, temperature, memory, SDR, disk) and the station log.
-  - **Admin** (at `/admin/passes`, password protected): delete passes and captures.
+  - **Admin** (at `/admin/passes`, password protected): delete passes and captures, switch Meteor and
+    the ISS on or off, and **Settings**: every station setting on one page, grouped, with the rarely
+    used ones folded ([how it works](docs/admin_settings.md)). Not security-reviewed: preferably over HTTPS only.
   - Live UTC and local clocks, and the station's version in the footer.
 
 ### Extra: ISS SSTV pictures and APRS

@@ -32,7 +32,7 @@ set -u
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${PWD}/webpanel-test-output"
 KEEP=0
-PAGES="/passes /satellite /about /captures?page_no=1 /captures/listImages?pass_id=1 /captures/listImages?pass_id=2 /daily /satellite/map /admin/passes /admin/captures?page_no=1 /log"
+PAGES="/passes /satellite /about /captures?page_no=1 /captures/listImages?pass_id=1 /captures/listImages?pass_id=2 /daily /satellite/map /admin/passes /admin/captures?page_no=1 /admin/settings /log"
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/rl1-webtest"
 
 while getopts ":o:kp:" opt; do
@@ -114,6 +114,11 @@ v.update(db_file=os.path.join(work, 'panel.db'), images_output=os.path.join(srv,
          log_file=os.path.join(work, 'output.log'))
 tpl = open(os.path.join(repo, 'ansible/roles/webserver/templates/Config.php.j2')).read()
 cfg = env.from_string(tpl).render(**v).replace("const LOCK_ADMIN = 'true'", "const LOCK_ADMIN = 'false'")
+# Admin > Settings runs scripts/settings_web.sh show from this repo, as the user running the test
+# (no sudo when PHP already runs as the station user)
+import getpass
+cfg = cfg.replace("const STATION_USER = 'tester'", "const STATION_USER = '%s'" % getpass.getuser())
+cfg = cfg.replace("const LRPT_HOME = '%s'" % v['lrpt_home'], "const LRPT_HOME = '%s'" % repo)
 os.makedirs(os.path.join(wp, 'Config'), exist_ok=True)
 open(os.path.join(wp, 'Config/Config.php'), 'w').write(cfg)
 

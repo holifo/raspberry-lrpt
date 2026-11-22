@@ -98,6 +98,7 @@
         '{claude}': '<a href="https://www.anthropic.com/claude" rel="noopener" target="_blank">Claude</a>'})|raw }}</p>
   <p><i class="fab fa-github"></i> {{ (lang['about_repo']|default('Source code, updates and issue reports: {repo}.'))|e|replace({
         '{repo}': '<a href="' ~ lrpt_repo ~ '" rel="noopener" target="_blank">github.com/holifo/raspberry-lrpt</a>'})|raw }}</p>
+  <p><i class="fas fa-shield-alt"></i> {{ lang['about_security']|default('Use it at your own risk: this software has not had a security review. Serve the web panel over HTTPS with a strong admin password if it can be reached from the internet.') }}</p>
   <p class="mi-dim">{{ lang['about_ai_note']|default('The satellite facts on this page were checked against the sources in the Sources tab on the date shown at the top, but AI can make mistakes: if something looks wrong, please say so on GitHub.') }}</p>
 </div>
 </section>

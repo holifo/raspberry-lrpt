@@ -57,6 +57,7 @@
     "storage":                                       { "type": "string", "enum": ["sd", "ssd"] },
     "use_device_string":                             { "type": "boolean" },
     "meteor_m2_3_80k_interleaving":                  { "type": "boolean" },
+    "meteor_m2_4_80k_interleaving":                  { "type": "boolean" },
     "days_to_schedule_passes":                       { "type": "number" },
     "keep_recordings":                               { "type": "integer", "minimum": 0 },
     "iss_sstv":                                      { "type": "boolean" },
@@ -74,7 +75,7 @@
     "produce_spectrogram":                           { "type": "boolean" },
     "live_preview":                                  { "type": "boolean" },
     "update_check":                                  { "type": "boolean" },
-    "image_annotation_location":                     { "type": "string" },
+    "image_annotation_location":                     { "type": "string", "enum": ["NorthWest", "North", "NorthEast", "West", "Center", "East", "SouthWest", "South", "SouthEast"] },
     "annotation_width_percent":                      { "type": "number", "minimum": 0, "maximum": 100 },
     "annotation_style":                              { "type": "string", "enum": ["light", "dark", "auto", "white", "black", "clear"] },
     "annotation_transparency":                       { "type": "number", "minimum": 0, "maximum": 100 },
@@ -85,8 +86,8 @@
     "produce_polar_az_el_graph":                     { "type": "boolean" },
     "produce_polar_direction_graph":                 { "type": "boolean" },
     "ground_station_location":                       { "type": "string" },
-    "show_sun_elevation":                            { "type": "boolean" },
-    "show_pass_direction":                           { "type": "boolean" },
+    "drop_dark_images":                              { "type": "boolean" },
+    "antenna_information":                           { "type": "string" },
     "meteor_jpg_image_quality": {
       "type": "number",
       "minimum": 0,
@@ -96,18 +97,9 @@
     "meteor_nighttime_enhancements":     { "type": "string" },
     "meteor_daytime_thumbnail":          { "type": "string" },
     "meteor_nighttime_thumbnail":        { "type": "string" },
-    "meteor_create_equidistant_projection":          { "type": "boolean" },
-    "meteor_create_mercator_projection":             { "type": "boolean" },
-    "meteor_create_spreaded_images_without_overlay": { "type": "boolean" },
-    "meteor_create_rain_probability_overlay":        { "type": "boolean" },
-    "meteor_map_crosshair_enable":                   { "type": "boolean" },
-    "meteor_map_crosshair_color":                    { "type": "string" },
-    "meteor_draw_map_overlay":                       { "type": "boolean" },
-    "meteor_draw_cities":                            { "type": "boolean" },
-    "meteor_map_country_border_color":               { "type": "string" },
     "lang_setting": {
       "type": "string",
-      "enum": [ "ar", "bg", "cn", "de", "en", "es", "fr", "lt", "nl", "pt", "sr", "ru", "it", "hu", "gr", "kr", "ro" ]
+      "enum": [ "en", "de", "fr", "it", "es", "gr", "cn", "hi", "ar", "bg", "hu", "kr", "lt", "nl", "pt", "ro", "ru", "sr" ]
     },
     "station_title": { "type": "string" },
     "web_server_name": { "type": "string" },
@@ -200,13 +192,7 @@
     "extend_for_annotation",
     "produce_polar_az_el_graph",
     "produce_polar_direction_graph",
-    "meteor_create_equidistant_projection",
-    "meteor_create_mercator_projection",
-    "meteor_create_spreaded_images_without_overlay",
-    "meteor_create_rain_probability_overlay",
     "ground_station_location",
-    "show_sun_elevation",
-    "show_pass_direction",
     "meteor_daytime_enhancements",
     "meteor_nighttime_enhancements",
     "meteor_daytime_thumbnail",
@@ -237,6 +223,9 @@
     "discord_images",
     "discord_sky_track",
     "sdr_extra_options",
-    "sdrplay_licence_accepted"]
+    "sdrplay_licence_accepted",
+    "meteor_m2_4_80k_interleaving",
+    "antenna_information",
+    "drop_dark_images"]
 }
 

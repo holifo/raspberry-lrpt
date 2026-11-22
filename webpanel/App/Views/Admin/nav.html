@@ -1,5 +1,6 @@
 <nav class="subnav">
   <a class="{% if admin_action == 'passes' %}active{% endif %}" {% if admin_action == 'passes' %}aria-current="page"{% endif %} href="/admin/passes">{{ lang['passes'] }}</a>
   <a class="{% if admin_action == 'captures' %}active{% endif %}" {% if admin_action == 'captures' %}aria-current="page"{% endif %} href="/admin/captures">{{ lang['captures'] }}</a>
+  <a class="{% if admin_action == 'settings' %}active{% endif %}" {% if admin_action == 'settings' %}aria-current="page"{% endif %} href="/admin/settings">{{ lang['settings']|default('Settings') }}</a>
   <a class="{% if admin_action == 'log' %}active{% endif %}" {% if admin_action == 'log' %}aria-current="page"{% endif %} href="/log">{{ lang['live_log']|default('Live log') }}</a>
 </nav>

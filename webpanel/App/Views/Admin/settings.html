@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% macro row(s, lang) %}
+  <div class="set-row{{ s.error ? ' has-error' : '' }}" data-key="{{ s.key }}" data-find="{{ (s.key ~ ' ' ~ s.label ~ ' ' ~ s.help)|lower }}">
+    <div class="set-label">
+      <label for="f-{{ s.key }}">{{ s.label }}</label>
+      {% if s.pending %}<span class="set-badge pending" title="{{ lang['set_pending_hint']|default('Saved; ./install_and_upgrade.sh applies it') }}">{{ lang['set_pending']|default('waiting for the install') }}</span>
+      {% elseif s.install %}<span class="set-badge install" title="{{ lang['set_install_hint']|default('Saved at once, applied by ./install_and_upgrade.sh') }}">{{ lang['set_install']|default('needs the install') }}</span>{% endif %}
+      {% if s.reschedule and not s.install %}<span class="set-badge sched" title="{{ lang['set_sched_hint']|default('Saving it schedules the passes again') }}">{{ lang['set_sched']|default('reschedules') }}</span>{% endif %}
+      <code class="set-key">{{ s.key }}</code>
+      {% if s.help %}<div class="set-help">{{ s.help }}</div>{% endif %}
+      {% if s.error %}<div class="set-error">{{ s.error }}</div>{% endif %}
+    </div>
+    <div class="set-ctl">
+      {% if s.secret %}
+        <span class="set-fixed">{{ s.set ? lang['set_is_set']|default('Set') : lang['set_not_set']|default('Not set') }}</span>
+        <div class="set-help">{{ lang['set_ssh']|default('Changed over SSH only: the install\'s setup questions ask for it.') }}</div>
+      {% elseif s.locked %}
+        <span class="set-fixed">{{ s.type == 'boolean' ? (s.value ? lang['sw_on']|default('On') : lang['sw_off']|default('Off')) : s.value }}</span>
+        <div class="set-help">{{ lang['set_ssh']|default('Changed over SSH only: the install\'s setup questions ask for it.') }}</div>
+      {% elseif s.type == 'boolean' %}
+        <input type="hidden" name="s[{{ s.key }}]" value="false">
+        <label class="set-toggle"><input type="checkbox" id="f-{{ s.key }}" name="s[{{ s.key }}]" value="true" data-orig="{{ s.value ? 'true' : 'false' }}"{% if s.text == 'true' %} checked{% endif %}><span aria-hidden="true"></span></label>
+      {% elseif s.enum is defined %}
+        <select class="form-control form-control-sm" id="f-{{ s.key }}" name="s[{{ s.key }}]" data-orig="{{ s.value }}">
+          {% for o in s.enum %}<option value="{{ o }}"{% if s.text == o ~ '' %} selected{% endif %}>{{ o }}</option>{% endfor %}
+        </select>
+      {% elseif s.type in ['number', 'integer'] %}
+        <input type="number" class="form-control form-control-sm set-num" id="f-{{ s.key }}" name="s[{{ s.key }}]" value="{{ s.text }}" data-orig="{{ s.value }}"
+               step="{{ s.type == 'integer' ? '1' : 'any' }}"{% if s.minimum is defined %} min="{{ s.minimum }}"{% endif %}{% if s.maximum is defined %} max="{{ s.maximum }}"{% endif %}>
+      {% elseif s.text|length > 60 %}
+        <textarea class="form-control form-control-sm set-long" id="f-{{ s.key }}" name="s[{{ s.key }}]" rows="3" data-orig="{{ s.value }}" spellcheck="false">{{ s.text }}</textarea>
+      {% else %}
+        <input type="text" class="form-control form-control-sm" id="f-{{ s.key }}" name="s[{{ s.key }}]" value="{{ s.text }}" data-orig="{{ s.value }}" spellcheck="false"
+               {% if s.key ends with '_colour' %}placeholder="#rrggbb"{% endif %}>
+      {% endif %}
+    </div>
+  </div>
+{% endmacro %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/admin.css') }}">
+{% endblock %}
+
+{% block body %}
+  {% include('Admin/nav.html') %}
+
+  {# Admin > Settings: every setting of config/settings.yml, grouped. Saving runs
+     scripts/settings_web.sh apply as the station user (AdminController::settingsAction). #}
+  <div class="alert alert-warning set-risk" role="note">
+    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+    {{ lang['set_risk']|default('This settings page has not had a security review. Use it at your own risk, and preferably only over HTTPS: the admin login is sent with every request.') }}
+  </div>
+
+  {% if result %}
+    {% set msg = {
+         'saved': lang['set_saved']|default('{n} settings saved.')|replace({'{n}': saved_n}),
+         'none': lang['set_none']|default('Nothing changed.'),
+         'busy': lang['set_busy']|default('A pass is being recorded. Try again when it ends.'),
+         'invalid': lang['set_invalid']|default('Nothing was saved: check the settings marked in red.'),
+         'fail': lang['set_fail']|default('The settings could not be saved. The Live log may say why.')} %}
+    <div class="alert {{ result == 'saved' ? 'alert-success' : (result in ['none', 'busy'] ? 'alert-info' : 'alert-danger') }} alert-dismissible fade show" role="alert">
+      {{ msg[result] }}
+      {% if result == 'saved' and resched %} {{ lang['set_saved_sched']|default('The passes are being scheduled again; they appear in a minute or two.') }}{% endif %}
+      {% if result == 'saved' and install_n > 0 %} {{ lang['set_saved_install']|default('Some of them are applied by the install: run it on the Pi when convenient.') }}{% endif %}
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    </div>
+  {% endif %}
+
+  {% if sections is null %}
+    <div class="alert alert-danger">
+      {{ lang['set_unread']|default('The station\'s settings could not be read. Run ./install_and_upgrade.sh on the Pi once: it adds the permission this page needs.') }}
+    </div>
+  {% else %}
+    {% set pending = [] %}
+    {% for sec in sections %}{% for s in sec.settings %}{% if s.pending %}{% set pending = pending|merge([s.key]) %}{% endif %}{% endfor %}{% endfor %}
+    {% if pending %}
+      <div class="alert alert-info set-pending-note">
+        <strong>{{ lang['set_pending_title']|default('Waiting for the install') }}:</strong>
+        {% for k in pending %}<code>{{ k }}</code>{% if not loop.last %}, {% endif %}{% endfor %}.
+        {{ lang['set_pending_cmd']|default('They are saved; run this on the Pi to apply them:') }}
+        <code class="set-cmd">cd ~/raspberry-lrpt &amp;&amp; ./install_and_upgrade.sh</code>
+      </div>
+    {% endif %}
+
+    <p class="set-intro">{{ lang['set_intro']|default('Every setting of config/settings.yml. Changes are kept in config/settings.local.yml on the Pi, so updates keep them. Most take effect at once.') }}</p>
+
+    <div class="set-tools">
+      <nav class="set-jump" aria-label="{{ lang['set_sections']|default('Sections') }}">
+        {% for sec in sections %}<a href="#set-{{ sec.id }}">{{ lang['set_sec_' ~ sec.id]|default(sec.id|capitalize) }}</a>{% endfor %}
+      </nav>
+      <input type="search" id="set-find" class="form-control form-control-sm" placeholder="{{ lang['set_find']|default('Find a setting') }}" aria-label="{{ lang['set_find']|default('Find a setting') }}">
+    </div>
+
+    <form method="post" action="/admin/settings" id="set-form" autocomplete="off">
+      {% import _self as f %}
+
+      {% for sec in sections %}
+        <section class="set-sec" id="set-{{ sec.id }}">
+          <h2>{{ lang['set_sec_' ~ sec.id]|default(sec.id|capitalize) }}</h2>
+          {% for s in sec.settings|filter(s => not s.advanced) %}{{ f.row(s, lang) }}{% endfor %}
+          {% set adv = sec.settings|filter(s => s.advanced) %}
+          {% if adv|length > 0 %}
+            <details class="set-adv"{% if adv|filter(s => s.error)|length > 0 %} open{% endif %}>
+              <summary>{{ lang['set_advanced']|default('Advanced') }} ({{ adv|length }})</summary>
+              {% for s in adv %}{{ f.row(s, lang) }}{% endfor %}
+            </details>
+          {% endif %}
+        </section>
+      {% endfor %}
+
+      <div class="set-bar">
+        <span class="set-count" id="set-count" data-one="{{ lang['set_changed_one']|default('1 unsaved change') }}" data-many="{{ lang['set_changed']|default('{n} unsaved changes') }}"></span>
+        <button type="reset" class="btn btn-sm btn-outline-secondary" id="set-undo">{{ lang['set_undo']|default('Undo changes') }}</button>
+        <button type="submit" class="btn btn-sm btn-primary" id="set-save">{{ lang['set_save']|default('Save') }}</button>
+      </div>
+    </form>
+
+    <script>
+    (function () {
+      var form = document.getElementById('set-form');
+      var count = document.getElementById('set-count');
+      var dirty = 0, sending = false;
+      function changed(el) {
+        if (el.type === 'checkbox') return String(el.checked) !== el.dataset.orig;
+        if (el.type === 'number') return el.value === '' ? el.dataset.orig !== '' : parseFloat(el.value) !== parseFloat(el.dataset.orig);
+        return el.value.replace(/\s+/g, ' ').trim() !== el.dataset.orig;
+      }
+      function update() {
+        dirty = 0;
+        form.querySelectorAll('[data-orig]').forEach(function (el) {
+          var c = changed(el);
+          el.closest('.set-row').classList.toggle('is-changed', c);
+          if (c) dirty++;
+        });
+        count.textContent = dirty === 0 ? '' : (dirty === 1 ? count.dataset.one : count.dataset.many.replace('{n}', dirty));
+        form.classList.toggle('is-dirty', dirty > 0);
+      }
+      form.addEventListener('input', update);
+      form.addEventListener('change', update);
+      form.addEventListener('reset', function () { setTimeout(update, 0); });
+      form.addEventListener('submit', function () { sending = true; });
+      window.addEventListener('beforeunload', function (e) { if (dirty && !sending) { e.preventDefault(); e.returnValue = ''; } });
+      update();
+
+      var find = document.getElementById('set-find');
+      find.addEventListener('input', function () {
+        var q = find.value.trim().toLowerCase();
+        form.querySelectorAll('.set-row').forEach(function (r) { r.hidden = q !== '' && r.dataset.find.indexOf(q) < 0; });
+        form.querySelectorAll('.set-adv').forEach(function (d) {
+          if (q !== '') d.open = !!d.querySelector('.set-row:not([hidden])');
+        });
+        form.querySelectorAll('.set-sec').forEach(function (s) { s.hidden = q !== '' && !s.querySelector('.set-row:not([hidden])'); });
+      });
+    })();
+    </script>
+  {% endif %}
+{% endblock %}

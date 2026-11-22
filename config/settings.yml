@@ -8,7 +8,7 @@ altitude: 100.0
 
 #Website language settings
 #   lang_setting: see the 'webpanel/App/Lang' folder for available
-#                 languages (2-letter filename - e.g. ar, bg, de, en, es, nl, sr, ru, it, hu, gr, lt, kr, ro)
+#                 languages (2-letter filename: en, de, fr, it, es, gr, cn, hi, ar; the menu offers those nine)
 lang_setting: en
 
 # station name shown in the bar at the top of the Passes page
@@ -166,8 +166,6 @@ map_capitals: true
 #        annotation (leave blank if you wish to exclude the ground station annotation)
 #   antenna_information - free-form text for indicating antenna information in image
 #        annotation (leave blank if you wish to exclude the antenna information annotation)
-#   show_sun_elevation - whether to show sun elevation in annotation
-#   show_pass_direction - show which direction the satellite is moving in the image annotation
 
 extend_for_annotation: false
 image_annotation_location: 'South'
@@ -189,8 +187,6 @@ produce_polar_az_el_graph: true
 produce_polar_direction_graph: true
 ground_station_location: 'Athens, GR'
 antenna_information: 'QFH'
-show_sun_elevation: true
-show_pass_direction: true
 produce_spectrogram: true
 live_preview: true
 
@@ -210,16 +206,11 @@ meteor_nighttime_enhancements: 'MCIR_corrected 10.8um_Thermal_IR_(Uncalibrated)_
 meteor_daytime_thumbnail: 'MSA_corrected AVHRR_221_False_Color_corrected Natural_Color_corrected MCIR_corrected'
 meteor_nighttime_thumbnail: 'MCIR_corrected 10.8um_Thermal_IR_(Uncalibrated)_corrected Enhanced_IR_corrected 3.9_um_Shortwave_IR_(Calibrated)_corrected'
 flip_meteor_image: true
+# delete a pass's images made from a channel with no picture in it: on night passes channels 1-3
+# (reflected sunlight) are empty, so MSA, AVHRR 221, Natural Color, ... come out white or yellow.
+# The pictures are checked, so a dawn or dusk pass with some sunlight keeps them.
+drop_dark_images: true
 meteor_jpg_image_quality: 100
-meteor_draw_map_overlay: true
-meteor_draw_cities: true
-meteor_map_crosshair_enable: true
-meteor_map_crosshair_color: "#FFFF00"
-meteor_map_country_border_color: "#FFFF00"
-meteor_create_rain_probability_overlay: true
-meteor_create_equidistant_projection: true
-meteor_create_mercator_projection: true
-meteor_create_spreaded_images_without_overlay: true
 
 # web server configuration settings
 #   web_server_name - server name to use for the TLS certs and web endpoint - this MUST be

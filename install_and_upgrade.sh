@@ -185,6 +185,8 @@ ansible-playbook -i ansible/hosts --extra-vars "@config/.settings.merged.yml" an
   -e "target_user=$USER system_architecture=$arch" \
   || die "Ansible failed - see the task marked ✗ above"
 ok "Ansible complete"
+# settings changed on the web panel that waited for the install are applied now
+rm -f config/.settings.pending.yml
 
 . "$HOME/.raspberry-lrpt.conf"
 

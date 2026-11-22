@@ -277,30 +277,46 @@ def save_local(answers):
     os.chmod(LOCAL, 0o600)
 
 
-def set_value(key, raw):
-    """Set one setting in settings.local.yml (a yes/no setting takes on/off, yes/no, true/false)."""
+def check_value(key, raw):
+    """The value of a setting typed as raw text, checked against the schema (ValueError if not
+    valid). A yes/no setting takes on/off, yes/no, true/false."""
     with open(SCHEMA) as f:
         prop = json.load(f)['properties'].get(key)
     if prop is None:
-        sys.exit('Unknown setting: ' + key)
+        raise ValueError('Unknown setting: ' + key)
     kind = prop.get('type')
     if kind == 'string':
         value = str(raw)                  # as typed: '#3a2600' would read as a YAML comment
-    else:
-        value = yaml.safe_load(raw)
-    if kind == 'boolean':
+    elif kind == 'boolean':
         if str(raw).lower() not in ('on', 'off', 'yes', 'no', 'true', 'false'):
-            sys.exit('%s takes on or off' % key)
+            raise ValueError('%s takes on or off' % key)
         value = str(raw).lower() in ('on', 'yes', 'true')
-    elif kind in ('number', 'integer'):
+    else:
+        try:
+            value = yaml.safe_load(raw)
+        except yaml.YAMLError:
+            value = None
         if isinstance(value, bool) or not isinstance(value, (int, float)):
-            sys.exit('%s takes a number' % key)
+            raise ValueError('%s takes a number' % key)
+        if kind == 'integer' and value != int(value):
+            raise ValueError('%s takes a whole number' % key)
+        if kind == 'integer':
+            value = int(value)
         if value < prop.get('minimum', value) or value > prop.get('maximum', value):
-            sys.exit('%s takes %s to %s' % (key, prop.get('minimum'), prop.get('maximum')))
+            raise ValueError('%s takes %s to %s' % (key, prop.get('minimum', ''), prop.get('maximum', '')))
     if 'enum' in prop and value not in prop['enum']:
-        sys.exit('%s takes one of: %s' % (key, ', '.join(str(v) for v in prop['enum'])))
+        raise ValueError('%s takes one of: %s' % (key, ', '.join(str(v) for v in prop['enum'])))
     if prop.get('pattern') and not re.search(prop['pattern'], str(value)):
-        sys.exit('%s: %r is not valid' % (key, value))
+        raise ValueError('%s: %r is not valid' % (key, value))
+    return value
+
+
+def set_value(key, raw):
+    """Set one setting in settings.local.yml."""
+    try:
+        value = check_value(key, raw)
+    except ValueError as e:
+        sys.exit(str(e))
     answers = load(LOCAL)
     answers[key] = value
     save_local(answers)

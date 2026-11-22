@@ -1,5 +1,30 @@
 # Changelog
 
+## Raspberry-LRPT v1.37.0 (2026-11-22)
+
+- **New: Admin > Settings.** Every station setting on one page (`/admin/settings`), in ten
+  sections with the rarely used ones folded under "Advanced", a search box and a Save bar that
+  counts your changes. Saving checks every value, keeps it in `config/settings.local.yml` (so
+  updates keep it) and applies most settings at once; changes to the schedule reschedule the
+  passes. Settings only the install can apply (receiver, web ports, HTTPS, NTP, location, ...) are
+  saved and marked "waiting for the install" until you run `./install_and_upgrade.sh`. The admin
+  password, admin login and Discord webhook stay SSH-only. See
+  [Admin > Settings](docs/admin_settings.md). **This page has not had a security review: use it at
+  your own risk, preferably over HTTPS.**
+- **Blank night images are no longer kept.** At night the channels that need sunlight (1-3) are
+  empty, so MSA, AVHRR 221, MSU-MR 124, Natural Color and the channel 1-3 images came out white or
+  yellow. After each pass the station now checks each channel's picture and deletes every image
+  made from an empty one; dawn and dusk passes with some sunlight keep theirs. Setting
+  `drop_dark_images` (on).
+- **Safer settings files.** Text settings (station name, location, image lists, NTP server, ...)
+  are now quoted in the shell settings and escaped in the web panel's settings, so an apostrophe
+  in the station name no longer breaks the web panel.
+- **Notice: use at your own risk.** The README and the About page now say that this software
+  has not had a security review.
+- Settings no SatDump station used are gone: `show_sun_elevation`, `show_pass_direction` and the
+  nine old map and projection options (`meteor_create_*`, `meteor_map_*`, `meteor_draw_*`).
+  `image_annotation_location` now only takes the nine positions, and `lang_setting` accepts Hindi.
+
 ## Raspberry-LRPT v1.36.10 (2026-11-22)
 
 - **Old clean-up steps removed.** The install no longer looks for files left by much older
