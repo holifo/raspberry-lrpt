@@ -41,7 +41,7 @@ dongle can't be used as a TV tuner.
 | A service that switches Wi-Fi power saving off | With `disable_wifi_power_mgmt: true` |
 | Logs in `/var/log/raspberry-lrpt` and their logrotate file | |
 | Images and recordings in `/srv` | |
-| Settings for the scripts (`~/.raspberry-lrpt.conf`), predict (`~/.predict`) and SatDump (`~/.config/satdump`, the station position in `/usr/share/satdump/satdump_cfg.json`) | |
+| Settings for the scripts (`~/.raspberry-lrpt.conf`), predict (`~/.predict`) and SatDump (`~/.config/satdump`: its own TLE download off and city names in green; the station position in `/usr/share/satdump/satdump_cfg.json`) | |
 
 A first install reboots at the end, after asking (`--no-reboot` skips it).
 

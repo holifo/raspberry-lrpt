@@ -313,5 +313,9 @@ return array(
   "about_security" => "Use it at your own risk: this software has not had a security review. Serve the web panel over HTTPS with a strong admin password if it can be reached from the internet.",
   "lg_rain" => "Where rain is likely, from cloud-top temperature: green light rain up to magenta storms. Made only when the satellite sends calibration; the 3.7 µm one only at night",
   "lg_coldtops" => "Night passes: the coldest cloud tops of the pass in colour, where showers and storms are likely. Relative to the pass, not a rain measurement",
+  "daymap_msa" => "MSA: channel 1 (0.6 µm) for the clouds, laid over SatDump's colour picture of the Earth, so land and sea look natural and clouds white. The same look as the night map.",
+  "nightmap_mcir" => "MCIR: channel 4 (3.8 µm) for the clouds, laid over SatDump's colour picture of the Earth. It sees clouds without sunlight and looks like the day map.",
+  "map_blend_desc" => "Each pass is projected with SatDump's own geometry (the satellite's orbit and line times) onto one map around the station. Where passes overlap they are blended with no seams: the pass that saw a spot nearer the middle of its swath (less stretched) counts most. Borders, coastlines, capitals and the station are drawn once on top. The maps are redrawn after every pass of the day.",
+  "lg_capmap" => "The pass on the area around the station, north up, with the borders and the capital cities in green. MSA by day, MCIR at night",
 );
 ?>

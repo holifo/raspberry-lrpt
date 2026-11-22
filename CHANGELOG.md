@@ -1,5 +1,23 @@
 # Changelog
 
+## Raspberry-LRPT v1.39.0 (2026-11-22)
+
+- **Daily maps look the same day and night:** the day map is now MSA and the night map MCIR (the
+  clouds over SatDump's colour picture of the Earth), instead of AVHRR 221 and 3.9 µm IR. Passes
+  that overlap are **blended with no seams**: the pass that saw a spot nearer the middle of its
+  swath counts most, fading into the next, instead of the newest pass covering the others with a
+  hard edge. Borders, coastlines, capitals and the station are drawn once on top
+  (`scripts/image_processors/blend_layers.py`). Redraw the kept days with
+  `scripts/daily_map.sh --all`.
+- **Capitals map** for every pass (setting `capitals_map`, area `capitals_map_area`, default
+  15–35° E, 33–46° N): the pass projected north up onto the area, with the borders and the capital
+  cities in green; MSA by day, MCIR at night. Skipped when the pass covers little of the area or
+  its line times are wrong. In the image legend.
+- **City names are green** on every projected image and map (SatDump's `default_cities_color`,
+  set by the install).
+- **Night thumbnails are greyscale infrared** (10.8 µm, else 3.9 µm, else channel 4) instead of
+  MCIR.
+
 ## Raspberry-LRPT v1.38.1 (2026-11-22)
 
 - No more false "Could not copy TLE file for the web panel map" warning when the ISS is off: the

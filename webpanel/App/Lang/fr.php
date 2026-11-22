@@ -431,5 +431,9 @@ return array(
   "about_security" => "À utiliser à vos risques : ce logiciel n'a pas fait l'objet d'un audit de sécurité. Si l'interface web est accessible depuis Internet, servez-la en HTTPS avec un mot de passe admin solide.",
   "lg_rain" => "Où la pluie est probable, d'après la température du sommet des nuages : du vert (pluie faible) au magenta (orages). Seulement quand le satellite envoie l'étalonnage ; celle à 3,7 µm seulement la nuit",
   "lg_coldtops" => "Passages de nuit : les sommets de nuages les plus froids du passage en couleur, là où averses et orages sont probables. Relatif au passage, pas une mesure de pluie",
+  "daymap_msa" => "MSA : le canal 1 (0,6 µm) pour les nuages, posé sur l'image en couleur de la Terre de SatDump : terres et mer naturelles, nuages blancs. Le même aspect que la carte de nuit.",
+  "nightmap_mcir" => "MCIR : le canal 4 (3,8 µm) pour les nuages, posé sur l'image en couleur de la Terre de SatDump. Il voit les nuages sans soleil et ressemble à la carte de jour.",
+  "map_blend_desc" => "Chaque passage est projeté avec la géométrie de SatDump (orbite et heures des lignes du satellite) sur une carte autour de la station. Là où les passages se chevauchent, ils sont fondus sans raccord : le passage qui a vu un endroit plus près du milieu de sa fauchée (moins étiré) compte le plus. Frontières, côtes, capitales et station sont dessinées une fois par-dessus. Les cartes sont refaites après chaque passage du jour.",
+  "lg_capmap" => "Le passage sur la région autour de la station, nord en haut, avec les frontières et les capitales en vert. MSA de jour, MCIR de nuit",
 );
 ?>

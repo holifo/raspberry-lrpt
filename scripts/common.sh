@@ -244,3 +244,42 @@ rain_images() {
   fi
   return 0
 }
+
+# capitals_map DIR DAYLIGHT EPOCH: the pass projected onto CAPITALS_MAP_AREA ("west east south
+# north", 0.01°/px) with the borders, the station and the capitals' names (green: SatDump's
+# default_cities_color, set by Ansible), MSA by day and MCIR at night, as
+# DIR/msu_mr_Capitals_map_projected.png, which the label/thumbnail loop then picks up like the
+# others. Only with a map (orbit known) and line times that fit the pass; dropped when the pass
+# covers under 15 % of the area (the borders count too). Never fails the pass.
+capitals_map() {
+  [ "${CAPITALS_MAP:-true}" == "true" ] || return 0
+  local dir=$1 comp=MCIR out="$1/msu_mr_Capitals_map_projected.png" w e s n tmp
+  [ -f "$dir/product.cbor" ] && ls "$dir"/*map.png >/dev/null 2>&1 || return 0
+  satdump_times_ok "$(dirname "$dir")" "$3" || return 0
+  read -r w e s n <<< "${CAPITALS_MAP_AREA:-15 35 33 46}"
+  [ -n "$n" ] || { log "Capitals map: capitals_map_area should be 'west east south north'" "WARN"; return 0; }
+  [ "$2" == "1" ] && comp=MSA
+  tmp="$dir/capitals_map.tmp.png"
+  nice -n 10 $SATDUMP project -layer --type product --file "$dir/product.cbor" --composite "$comp" \
+    -target --type equirec --offset_x "$w" --offset_y "$n" --scalar_x 0.01 --scalar_y -0.01 \
+            --width "$(awk -v a="$w" -v b="$e" 'BEGIN{printf "%d", (b-a)/0.01}')" \
+            --height "$(awk -v a="$s" -v b="$n" 'BEGIN{printf "%d", (b-a)/0.01}')" \
+            --draw_map_overlay --draw_qth_overlay \
+            --draw_cities_overlay --cities_type 0 --cities_scale_rank 3 --cities_size 24 \
+            --file "$tmp" >> "$LRPT_LOG" 2>&1
+  if [ -s "$tmp" ] && python3 - "$tmp" <<'EOF'
+import sys
+import numpy as np
+from PIL import Image
+a = np.asarray(Image.open(sys.argv[1]).convert('RGBA'))[..., 3]
+sys.exit(0 if (a > 0).mean() >= 0.15 else 1)
+EOF
+  then
+    $CONVERT "$tmp" -background '#0b1220' -flatten "$out" >> "$LRPT_LOG" 2>&1 &&
+      log "Capitals map ($comp) made" "INFO"
+  else
+    log "Capitals map: the pass hardly covers the area ($w $e $s $n) - none made" "INFO"
+  fi
+  rm -f "$tmp"
+  return 0
+}

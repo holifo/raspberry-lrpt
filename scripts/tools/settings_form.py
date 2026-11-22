@@ -112,7 +112,9 @@ FORM = [
   ]),
   ('maps', [
     ('daily_map', '', 'Daily map', 'Every pass of a day on one map of the region (Daily map page).'),
-    ('map_capitals', 'i', 'Capital cities', 'Write capitals on the projected images and the daily map.'),
+    ('map_capitals', 'i', 'Capital cities', 'Write capitals (in green) on the projected images and the daily map.'),
+    ('capitals_map', '', 'Capitals map', 'A picture for every pass: the pass on the area below with the borders and the capital cities in green.'),
+    ('capitals_map_area', '', 'Capitals map area', '"west east south north" in degrees.'),
     ('map_projection', '', 'Map projection', 'equal_earth keeps every area\'s true size; equirectangular is SatDump\'s plain grid.'),
     ('enable_animation', '', 'Time-lapse', 'A time-lapse of each day\'s passes on the Daily map page.'),
     ('animation_area', '', 'Time-lapse area', '"west east south north" in degrees.'),

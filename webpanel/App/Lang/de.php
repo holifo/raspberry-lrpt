@@ -431,5 +431,9 @@ return array(
   "about_security" => "Nutzung auf eigene Gefahr: Diese Software wurde keiner Sicherheitsprüfung unterzogen. Ist die Weboberfläche aus dem Internet erreichbar, nur über HTTPS und mit einem starken Admin-Passwort betreiben.",
   "lg_rain" => "Wo Regen wahrscheinlich ist, aus der Wolkenobergrenzen-Temperatur: grün leichter Regen bis magenta Gewitter. Nur wenn der Satellit Kalibrierdaten sendet; die 3,7-µm-Version nur nachts",
   "lg_coldtops" => "Nachtüberflüge: die kältesten Wolkenobergrenzen des Überflugs in Farbe, wo Schauer und Gewitter wahrscheinlich sind. Relativ zum Überflug, keine Regenmessung",
+  "daymap_msa" => "MSA: Kanal 1 (0,6 µm) für die Wolken, über SatDumps Farbbild der Erde gelegt, so wirken Land und Meer natürlich und Wolken weiß. Dasselbe Aussehen wie die Nachtkarte.",
+  "nightmap_mcir" => "MCIR: Kanal 4 (3,8 µm) für die Wolken, über SatDumps Farbbild der Erde gelegt. Es sieht Wolken ohne Sonnenlicht und sieht aus wie die Tageskarte.",
+  "map_blend_desc" => "Jeder Überflug wird mit SatDumps eigener Geometrie (Bahn und Zeilenzeiten des Satelliten) auf eine Karte um die Station projiziert. Wo sich Überflüge überlappen, werden sie nahtlos überblendet: Der Überflug, der eine Stelle näher an der Mitte seines Streifens (weniger verzerrt) sah, zählt am meisten. Grenzen, Küsten, Hauptstädte und die Station werden einmal darüber gezeichnet. Die Karten werden nach jedem Überflug des Tages neu gezeichnet.",
+  "lg_capmap" => "Der Überflug auf dem Gebiet um die Station, Norden oben, mit den Grenzen und den Hauptstädten in Grün. Tagsüber MSA, nachts MCIR",
 );
 ?>

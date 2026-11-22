@@ -73,9 +73,10 @@ done
 
 # make_map KIND COMPOSITE PRODUCT...: project each pass (products newest first) onto the map in
 # its own SatDump process, as many at once as the Pi has cores (SatDump warps one layer on one
-# core), then stack them with ImageMagick, oldest at the bottom and newest on top. Each layer
-# carries the borders, coastlines and station, so they show everywhere. Saved as a JPEG with a
-# thumbnail.
+# core), without borders, so each layer is just its swath. blend_layers.py then blends them with
+# no seams (where passes overlap, the one that saw the spot nearer its swath's middle wins, with a
+# soft hand-over) and draws the borders, coastlines, station and capitals once on top, from the
+# newest pass projected again with them. Saved as a JPEG with a thumbnail.
 make_map() {
   local kind=$1 comp=$2; shift 2
   local jpg="$out/$day-$kind.jpg" work k=0 layers=() stack=()
@@ -83,15 +84,19 @@ make_map() {
   # capital cities' names (map_capitals), smaller than on the pass images: the map covers 70°
   local capitals=()
   [ "${MAP_CAPITALS:-true}" = "true" ] && capitals=(--draw_cities_overlay --cities_type 0 --cities_scale_rank 3 --cities_size 30)
-  log "Daily map: projecting $# $kind pass(es) of $day, $PARALLEL_JOBS at a time" "INFO"
+  local target=(-target --type equirec --offset_x "$lon0" --offset_y "$lat0"
+                --scalar_x 0.025 --scalar_y -0.025 --width $width --height $height)
+  log "Daily map: projecting $# $kind pass(es) of $day ($comp), $PARALLEL_JOBS at a time" "INFO"
   for prod in "$@"; do
     k=$((k + 1)); layers+=("$work/$k.png")
-    $SATDUMP project -layer --type product --file "$prod" --composite "$comp" \
-      -target --type equirec --offset_x "$lon0" --offset_y "$lat0" \
-              --scalar_x 0.025 --scalar_y -0.025 --width $width --height $height \
-              --draw_map_overlay --draw_qth_overlay "${capitals[@]}" --file "$work/$k.png" > "$work/$k.log" 2>&1 &
+    $SATDUMP project -layer --type product --file "$prod" --composite "$comp" "${target[@]}" \
+      --file "$work/$k.png" > "$work/$k.log" 2>&1 &
     throttle
   done
+  # the borders: the newest pass once more, with them
+  $SATDUMP project -layer --type product --file "$1" --composite "$comp" "${target[@]}" \
+    --draw_map_overlay --draw_qth_overlay "${capitals[@]}" --file "$work/overlay.png" > "$work/overlay.log" 2>&1 &
+  throttle
   wait
   cat "$work"/*.log >> "$LRPT_LOG" 2>/dev/null
   for (( k = ${#layers[@]} - 1; k >= 0; k-- )); do [ -s "${layers[k]}" ] && stack+=("${layers[k]}"); done
@@ -100,7 +105,16 @@ make_map() {
     rm -rf "$work"
     return 1
   fi
-  $CONVERT -background '#0b1220' "${stack[@]}" -layers flatten -quality 88 "$jpg" >> "$LRPT_LOG" 2>&1 &&
+  local line
+  while IFS= read -r line; do [ -n "$line" ] && log "$line" "INFO"; done < <(
+    python3 "$LRPT_HOME/scripts/image_processors/blend_layers.py" "$work/blend.png" \
+      "$work/overlay.png" "$work/1.png" "${stack[@]}" 2>&1)
+  if [ ! -s "$work/blend.png" ]; then
+    # blending failed: stack them as before (newest on top)
+    log "Daily map: blending failed, stacking the passes instead" "WARN"
+    $CONVERT -background '#0b1220' "${stack[@]}" -layers flatten "$work/blend.png" >> "$LRPT_LOG" 2>&1
+  fi
+  $CONVERT "$work/blend.png" -quality 88 "$jpg" >> "$LRPT_LOG" 2>&1 &&
     map_size=$(reproject "$jpg" "$jpg" "$lon0" "$lat0" "$lon1" "$lat1") &&
     $CONVERT "$jpg" -resize 700x "$out/thumb/$day-$kind.jpg" >> "$LRPT_LOG" 2>&1
   rm -rf "$work"
@@ -118,8 +132,8 @@ if [ ${#day_passes[@]} -eq 0 ] && [ ${#night_passes[@]} -eq 0 ]; then
 fi
 
 made=0
-if [ ${#day_passes[@]} -gt 0 ]; then make_map day "AVHRR 221" "${day_layers[@]}" && made=1; else rm -f "$out/$day-day.jpg" "$out/thumb/$day-day.jpg"; fi
-if [ ${#night_passes[@]} -gt 0 ]; then make_map night "Shortwave IR (Uncalibrated)" "${night_layers[@]}" && made=1; else rm -f "$out/$day-night.jpg" "$out/thumb/$day-night.jpg"; fi
+if [ ${#day_passes[@]} -gt 0 ]; then make_map day "MSA" "${day_layers[@]}" && made=1; else rm -f "$out/$day-day.jpg" "$out/thumb/$day-day.jpg"; fi
+if [ ${#night_passes[@]} -gt 0 ]; then make_map night "MCIR" "${night_layers[@]}" && made=1; else rm -f "$out/$day-night.jpg" "$out/thumb/$day-night.jpg"; fi
 
 if [ $made = 1 ]; then
   # what the page shows: the passes in each map, how each map was made and the area it covers
@@ -127,8 +141,8 @@ if [ $made = 1 ]; then
     "$day" "$(json_list "${day_passes[@]}")" "$(json_list "${night_passes[@]}")" \
     "$lon0" "$lat0" "$lon1" "$lat1" \
     "${map_size%x*}" "${map_size#*x}" "$(date +%s)" > "$out/$day.json"
-  printf '"composites":{"day":{"name":"AVHRR 221","channels":[2,2,1],"wavelengths":"0.8, 0.8, 0.6 µm"},' >> "$out/$day.json"
-  printf '"night":{"name":"3.9 µm Shortwave IR","channels":[4],"wavelengths":"3.8 µm, inverted"}},' >> "$out/$day.json"
+  printf '"composites":{"day":{"name":"MSA","channels":[1],"wavelengths":"0.6 µm over a map"},"blend":true,' >> "$out/$day.json"
+  printf '"night":{"name":"MCIR","channels":[4],"wavelengths":"3.8 µm over a map"}},' >> "$out/$day.json"
   printf '"projection":"%s","decoder":"%s"}\n' "${MAP_PROJECTION:-equal_earth}" "$($SATDUMP version 2>/dev/null | grep -om1 'SatDump v[0-9.]*' || echo SatDump)" >> "$out/$day.json"
 fi
 

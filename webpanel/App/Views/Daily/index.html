@@ -21,12 +21,12 @@
 <details class="daily-about">
   <summary>{{ lang['about_maps']|default('About these maps') }}</summary>
   <dl>
-    <dt><i class="fas fa-sun dn"></i> {{ lang['daytime_passes']|default('Daytime passes') }} · AVHRR 221</dt>
-    <dd>{{ lang['day_map_desc']|default('False colour from channels 2, 2 and 1 (0.8, 0.8 and 0.6 µm, red, green, blue): land in yellow and brown, vegetation brighter, sea dark blue, clouds, snow and ice white.') }}</dd>
-    <dt><i class="fas fa-moon dn"></i> {{ lang['night_passes']|default('Night-time passes') }} · 3.9 µm IR</dt>
-    <dd>{{ lang['night_map_desc']|default('Shortwave infrared from channel 4 (3.8 µm), inverted: cold cloud tops bright, warm land and sea dark. It sees clouds without sunlight.') }}</dd>
+    <dt><i class="fas fa-sun dn"></i> {{ lang['daytime_passes']|default('Daytime passes') }} · MSA</dt>
+    <dd>{{ lang['daymap_msa']|default("MSA: channel 1 (0.6 µm) for the clouds, laid over SatDump's colour picture of the Earth, so land and sea look natural and clouds white. The same look as the night map.") }}</dd>
+    <dt><i class="fas fa-moon dn"></i> {{ lang['night_passes']|default('Night-time passes') }} · MCIR</dt>
+    <dd>{{ lang['nightmap_mcir']|default("MCIR: channel 4 (3.8 µm) for the clouds, laid over SatDump's colour picture of the Earth. It sees clouds without sunlight and looks like the day map.") }}</dd>
     <dt><i class="fas fa-globe-europe"></i> {{ lang['map_how']|default('How they are made') }}</dt>
-    <dd>{{ lang['map_how_desc']|default("Each pass is projected with SatDump's own geometry (the satellite's orbit and line times) onto one map around the station, with borders, coastlines and the station marked. Where passes overlap, the newest is on top. The maps are redrawn after every pass of the day.") }}</dd>
+    <dd>{{ lang['map_blend_desc']|default("Each pass is projected with SatDump's own geometry (the satellite's orbit and line times) onto one map around the station. Where passes overlap they are blended with no seams: the pass that saw a spot nearer the middle of its swath (less stretched) counts most. Borders, coastlines, capitals and the station are drawn once on top. The maps are redrawn after every pass of the day.") }}</dd>
     {% set proj = (days|length and days[0].area) ? days[0].area.proj : 'equal_earth' %}
     <dt><i class="fas fa-globe"></i> {{ lang['proj_title']|default('Map projection: Equal Earth or equirectangular') }}</dt>
     <dd>

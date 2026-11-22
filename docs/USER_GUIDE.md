@@ -145,13 +145,24 @@ in view.
 
 ## The daily map
 
-Every pass of a day is projected onto one map of the region around the station, newest pass on
-top. There are two maps a day:
+Every pass of a day is projected onto one map of the region around the station. Where passes
+overlap they are blended with no visible seams: the pass that saw a spot nearer the middle of its
+swath (where the picture is least stretched) counts most, fading into the next pass. Borders,
+coastlines, capitals (in green) and the station are drawn once on top. There are two maps a day,
+in the same style, so they look alike:
 
 | Map | Composite | Channels | What you see |
 |---|---|---|---|
-| **Day** | AVHRR 221 false colour | 2, 2, 1 (0.8, 0.8, 0.6 µm) | Land yellow and brown, vegetation brighter, sea dark blue, clouds, snow and ice white |
-| **Night** | 3.9 µm shortwave IR, inverted | 4 (3.8 µm) | Cold cloud tops bright, warm land and sea dark; works without sunlight |
+| **Day** | MSA | 1 (0.6 µm) over SatDump's colour map of the Earth | Natural-coloured land and sea, white clouds |
+| **Night** | MCIR | 4 (3.8 µm) over SatDump's colour map of the Earth | The same look, clouds seen without sunlight |
+
+Days drawn before v1.39.0 keep their old look (AVHRR 221 by day, 3.9 µm IR at night) until they
+are redrawn: `scripts/daily_map.sh --all` redraws every day whose passes are still kept (2 days).
+
+**Capitals map** (setting `capitals_map`): every pass with a map also gets a picture of
+`capitals_map_area` ("west east south north", default 15–35° E, 33–46° N), north up, with the
+borders and the capital cities in green; MSA by day, MCIR at night. It is skipped when the pass
+covers little of the area.
 
 ```
   7°W                                              63°E

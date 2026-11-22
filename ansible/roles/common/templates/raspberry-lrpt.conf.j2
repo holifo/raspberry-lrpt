@@ -80,6 +80,8 @@ PRODUCE_POLAR_AZ_EL={{ produce_polar_az_el_graph|lower }}
 PRODUCE_POLAR_DIRECTION={{ produce_polar_direction_graph|lower }}
 FLIP_METEOR_IMG={{ flip_meteor_image|lower }}
 RAIN_IMAGES={{ 'true' if rain_images|default(true) else 'false' }}
+CAPITALS_MAP={{ 'true' if capitals_map|default(true) else 'false' }}
+CAPITALS_MAP_AREA={{ capitals_map_area|default('15 35 33 46')|string|quote }}
 DROP_DARK_IMAGES={{ 'true' if drop_dark_images|default(true) else 'false' }}
 
 # Image Quality and Pruning

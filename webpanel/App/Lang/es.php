@@ -431,5 +431,9 @@ return array(
   "about_security" => "Úsalo bajo tu propio riesgo: este software no ha pasado una revisión de seguridad. Si el panel web es accesible desde Internet, sírvelo por HTTPS y con una contraseña de administrador fuerte.",
   "lg_rain" => "Dónde es probable la lluvia, según la temperatura de la cima de las nubes: del verde (lluvia débil) al magenta (tormentas). Solo cuando el satélite envía calibración; la de 3,7 µm solo de noche",
   "lg_coldtops" => "Pasos nocturnos: las cimas de nubes más frías del paso en color, donde son probables chubascos y tormentas. Relativo al paso, no es una medida de lluvia",
+  "daymap_msa" => "MSA: el canal 1 (0,6 µm) para las nubes, sobre la imagen en color de la Tierra de SatDump: tierra y mar naturales, nubes blancas. El mismo aspecto que el mapa nocturno.",
+  "nightmap_mcir" => "MCIR: el canal 4 (3,8 µm) para las nubes, sobre la imagen en color de la Tierra de SatDump. Ve las nubes sin luz solar y se parece al mapa diurno.",
+  "map_blend_desc" => "Cada paso se proyecta con la geometría de SatDump (órbita y horas de las líneas del satélite) sobre un mapa alrededor de la estación. Donde los pasos se solapan se funden sin costuras: cuenta más el paso que vio un punto más cerca del centro de su franja (menos estirado). Fronteras, costas, capitales y la estación se dibujan una vez encima. Los mapas se rehacen tras cada paso del día.",
+  "lg_capmap" => "El paso sobre la zona alrededor de la estación, norte arriba, con las fronteras y las capitales en verde. MSA de día, MCIR de noche",
 );
 ?>

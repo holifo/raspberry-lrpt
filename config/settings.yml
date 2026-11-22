@@ -146,6 +146,11 @@ iss_bias_tee: false
 daily_map: true
 # write the names of capital cities on the map images and the daily map
 map_capitals: true
+# a "Capitals map" picture for every pass: the pass projected onto the area below (MSA by day,
+# MCIR at night) with the borders and the capital cities' names in green
+capitals_map: true
+#   capitals_map_area - the area as "west east south north" in degrees (default: around Greece)
+capitals_map_area: "15 35 33 46"
 
 # processing settings
 #   flip_meteor_image - whether the meteor image should be flipped
@@ -198,13 +203,13 @@ update_check: true
 # images shown first on a capture's page, in this order: SatDump 1.2.3 file names (the composite
 # name with _ for spaces, then _corrected or _projected), space-separated. A pass only has the
 # composites whose channels the satellite sent. Images it made that aren't listed follow after.
-meteor_daytime_enhancements: 'MSA_corrected AVHRR_221_False_Color_corrected Natural_Color_corrected AVHRR_3a21_False_Color_corrected AVHRR_3a21_False_Color_projected MSU-MR_124_False_Color_corrected AVHRR_124_False_Color_corrected Day_Microphysics_corrected Rain_Likelihood_(10.8_um)_corrected MCIR_corrected 10.8um_Thermal_IR_(Uncalibrated)_corrected 10.8um_Thermal_IR_(Uncalibrated)_projected Enhanced_IR_corrected Cloud_Top_IR_corrected Color_general_cloud_IR_corrected Color_convection_longwave_IR_corrected 3.9_um_Shortwave_IR_(Calibrated)_corrected 3.9_um_Cloud_Tops_(Transparent)_corrected 3.75um_IR_(Enhanced_Rainbow)_corrected 3.75um_IR_(Rainbow)_corrected 3.75um_IR_(CIRA)_corrected Night_Microphysics_corrected Sea_Surface_Temperature_corrected Split_Window_Difference_corrected'
-meteor_nighttime_enhancements: 'Rain_Likelihood_(10.8_um)_corrected Rain_Likelihood_(3.7_um_night)_corrected Cold_Cloud_Tops_corrected MCIR_corrected 10.8um_Thermal_IR_(Uncalibrated)_corrected 10.8um_Thermal_IR_(Uncalibrated)_projected Enhanced_IR_corrected Cloud_Top_IR_corrected Color_general_cloud_IR_corrected Color_convection_longwave_IR_corrected 3.9_um_Shortwave_IR_(Calibrated)_corrected 3.9_um_Cloud_Tops_(Transparent)_corrected 3.75um_IR_(Enhanced_Rainbow)_corrected 3.75um_IR_(Rainbow)_corrected 3.75um_IR_(CIRA)_corrected Night_Microphysics_corrected Sea_Surface_Temperature_corrected Split_Window_Difference_corrected AVHRR_543b_IR_False_Color_corrected AVHRR_3b45_IR_False_Color_corrected'
+meteor_daytime_enhancements: 'MSA_corrected Capitals_map_projected AVHRR_221_False_Color_corrected Natural_Color_corrected AVHRR_3a21_False_Color_corrected AVHRR_3a21_False_Color_projected MSU-MR_124_False_Color_corrected AVHRR_124_False_Color_corrected Day_Microphysics_corrected Rain_Likelihood_(10.8_um)_corrected MCIR_corrected 10.8um_Thermal_IR_(Uncalibrated)_corrected 10.8um_Thermal_IR_(Uncalibrated)_projected Enhanced_IR_corrected Cloud_Top_IR_corrected Color_general_cloud_IR_corrected Color_convection_longwave_IR_corrected 3.9_um_Shortwave_IR_(Calibrated)_corrected 3.9_um_Cloud_Tops_(Transparent)_corrected 3.75um_IR_(Enhanced_Rainbow)_corrected 3.75um_IR_(Rainbow)_corrected 3.75um_IR_(CIRA)_corrected Night_Microphysics_corrected Sea_Surface_Temperature_corrected Split_Window_Difference_corrected'
+meteor_nighttime_enhancements: 'Rain_Likelihood_(10.8_um)_corrected Rain_Likelihood_(3.7_um_night)_corrected Cold_Cloud_Tops_corrected MCIR_corrected Capitals_map_projected 10.8um_Thermal_IR_(Uncalibrated)_corrected 10.8um_Thermal_IR_(Uncalibrated)_projected Enhanced_IR_corrected Cloud_Top_IR_corrected Color_general_cloud_IR_corrected Color_convection_longwave_IR_corrected 3.9_um_Shortwave_IR_(Calibrated)_corrected 3.9_um_Cloud_Tops_(Transparent)_corrected 3.75um_IR_(Enhanced_Rainbow)_corrected 3.75um_IR_(Rainbow)_corrected 3.75um_IR_(CIRA)_corrected Night_Microphysics_corrected Sea_Surface_Temperature_corrected Split_Window_Difference_corrected AVHRR_543b_IR_False_Color_corrected AVHRR_3b45_IR_False_Color_corrected'
 # which image becomes the capture's thumbnail in the Captures list
 #   space-separated SatDump image names, tried in order - the first one produced is used
 #   (falls back to the built-in list if none of these exist)
 meteor_daytime_thumbnail: 'MSA_corrected AVHRR_221_False_Color_corrected Natural_Color_corrected MCIR_corrected'
-meteor_nighttime_thumbnail: 'MCIR_corrected 10.8um_Thermal_IR_(Uncalibrated)_corrected Enhanced_IR_corrected 3.9_um_Shortwave_IR_(Calibrated)_corrected 3.9_um_Shortwave_IR_(Uncalibrated)_corrected MSU-MR_Channel_4_corrected'
+meteor_nighttime_thumbnail: '10.8um_Thermal_IR_(Uncalibrated)_corrected 3.9_um_Shortwave_IR_(Calibrated)_corrected 3.9_um_Shortwave_IR_(Uncalibrated)_corrected MSU-MR_Channel_4_corrected Enhanced_IR_corrected MCIR_corrected'
 flip_meteor_image: true
 # delete a pass's images made from a channel with no picture in it: on night passes channels 1-3
 # (reflected sunlight) are empty, so MSA, AVHRR 221, Natural Color, ... come out white or yellow.
