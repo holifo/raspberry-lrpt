@@ -101,7 +101,7 @@
       <div class="cap-empty">{{ lang['no_passes']|default('No passes scheduled') }}</div>
     {% else %}
       {% set last_day = '' %}
-      {% set prev_end = 0 %}
+      {% set prev_end = 0 %}{% set prev_end_iss = 0 %}
       {% for pass in pass.list %}
         {% set day = pass.pass_start|date('Y-m-d') %}
         {% if day != last_day %}
@@ -115,7 +115,8 @@
           </div>
           {% set last_day = day %}
         {% endif %}
-        {% set conflict = prev_end >= pass.pass_start %}
+        {% set own = iss_own_sdr and pass.sat_name == 'ISS' %}
+        {% set conflict = (own ? prev_end_iss : prev_end) >= pass.pass_start %}
         <div class="admin-row sat-{{ sat_colours[pass.sat_name]|default('other') }}{% if pass.is_active == false or pass.pass_end < now_s %} inactive{% endif %}">
           <input type="checkbox" class="bulk-select-item" name="pass_start_ids[]" value="{{ pass.pass_start }}" aria-label="{{ lang['select']|default('Select') }}">
           <button type="button" class="btn-icon delete-capture" data-toggle="modal"
@@ -130,7 +131,7 @@
           <span class="c-elev"><span class="elev-bar{% if pass.max_elev < 30 %} low{% endif %}"><span style="width: {{ (pass.max_elev / 90 * 100)|round }}%"></span></span><span class="elev-val">{{ pass.max_elev }}&deg;</span></span>
           <span class="a-dir">{% if pass.direction == 'Northbound' %}<i class="fas fa-arrow-up"></i>{% elseif pass.direction == 'Southbound' %}<i class="fas fa-arrow-down"></i>{% endif %}</span>
         </div>
-        {% set prev_end = pass.pass_end %}
+        {% if own %}{% set prev_end_iss = pass.pass_end %}{% else %}{% set prev_end = pass.pass_end %}{% endif %}
       {% endfor %}
     {% endif %}
     </div>

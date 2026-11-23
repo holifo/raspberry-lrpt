@@ -35,6 +35,7 @@ class AdminController extends \Lib\Controller {
     }
     $args = array_merge($args, array('pass' => $pass,
                                      'sw' => $sw,
+                                     'iss_own_sdr' => \App\Models\Pass::issOwnSdr(),
                                      'iss_switchable' => true,     # switch.sh refuses when no RTL-SDR is connected
                                      'admin_action' => 'passes'));
     View::renderTemplate('Admin/passes.html', $args);

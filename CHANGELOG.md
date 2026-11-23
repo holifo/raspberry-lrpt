@@ -1,5 +1,12 @@
 # Changelog
 
+## Raspberry-LRPT v1.40.3 (2026-11-23)
+
+- **Admin > Passes: no false conflicts with two RTL-SDRs.** When the ISS has its own dongle it
+  records alongside the Meteors, and the Passes page already knew that, but Admin > Passes still
+  marked an ISS pass during a Meteor pass (or the next pass after it) as a conflict. Both pages
+  now read `iss-sdr.json` the same way (`Pass::issOwnSdr()`).
+
 ## Raspberry-LRPT v1.40.2 (2026-11-23)
 
 - **Live log: every RTL-SDR.** With two or more dongles the SDR card lists each one with what it

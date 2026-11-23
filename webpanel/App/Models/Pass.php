@@ -58,6 +58,13 @@ class Pass extends \Lib\Model {
   }
 
   # get a list of active/remaining passes
+  # the ISS on its own RTL-SDR records alongside the Meteors (schedule.sh writes iss-sdr.json):
+  # an ISS pass during a Meteor pass is then no conflict (Passes and Admin > Passes)
+  public static function issOwnSdr() {
+    $sdr = @json_decode((string) @file_get_contents(\Config\Config::IMAGE_PATH . '/iss-sdr.json'), true);
+    return is_array($sdr) && ($sdr['mode'] ?? '') === 'dedicated';
+  }
+
   public function getActiveList() {
     $today = time();
     $query = $this->db_conn->query("SELECT sat_name,

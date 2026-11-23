@@ -18,16 +18,13 @@ class PassesController extends \Lib\Controller {
   public function indexAction($args) {
     $pass = $this->loadModel('Pass');
     $pass->getList();
-    # the ISS on its own RTL-SDR records alongside the Meteors (schedule.sh writes iss-sdr.json):
-    # an ISS pass during a Meteor pass is then no conflict
-    $sdr = @json_decode((string) @file_get_contents(Config::IMAGE_PATH . '/iss-sdr.json'), true);
     # station health: the last HEALTH_PASSES finished Meteor passes all gave nothing -> a warning
     # with their reasons (receiver, antenna, ...) at the top of the page
     $recent = $pass->recentResults(self::HEALTH_PASSES);
     $failed = array_filter($recent, function ($r) { return empty($r['id']); });
     $health = (count($recent) == self::HEALTH_PASSES && count($failed) == count($recent)) ? array_values($recent) : null;
     $args = array_merge($args, array('pass' => $pass, 'health' => $health,
-                                     'iss_own_sdr' => ($sdr['mode'] ?? '') === 'dedicated'));
+                                     'iss_own_sdr' => \App\Models\Pass::issOwnSdr()));
     View::renderTemplate('Passes/index.html', $args);
   }
 
