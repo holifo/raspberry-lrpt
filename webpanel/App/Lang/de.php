@@ -436,6 +436,7 @@ return array(
   "map_blend_desc" => "Jeder Überflug wird mit SatDumps eigener Geometrie (Bahn und Zeilenzeiten des Satelliten) auf eine Karte um die Station projiziert. Wo sich Überflüge überlappen, werden sie nahtlos überblendet: Der Überflug, der eine Stelle näher an der Mitte seines Streifens (weniger verzerrt) sah, zählt am meisten. Grenzen, Küsten, Hauptstädte und die Station werden einmal darüber gezeichnet. Die Karten werden nach jedem Überflug des Tages neu gezeichnet.",
   "lg_capmap" => "Der Überflug auf dem Gebiet um die Station, Norden oben, mit den Grenzen und den Hauptstädten in Grün. Tagsüber MSA, nachts MCIR",
   "fail_receiver" => "Empfängerproblem: SatDump hat zu früh aufgehört",
+  "fail_no_samples" => "Empfängerproblem: keine Daten vom SDR (aus- und wieder einstecken oder neu starten)",
   "fail_no_signal" => "Kein Signal empfangen",
   "fail_no_lock" => "Signal zu schwach zum Dekodieren",
   "fail_too_short" => "Zu kurz dekodiert für ein Bild",

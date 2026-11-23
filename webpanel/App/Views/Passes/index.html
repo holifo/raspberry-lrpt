@@ -9,6 +9,7 @@
   {# why a pass gave no images (receive_meteor.sh, pass_fail_reason in common.sh) #}
   {% set fail_text = {
     'receiver': lang['fail_receiver']|default('Receiver problem: SatDump stopped early'),
+    'no_samples': lang['fail_no_samples']|default('Receiver problem: no samples from the SDR (unplug and replug it, or reboot)'),
     'no_signal': lang['fail_no_signal']|default('No signal heard'),
     'no_lock': lang['fail_no_lock']|default('Signal too weak to decode'),
     'too_short': lang['fail_too_short']|default('Decoded too briefly for a picture'),

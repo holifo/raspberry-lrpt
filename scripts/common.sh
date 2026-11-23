@@ -306,8 +306,12 @@ capitals_map() {
 #   too_short  the decoder locked, but not long enough for a picture
 #   no_images  none of the above fits (no signal numbers, e.g. spectrogram off)
 pass_fail_reason() {
-  local snr=$1 locked=$2 ran=$3 capture=$4
-  if [ -n "$ran" ] && [ -n "$capture" ] && [ "$capture" -gt 0 ] && [ "$ran" -lt $((capture / 2)) ]; then
+  local snr=$1 locked=$2 ran=$3 capture=$4 recorded=${5:-}
+  if [ "$recorded" = "none" ]; then
+    # SatDump ran but the spectrum never changed (spectrogram.py got no rows) and no frame came:
+    # the SDR sent no samples (stuck dongle, or a kernel DVB driver holding it)
+    echo no_samples
+  elif [ -n "$ran" ] && [ -n "$capture" ] && [ "$capture" -gt 0 ] && [ "$ran" -lt $((capture / 2)) ]; then
     echo receiver
   elif [ "$locked" = "NULL" ] || [ -z "$locked" ]; then
     echo no_images

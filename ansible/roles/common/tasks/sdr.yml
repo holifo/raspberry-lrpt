@@ -21,6 +21,30 @@
         owner: root
         group: root
         mode: 0644
+      register: rtlsdr_blacklist
+
+    # The blacklist only stops the DVB-T driver at the next boot (and an initramfs, as on Trixie,
+    # can still load it early). A dongle that driver holds streams no samples: SatDump then runs a
+    # whole pass on a flat spectrum. So unload it now, and rebuild the initramfs when there is one.
+    - name: RTL-SDR kernel driver unloaded
+      become: yes
+      shell: |
+        loaded=$(lsmod | awk '$1 ~ /^(dvb_usb_rtl28xxu|rtl2832_sdr|rtl2832|rtl2830)$/ {print $1}')
+        [ -z "$loaded" ] && exit 0
+        modprobe -r $loaded || true
+        echo unloaded
+      register: rtlsdr_unload
+      changed_when: "'unloaded' in rtlsdr_unload.stdout"
+
+    - name: RTL-SDR blacklist in the initramfs
+      become: yes
+      shell: |
+        ls /boot/firmware/initramfs* /boot/initrd.img-* >/dev/null 2>&1 || exit 0
+        command -v update-initramfs >/dev/null || exit 0
+        update-initramfs -u -k all >/dev/null && echo rebuilt
+      register: rtlsdr_initramfs
+      changed_when: "'rebuilt' in rtlsdr_initramfs.stdout"
+      when: rtlsdr_blacklist.changed
 
     # The RTL-SDR Blog driver (it supports the RTL-SDR Blog V4), built with its own Debian
     # packaging into librtlsdr0 and rtl-sdr packages. The epoch in the version (1:) keeps them

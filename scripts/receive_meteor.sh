@@ -173,7 +173,7 @@ if pgrep -f "$ISS_RUNNING" >/dev/null 2>&1 && ! grep -q ' dedicated$' "$ISS_SDR_
   sleep 1                                  # let the USB device go
 fi
 
-log "Recording ${LRPT_HOME} via $receiver at ${METEOR_FREQUENCY} MHz using SatDump record " "INFO"
+log "Recording ${SAT_NAME} via $receiver at ${METEOR_FREQUENCY} MHz with satdump live" "INFO"
 # SatDump's working folder: it writes the frames and ~250 MB of images there while decoding.
 # With storage: sd it is on the RAM disk (when that has room), which spares the SD card.
 WORK_DIR=$(work_dir "pass-${FILENAME_BASE}")
@@ -235,6 +235,7 @@ if [[ "${PRODUCE_SPECTROGRAM}" == "true" ]] && [ -f "${SPECTRO_DATA}" ]; then
   fi
 fi
 CADU_FILE="$WORK_DIR/meteor_m2-x_lrpt${mode}.cadu"
+cadu_bytes=$(stat -c %s "$CADU_FILE" 2>/dev/null || echo 0)   # before the recording is moved away
 
 # the pass's signal numbers (written by spectrogram.py render): quality, peak / mean SNR, lock time
 q_quality=NULL; q_snr_peak=NULL; q_snr_avg=NULL; q_locked=NULL
@@ -467,7 +468,14 @@ if [ -n "$(find /srv/images -maxdepth 1 -type f -name "$(basename "$IMAGE_FILE_B
                "$PASS_DIRECTION" "$CAPTURE_TIME" "$pass_id" || true
 else
   # why: kept with the scheduled pass so the Passes page can say it (pass_fail_reason, common.sh)
-  reason=$(pass_fail_reason "$q_snr_peak" "$q_locked" "$satdump_ran" "$CAPTURE_TIME")
+  # no signal numbers and no frames from a full-length run: the SDR sent nothing at all
+  recorded=""
+  if [[ "${PRODUCE_SPECTROGRAM}" == "true" ]] && [ "$q_locked" = "NULL" ] && [ "${cadu_bytes:-0}" -eq 0 ] \
+     && [ "${satdump_ran:-0}" -ge $((CAPTURE_TIME / 2)) ]; then
+    recorded=none
+    log "The SDR sent no samples during the pass (flat spectrum, no frames). Unplug and replug it, or reboot; check that no kernel DVB driver holds it (lsmod | grep rtl28)" "WARN"
+  fi
+  reason=$(pass_fail_reason "$q_snr_peak" "$q_locked" "$satdump_ran" "$CAPTURE_TIME" "$recorded")
   log "No images found ($reason: peak SNR ${q_snr_peak} dB, decoder locked ${q_locked} s, SatDump ran ${satdump_ran} s)" "INFO"
   $SQLITE3 $DB_FILE "UPDATE predict_passes SET fail_reason = '$reason', \
                        fail_detail = '${q_snr_peak}|${q_locked}|${satdump_ran}' \

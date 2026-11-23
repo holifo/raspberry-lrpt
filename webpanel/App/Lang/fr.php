@@ -436,6 +436,7 @@ return array(
   "map_blend_desc" => "Chaque passage est projeté avec la géométrie de SatDump (orbite et heures des lignes du satellite) sur une carte autour de la station. Là où les passages se chevauchent, ils sont fondus sans raccord : le passage qui a vu un endroit plus près du milieu de sa fauchée (moins étiré) compte le plus. Frontières, côtes, capitales et station sont dessinées une fois par-dessus. Les cartes sont refaites après chaque passage du jour.",
   "lg_capmap" => "Le passage sur la région autour de la station, nord en haut, avec les frontières et les capitales en vert. MSA de jour, MCIR de nuit",
   "fail_receiver" => "Problème de récepteur : SatDump s'est arrêté trop tôt",
+  "fail_no_samples" => "Problème de récepteur : aucune donnée du SDR (débranchez-le et rebranchez-le, ou redémarrez)",
   "fail_no_signal" => "Aucun signal reçu",
   "fail_no_lock" => "Signal trop faible pour être décodé",
   "fail_too_short" => "Décodé trop brièvement pour une image",

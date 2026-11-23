@@ -318,6 +318,7 @@ return array(
   "map_blend_desc" => "Each pass is projected with SatDump's own geometry (the satellite's orbit and line times) onto one map around the station. Where passes overlap they are blended with no seams: the pass that saw a spot nearer the middle of its swath (less stretched) counts most. Borders, coastlines, capitals and the station are drawn once on top. The maps are redrawn after every pass of the day.",
   "lg_capmap" => "The pass on the area around the station, north up, with the borders and the capital cities in green. MSA by day, MCIR at night",
   "fail_receiver" => "Receiver problem: SatDump stopped early",
+  "fail_no_samples" => "Receiver problem: no samples from the SDR (unplug and replug it, or reboot)",
   "fail_no_signal" => "No signal heard",
   "fail_no_lock" => "Signal too weak to decode",
   "fail_too_short" => "Decoded too briefly for a picture",

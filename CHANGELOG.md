@@ -1,5 +1,16 @@
 # Changelog
 
+## Raspberry-LRPT v1.40.6 (2026-11-23)
+
+- **RTL-SDR: the kernel's DVB-T driver is unloaded at install.** The blacklist only took effect at
+  the next boot (and an initramfs could still load the driver early). A dongle that driver had
+  touched streamed no samples, so SatDump recorded a whole pass on a flat spectrum. The install now
+  unloads it right away and rebuilds the initramfs when the blacklist changes.
+- **"No samples" failure reason.** A pass where the SDR sent nothing at all (no spectrum changes,
+  no frames, SatDump ran the full time) is now marked "Receiver problem: no samples from the SDR"
+  on the Passes page, with a WARN in the log saying what to check.
+- The log's "Recording …" line names the satellite (it printed the install folder).
+
 ## Raspberry-LRPT v1.40.5 (2026-11-23)
 
 - **Passes page: Meteor first when two passes record at once.** With the ISS on its own RTL-SDR,

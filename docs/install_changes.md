@@ -23,7 +23,7 @@ dongle can't be used as a TV tuner.
 
 | What | When |
 |---|---|
-| `dvb_usb_rtl28xxu`, `rtl2832`, `rtl2830` (`/etc/modprobe.d/rtlsdr.conf`) | RTL-SDR receiver |
+| `dvb_usb_rtl28xxu`, `rtl2832`, `rtl2830` blocked and unloaded (`/etc/modprobe.d/rtlsdr.conf`; the initramfs is rebuilt when there is one) | RTL-SDR receiver |
 | `airspy` (`/etc/modprobe.d/airspy-blacklist.conf`) | Airspy receiver |
 | `msi001`, `msi2500` blocked and unloaded (`/etc/modprobe.d/blacklist-msi.conf`) | SDRplay or MiriSDR receiver |
 
