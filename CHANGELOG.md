@@ -1,5 +1,23 @@
 # Changelog
 
+## Raspberry-LRPT v1.40.0 (2026-11-23)
+
+- **Pass quality.** Every Meteor pass now gets a quality score: how much of the time the satellite
+  was above the minimum elevation that the decoder was locked (0–100 %), worked out from the
+  spectrogram recorder's SNR and lock data, with the peak and average SNR and the lock time. It is
+  shown on the Passes list, on each capture card and capture page, and in a **Signal quality**
+  chart at the top of the Captures page (one bar per pass of the last 30 days, with the average),
+  so the effect of gain, antenna or cable changes can be seen. Re-processing a recording keeps the
+  pass's numbers. Database update 10 adds the columns; older passes have no quality.
+- **Why a pass gave nothing.** A pass with no images now records the reason (no signal heard,
+  signal too weak to decode, decoded too briefly, receiver problem), shown under the pass on the
+  Passes page (database update 11).
+- **Station warning.** When the last 3 Meteor passes all gave nothing, a red box at the top of the
+  Passes page lists them with their reasons and what to check.
+- **Time-lapse in the daily maps' style:** MSA by day and MCIR at night instead of 3.9 µm infrared.
+  New frames use it; `./scripts/animation.sh --redo --all` redraws the kept ones.
+- Tests: the web panel test now also catches PHP "Deprecated" notices.
+
 ## Raspberry-LRPT v1.39.3 (2026-11-22)
 
 - The **Coldest cloud tops** legend was upside down on northbound passes: the station turns those

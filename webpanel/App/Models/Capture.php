@@ -21,6 +21,7 @@ class Capture extends \Lib\Model {
                                              sat_type,
                                              img_count,
                                              gain,
+                                             quality,
                                              predict_passes.sat_name,
                                              predict_passes.max_elev,
                                              predict_passes.pass_start_azimuth,
@@ -149,6 +150,10 @@ class Capture extends \Lib\Model {
   public function getPassInfo($id) {
     $query = $this->db_conn->prepare('SELECT decoded_passes.pass_start,
                                              decoded_passes.daylight_pass,
+                                             decoded_passes.quality,
+                                             decoded_passes.snr_peak,
+                                             decoded_passes.snr_avg,
+                                             decoded_passes.locked_s,
                                              predict_passes.sat_name,
                                              predict_passes.pass_end,
                                              predict_passes.max_elev,
@@ -160,6 +165,24 @@ class Capture extends \Lib\Model {
     $query->bindValue(1, $id);
     $result = $query->execute();
     $this->info = $result->fetchArray() ?: [];
+  }
+
+  # signal quality of the Meteor passes since $days days ago, oldest first, for the chart on the
+  # Captures page: [[pass_start, quality, sat_name], …] (passes from before v1.40.0 have none)
+  public $quality_history = [];
+  public function getQualityHistory($days = 30) {
+    $since = time() - $days * 86400;
+    $result = $this->db_conn->query("SELECT decoded_passes.pass_start, quality, predict_passes.sat_name,
+                                            predict_passes.max_elev
+                                     FROM decoded_passes
+                                     LEFT JOIN predict_passes ON predict_passes.pass_start = decoded_passes.pass_start
+                                     WHERE quality IS NOT NULL AND sat_type < 3 AND decoded_passes.pass_start > $since
+                                     ORDER BY decoded_passes.pass_start ASC;");
+    $out = [];
+    while ($result && ($row = $result->fetchArray(SQLITE3_ASSOC))) {
+      $out[] = $row;
+    }
+    $this->quality_history = $out;
   }
 
   # the decoded frames (.cadu) kept for this capture, if any: name, size in MB

@@ -16,6 +16,7 @@ class CapturesController extends \Lib\Controller {
     if ($page_number > $total_pages) $page_number = $total_pages;
 
     $capture->getList($page_number, Config::CAPTURES_PER_PAGE);
+    $capture->getQualityHistory(30);
     $args = array_merge($args, array('capture' => $capture,
                                      'cur_page' => $page_number,
                                      'page_count' => $total_pages));

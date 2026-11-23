@@ -158,7 +158,7 @@
       if (isPast) { pastCount++; }
       if (r.status) {
         r.status.className = 'st-live' + (isLive ? ' rec' : (isPast && !r.captured ? ' fas fa-times missed' : ''));
-        r.status.title = isLive ? T.recording : (isPast && !r.captured ? T.missed : '');
+        r.status.title = isLive ? T.recording : (isPast && !r.captured ? (r.el.dataset.fail || T.missed) : '');
       }
       if (isLive && !live) { live = r; }
       if (!r.skipped && now < r.start && !next) { next = r; }

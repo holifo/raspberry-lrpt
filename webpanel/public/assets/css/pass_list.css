@@ -153,3 +153,13 @@
 
 .next-card.sat-iss { border-left-color: var(--iss); }
 .pass-row.sat-iss.selected { box-shadow: inset 3px 0 0 var(--iss); }
+
+/* why a pass gave nothing (v1.40.0) and the station warning after several such passes */
+.t-fail { font-size: 0.74rem; color: #c0392b; opacity: 0.85; }
+.t-fail .fa-times { font-size: 0.68rem; }
+.health-warn { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; padding: 10px 14px;
+  border: 1px solid #e8b4ae; border-radius: 10px; background: #fdecea; color: #7a1f16; }
+.health-warn .fa-exclamation-triangle { margin-top: 3px; color: #c0392b; }
+.health-warn strong { display: block; }
+.health-why, .health-hint { display: block; font-size: 0.85rem; }
+.health-hint { opacity: 0.85; margin-top: 2px; }

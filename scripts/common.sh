@@ -288,3 +288,25 @@ capitals_map() {
   rm -f "$tmp"
   return 0
 }
+
+# pass_fail_reason SNR_PEAK LOCKED_S RAN_S CAPTURE_TIME: why a Meteor pass gave no images, as one
+# word for the Passes page (the numbers come from the spectrogram recorder; NULL when it didn't run):
+#   receiver   SatDump stopped long before the pass ended (receiver missing or busy, a crash)
+#   no_signal  no signal above the noise (peak SNR under 3 dB): antenna, cable, LNA or a low pass
+#   no_lock    a signal, but the decoder never locked on to it (too weak or interference)
+#   too_short  the decoder locked, but not long enough for a picture
+#   no_images  none of the above fits (no signal numbers, e.g. spectrogram off)
+pass_fail_reason() {
+  local snr=$1 locked=$2 ran=$3 capture=$4
+  if [ -n "$ran" ] && [ -n "$capture" ] && [ "$capture" -gt 0 ] && [ "$ran" -lt $((capture / 2)) ]; then
+    echo receiver
+  elif [ "$locked" = "NULL" ] || [ -z "$locked" ]; then
+    echo no_images
+  elif [ "$locked" -gt 0 ]; then
+    echo too_short
+  elif awk -v s="$snr" 'BEGIN { exit !(s + 0 < 3) }'; then
+    echo no_signal
+  else
+    echo no_lock
+  fi
+}

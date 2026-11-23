@@ -120,3 +120,11 @@ html[data-theme="dark"] .sat-info dd.si-warn { color: #f2b33d; }
 /* Meteor and ISS switches (Admin > Passes): the off track */
 html[data-theme="dark"] .sw-track { background: #34475f; }
 html[data-theme="dark"] .set-jump a { color: var(--pl-dim); }
+
+/* pass quality, failure reasons, station warning (v1.40.0) */
+html[data-theme="dark"] .q-good { color: #4cd38a; }
+html[data-theme="dark"] .q-fair { color: #f2c14e; }
+html[data-theme="dark"] .q-poor { color: #ff7b6e; }
+html[data-theme="dark"] .t-fail { color: #ff8b7e; }
+html[data-theme="dark"] .health-warn { background: #3a1714; border-color: #6e2a23; color: #ffd6d0; }
+html[data-theme="dark"] .health-warn .fa-exclamation-triangle { color: #ff7b6e; }

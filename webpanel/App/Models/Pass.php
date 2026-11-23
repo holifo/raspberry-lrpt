@@ -17,7 +17,10 @@ class Pass extends \Lib\Model {
                                            predict_passes.pass_start_azimuth,
                                            predict_passes.azimuth_at_max,
                                            predict_passes.direction,
-                                           decoded_passes.id
+                                           predict_passes.fail_reason,
+                                           predict_passes.fail_detail,
+                                           decoded_passes.id,
+                                           decoded_passes.quality
                                     FROM predict_passes
                                     LEFT JOIN decoded_passes
                                       ON predict_passes.pass_start = decoded_passes.pass_start
@@ -32,6 +35,26 @@ class Pass extends \Lib\Model {
     }
 
     $this->list = $passes;
+  }
+
+  # the station's health: the newest finished Meteor passes (scheduled ones only, newest first)
+  # and whether each made a capture, so the Passes page can warn after several failures in a row
+  public function recentResults($count = 3) {
+    $cutoff = time() - 20 * 60;       # a pass is processed within about 20 minutes of its end
+    $result = $this->db_conn->query("SELECT predict_passes.pass_start, predict_passes.sat_name,
+                                            predict_passes.fail_reason, decoded_passes.id
+                                     FROM predict_passes
+                                     LEFT JOIN decoded_passes ON predict_passes.pass_start = decoded_passes.pass_start
+                                     WHERE predict_passes.sat_name LIKE 'METEOR%'
+                                       AND predict_passes.pass_end < $cutoff
+                                       AND (predict_passes.is_active = 1 OR decoded_passes.id IS NOT NULL)
+                                     ORDER BY predict_passes.pass_start DESC
+                                     LIMIT " . intval($count) . ";");
+    $out = [];
+    while ($result && ($row = $result->fetchArray(SQLITE3_ASSOC))) {
+      $out[] = $row;
+    }
+    return $out;
   }
 
   # get a list of active/remaining passes

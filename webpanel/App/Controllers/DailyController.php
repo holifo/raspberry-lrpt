@@ -83,6 +83,8 @@ class DailyController extends \Lib\Controller {
       'made' => $info['made'] ?? $v,
       'area' => $this->area($info),
       'size' => $info['size'] ?? null,
+      # older loops were all 3.9 µm IR (channel 4); since v1.40.0 MSA by day and MCIR at night
+      'composite' => $info['composite'] ?? '3.9 µm Shortwave IR',
     );
   }
 

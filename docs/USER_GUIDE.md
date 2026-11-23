@@ -114,11 +114,25 @@ version, linked to the project on GitHub, and says "vX available" when an update
   |---|---|
   | ✓ | Captured: tap it to open the capture |
   | red dot | Recording now |
-  | ✗ | Missed |
+  | ✗ | Missed: since v1.40.0 the row also says why (below) |
   | ⚠ | Clashes with another pass |
   | ⊘ | Not scheduled |
   | sun / moon | Day or night pass |
   | grey bar | Below 30° (weak) |
+  | 78 % | The pass's **quality**: how much of the time the satellite was above the minimum elevation the decoder was locked (green 70 % and over, amber 40–69 %, red under 40) |
+
+- **Why a pass gave nothing** (shown under its time, from v1.40.0):
+
+  | Reason | What it means | What to check |
+  |---|---|---|
+  | No signal heard | Peak SNR under 3 dB | Antenna, cable, connectors, LNA / bias tee; a very low pass |
+  | Signal too weak to decode | A signal, but the decoder never locked | Gain, interference, a low pass |
+  | Decoded too briefly for a picture | Locked only for a moment | A low pass, or obstructions |
+  | Receiver problem | SatDump stopped long before the pass ended | Is the SDR plugged in? Is something else using it? The Live log |
+  | not recorded | No recording at all | The Pi was off or busy, or the job didn't run |
+
+- **Station warning:** when the last 3 Meteor passes all gave nothing, a red box at the top of the
+  page lists them with their reasons. It goes away with the next good pass.
 
 **Satellites page**
 
@@ -136,7 +150,13 @@ version, linked to the project on GitHub, and says "vX available" when an update
 **Meteor-M page:** the satellites working now, a timeline of every launch and the planned ones,
 the LRPT signal and the instruments, with the sources and the date they were checked.
 
-**Captures:** tap any image to open the viewer: zoom with the buttons, the wheel or a pinch, move
+**Captures:** the **Signal quality** chart at the top has one bar per pass of the last 30 days
+(in the satellite's colour, hover or hold for the details) and the average as a dashed line; use it
+to see whether a change of gain, antenna or cable helped. Each card and each capture's page show
+the pass's quality; the capture page also shows the peak SNR and how long the decoder was locked.
+Passes from before v1.40.0 have no quality.
+
+Tap any image to open the viewer: zoom with the buttons, the wheel or a pinch, move
 with a drag, and step through the pass's images with the arrows.
 
 **Live log:** the log colours lines by level (red errors, amber warnings, blue info, grey debug);
@@ -182,8 +202,9 @@ the whole pass).
   the captures the maps are made of. **About these maps** at the top explains the colours. Days
   fold open and shut (the newest is open); a folded day shows its pass count and thumbnails.
 - **Time-lapse:** each day also gets a video of its passes from 00:00 to 24:00 (local time) over
-  `animation_area` (Greece), one frame per pass, all in 3.9 µm infrared so day and night frames
-  look alike. It is redrawn with the day's maps. Its frames are kept a week, so a day can be
+  `animation_area` (Greece), one frame per pass, MSA by day and MCIR at night like the daily
+  maps (clouds over a colour picture of the Earth), so day and night frames look alike (3.9 µm
+  infrared before v1.40.0; `./scripts/animation.sh --redo --all` redraws the kept frames). It is redrawn with the day's maps. Its frames are kept a week, so a day can be
   rebuilt (`./scripts/animation.sh <date>`) after its products are gone.
 - **Its data:** each pass's SatDump product (raw channels, line times, orbit) is kept for
   **2 days** in `/srv/audio/meteor/products`. A day older than that can't be redrawn, but its maps

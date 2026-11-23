@@ -157,6 +157,14 @@ for i in range(10):
                'pass_start_azimuth, direction, azimuth_at_max) VALUES (?,?,?,?,?,?,?,?)',
                (sat, s, s + 780, [34, 61, 22, 47, 18, 72, 29, 55, 40, 25][i], 1,
                 [12, 190, 340, 165, 20, 200, 350, 170, 15, 185][i], ['Southbound', 'Northbound'][i % 2], [101, 260][i % 2]))
+# why today's two finished passes gave nothing (receive_meteor.sh's pass_fail_reason)
+db.execute("UPDATE predict_passes SET fail_reason = 'no_signal', fail_detail = '1.4|0|900' WHERE pass_start = ?", (start,))
+db.execute("UPDATE predict_passes SET fail_reason = 'no_lock', fail_detail = '4.6|0|900' WHERE pass_start = ?", (start + 5400,))
+# TEST_HEALTH=1: a third failed pass before them, so the Passes page shows the station warning
+if os.environ.get('TEST_HEALTH') == '1':
+    db.execute('INSERT INTO predict_passes (sat_name, pass_start, pass_end, max_elev, is_active, '
+               'pass_start_azimuth, direction, azimuth_at_max, fail_reason, fail_detail) VALUES (?,?,?,?,?,?,?,?,?,?)',
+               ('METEOR-M2 4', start - 5400, start - 4620, 44, 1, 20, 'Northbound', 100, 'receiver', 'NULL|NULL|12'))
 # ISS SSTV (iss_sstv): two coming ISS passes, and yesterday's pass with two SSTV pictures
 for k, s in enumerate((now + 2 * 3600 + 1200, now + 26 * 3600)):
     db.execute('INSERT INTO predict_passes (sat_name, pass_start, pass_end, max_elev, is_active, '
@@ -291,8 +299,11 @@ for i in range(6):
                'pass_start_azimuth, direction, azimuth_at_max) VALUES (?,?,?,?,?,?,?,?)',
                ('METEOR-M2 %d' % (3 + i % 2), ps, ps + 780, 30 + 7 * i, 0, 15, 'Northbound', 100))
     db.execute('INSERT INTO decoded_passes (pass_start, file_path, daylight_pass, sat_type, img_count, gain, '
-               'has_spectrogram, has_pristine, has_polar_az_el, has_polar_direction, has_histogram) '
-               'VALUES (?,?,?,?,?,?,?,0,?,?,0)', (ps, fp, i % 2, 0, 3, 48, int(i == 0), int(i == 0), int(i == 0)))
+               'has_spectrogram, has_pristine, has_polar_az_el, has_polar_direction, has_histogram, '
+               'quality, snr_peak, snr_avg, locked_s) '
+               'VALUES (?,?,?,?,?,?,?,0,?,?,0,?,?,?,?)', (ps, fp, i % 2, 0, 3, 48, int(i == 0), int(i == 0), int(i == 0),
+               [86, 64, 91, 35, 72, 58][i], [9.8, 7.1, 10.4, 4.2, 8.3, 6.6][i], [6.2, 4.9, 7.0, 3.1, 5.5, 4.4][i],
+               [612, 455, 640, 210, 520, 401][i]))
     if have_im:
         for suffix in ('-website-thumbnail.jpg', '-MSA_corrected.jpg', '-MCIR_corrected.jpg',
                        '-AVHRR_221_False_Color_corrected.jpg', '-3.9_um_Shortwave_IR_(Calibrated)_corrected.jpg'):
@@ -441,12 +452,13 @@ FAILED=0
 say "Checking pages on http://127.0.0.1:$PORT"
 for page in $PAGES; do
   code=$(curl -s -o "$WORK/page.html" -w '%{http_code}' "http://127.0.0.1:$PORT$page")
-  errors=$(grep -c -i -E 'Fatal error|Warning:|Notice:|Deprecated:|Twig\\Error|Uncaught|404 - ' "$WORK/page.html")
+  # PHP writes "<b>Deprecated</b>:", so the tags go before the search
+  errors=$(sed 's/<[^>]*>//g' "$WORK/page.html" | grep -c -i -E 'Fatal error|Warning:|Notice:|Deprecated:|Twig\\Error|Uncaught|404 - ')
   if [ "$code" == "200" ] && [ "$errors" -eq 0 ]; then
     printf "  \033[32mPASS\033[0m  %-36s\n" "$page"
   else
     printf "  \033[31mFAIL\033[0m  %-36s HTTP %s, %s error line(s)\n" "$page" "$code" "$errors"
-    grep -i -m3 -E 'Fatal error|Warning:|Notice:|Twig\\Error|Uncaught' "$WORK/page.html" | sed 's/<[^>]*>//g; s/^/        /'
+    sed 's/<[^>]*>//g' "$WORK/page.html" | grep -i -m3 -E 'Fatal error|Warning:|Notice:|Deprecated:|Twig\\Error|Uncaught' | sed 's/^/        /'
     FAILED=1
   fi
   name=$(echo "$page" | sed 's#^/##; s#[/?=&]#_#g'); [ -z "$name" ] && name=root

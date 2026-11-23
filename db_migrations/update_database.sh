@@ -22,6 +22,8 @@ MIGRATIONS=(
   "07_add_polar_direction_bool.sql    decoded_passes  has_polar_direction"
   "08_add_histogram_bool.sql          decoded_passes  has_histogram"
   "09_add_at_job_id.sql               predict_passes  at_job_id"
+  "10_add_pass_quality.sql           decoded_passes  quality"
+  "11_add_fail_reason.sql            predict_passes  fail_reason"
 )
 
 applied=0

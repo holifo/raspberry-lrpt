@@ -6,6 +6,14 @@
 {% endblock %}
 
 {% block pre_body %}
+  {# why a pass gave no images (receive_meteor.sh, pass_fail_reason in common.sh) #}
+  {% set fail_text = {
+    'receiver': lang['fail_receiver']|default('Receiver problem: SatDump stopped early'),
+    'no_signal': lang['fail_no_signal']|default('No signal heard'),
+    'no_lock': lang['fail_no_lock']|default('Signal too weak to decode'),
+    'too_short': lang['fail_too_short']|default('Decoded too briefly for a picture'),
+    'no_images': lang['fail_no_images']|default('No images made'),
+  } %}
   {# station bar: replaces the big page title #}
   <div class="station-bar">
     <div class="station-name">
@@ -14,6 +22,20 @@
     </div>
     <div class="station-state" id="station-state"><span class="state-dot"></span><span>&nbsp;</span></div>
   </div>
+
+  {# station health: the last passes all gave nothing (PassesController::HEALTH_PASSES) #}
+  {% if health %}
+    <div class="health-warn" role="alert">
+      <i class="fas fa-exclamation-triangle"></i>
+      <div>
+        <strong>{{ lang['health_title']|default('The last {n} passes gave no pictures')|replace({'{n}': health|length}) }}</strong>
+        <span class="health-why">
+          {% for h in health %}{{ h.pass_start|date('d/m H:i') }} {{ h.sat_name|replace({'METEOR-': ''}) }}: {{ h.fail_reason ? fail_text[h.fail_reason]|default(h.fail_reason) : lang['fail_no_record']|default('not recorded') }}{% if not loop.last %} · {% endif %}{% endfor %}
+        </span>
+        <span class="health-hint">{{ lang['health_hint']|default('Check that the receiver is plugged in and the antenna cable is connected. The Live log shows the details.') }}</span>
+      </div>
+    </div>
+  {% endif %}
 
   {# next pass / recording now - filled in by the script below #}
   <div class="next-card" id="next-card" hidden>
@@ -126,14 +148,15 @@
         {% set own = iss_own_sdr and p.sat_name == 'ISS' %}
         {% set conflict = (own ? prev_end_iss : prev_end) >= p.pass_start %}
         {% set az = p.pass_start_azimuth %}
-        <div class="pass-row sat-{{ colour }}{% if p.is_active == false %} skipped{% endif %}{% if conflict %} conflict{% endif %}"
+        {% set why = (not p.id and p.fail_reason) ? fail_text[p.fail_reason]|default(p.fail_reason) : '' %}
+        <div class="pass-row sat-{{ colour }}{% if p.is_active == false %} skipped{% endif %}{% if conflict %} conflict{% endif %}{% if why %} failed{% endif %}"{% if why %} data-fail="{{ why }}"{% endif %}
              data-sat="{{ p.sat_name }}" data-start="{{ p.pass_start }}" data-end="{{ p.pass_end }}"
              data-elev="{{ p.max_elev }}" data-dir="{{ p.direction }}"
              {% if p.id %}data-capture="/captures/listImages?pass_id={{ p.id }}"{% endif %}
              tabindex="0" role="button" title="{{ lang['show_on_map']|default('Show this pass on the map') }}">
           <span class="c-status">
             {% if p.id %}
-              <a href="/captures/listImages?pass_id={{ p.id }}" class="st-done" title="{{ lang['completed_pass'] }}"><i class="fas fa-check"></i></a>
+              <a href="/captures/listImages?pass_id={{ p.id }}" class="st-done" title="{{ lang['completed_pass'] }}{% if p.quality is not null %} · {{ lang['quality']|default('Quality') }} {{ p.quality }} %{% endif %}"><i class="fas fa-check"></i></a>
             {% elseif conflict %}
               <i class="fas fa-exclamation-triangle st-conflict" title="{{ lang['conflicting_pass'] }}"></i>
             {% elseif p.is_active == false %}
@@ -145,7 +168,8 @@
           <span class="c-sat"><span class="sat-dot"></span>{% if short != p.sat_name %}<span class="sat-prefix">METEOR-</span>{% endif %}{{ short }}</span>
           <span class="c-time">
             <span class="t-main">{{ p.pass_start|date('H:i') }}<span class="t-end">&ndash;{{ p.pass_end|date('H:i') }}</span></span>
-            <span class="t-dur">{{ mins }} {{ lang['unit_min']|default('min') }}</span>
+            <span class="t-dur">{{ mins }} {{ lang['unit_min']|default('min') }}{% if p.id and p.quality is not null %} · <span class="q-val q-{{ p.quality >= 70 ? 'good' : (p.quality >= 40 ? 'fair' : 'poor') }}" title="{{ lang['quality_hint']|default('Quality: how much of the time the satellite was above the minimum elevation the decoder was locked') }}">{{ p.quality }} %</span>{% endif %}</span>
+            {% if why %}<span class="t-fail"><i class="fas fa-times"></i> {{ why }}</span>{% endif %}
           </span>
           <span class="c-elev">
             <span class="elev-bar{% if p.max_elev < 30 %} low{% endif %}"><span style="width: {{ (p.max_elev / 90 * 100)|round }}%"></span></span>

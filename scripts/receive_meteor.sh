@@ -215,7 +215,9 @@ if [[ "${PRODUCE_SPECTROGRAM}" == "true" ]]; then
 fi
 
 log "$SATDUMP live meteor_m2-x_lrpt${mode} $audio_temporary_storage_directory --source $receiver --samplerate $samplerate $ppm_correction ${FREQ_OFFSET} --frequency ${METEOR_FREQUENCY}e6 $sdr_id_option $SDR_DEVICE_ID $gain_args $bias_tee_option $SDR_EXTRA_OPTIONS $finish_processing --fill_missing --timeout $CAPTURE_TIME $spectro_opts" "INFO"
+satdump_started=$(date +%s)
 $SATDUMP live meteor_m2-x_lrpt${mode} "$audio_temporary_storage_directory" --source $receiver --samplerate $samplerate $ppm_correction ${FREQ_OFFSET} --frequency "${METEOR_FREQUENCY}e6" $sdr_id_option $SDR_DEVICE_ID $gain_args $bias_tee_option $SDR_EXTRA_OPTIONS $finish_processing --fill_missing --timeout $CAPTURE_TIME $spectro_opts >> $LRPT_LOG 2>&1
+satdump_ran=$(( $(date +%s) - satdump_started ))
 rm -f "$LIVE_FILE"
 [ -n "$preview_pid" ] && { kill "$preview_pid" 2>/dev/null; wait "$preview_pid" 2>/dev/null; preview_pid=""; }
 [ -n "$spectro_pid" ] && wait "$spectro_pid"
@@ -233,6 +235,18 @@ if [[ "${PRODUCE_SPECTROGRAM}" == "true" ]] && [ -f "${SPECTRO_DATA}" ]; then
   fi
 fi
 CADU_FILE="$WORK_DIR/meteor_m2-x_lrpt${mode}.cadu"
+
+# the pass's signal numbers (written by spectrogram.py render): quality, peak / mean SNR, lock time
+q_quality=NULL; q_snr_peak=NULL; q_snr_avg=NULL; q_locked=NULL
+SPECTRO_STATS="${SPECTRO_DATA%.npz}.json"
+if [ -s "$SPECTRO_STATS" ]; then
+  read -r q_quality q_snr_peak q_snr_avg q_locked < <(python3 -c '
+import json, sys
+d = json.load(open(sys.argv[1]))
+v = lambda k: "NULL" if d.get(k) is None else str(d[k])
+print(v("quality"), v("snr_peak"), v("snr_avg"), v("locked_s"))' "$SPECTRO_STATS" 2>/dev/null || echo "NULL NULL NULL NULL")
+  log "Signal: quality ${q_quality} %, peak SNR ${q_snr_peak} dB, decoder locked ${q_locked} s" "INFO"
+fi
 
 # keep the product (raw channels, line times, orbit) for the daily map, before it is deleted
 save_daily_product . "$FILENAME_BASE" "$EPOCH_START"
@@ -428,8 +442,8 @@ if [ -n "$(find /srv/images -maxdepth 1 -type f -name "$(basename "$IMAGE_FILE_B
   log "I got a successful jpg images" "INFO"
 
   # insert or replace in case there was already an insert due to the spectrogram creation
-  $SQLITE3 $DB_FILE "INSERT OR REPLACE INTO decoded_passes (pass_start, file_path, daylight_pass, sat_type, has_spectrogram, has_polar_az_el, has_polar_direction, gain) \
-                                      VALUES ($EPOCH_START, \"$FILENAME_BASE\", $daylight, 0, $spectrogram, $polar_az_el, $polar_direction, $GAIN);" >> $LRPT_LOG 2>&1
+  $SQLITE3 $DB_FILE "INSERT OR REPLACE INTO decoded_passes (pass_start, file_path, daylight_pass, sat_type, has_spectrogram, has_polar_az_el, has_polar_direction, gain, quality, snr_peak, snr_avg, locked_s) \
+                                      VALUES ($EPOCH_START, \"$FILENAME_BASE\", $daylight, 0, $spectrogram, $polar_az_el, $polar_direction, $GAIN, $q_quality, $q_snr_peak, $q_snr_avg, $q_locked);" >> $LRPT_LOG 2>&1
 
   pass_id=$($SQLITE3 $DB_FILE "SELECT id FROM decoded_passes ORDER BY id DESC LIMIT 1;")
   $SQLITE3 $DB_FILE "UPDATE predict_passes \
@@ -452,10 +466,15 @@ if [ -n "$(find /srv/images -maxdepth 1 -type f -name "$(basename "$IMAGE_FILE_B
   discord_pass "$FILENAME_BASE" "$daylight" "$SAT_NAME" "$EPOCH_START" "$SAT_MAX_ELEVATION" \
                "$PASS_DIRECTION" "$CAPTURE_TIME" "$pass_id" || true
 else
-  log "No images found" "INFO"
+  # why: kept with the scheduled pass so the Passes page can say it (pass_fail_reason, common.sh)
+  reason=$(pass_fail_reason "$q_snr_peak" "$q_locked" "$satdump_ran" "$CAPTURE_TIME")
+  log "No images found ($reason: peak SNR ${q_snr_peak} dB, decoder locked ${q_locked} s, SatDump ran ${satdump_ran} s)" "INFO"
+  $SQLITE3 $DB_FILE "UPDATE predict_passes SET fail_reason = '$reason', \
+                       fail_detail = '${q_snr_peak}|${q_locked}|${satdump_ran}' \
+                     WHERE pass_start = $EPOCH_START;" >> $LRPT_LOG 2>&1
 fi
 
-rm -f "${SPECTRO_DATA}"
+rm -f "${SPECTRO_DATA}" "${SPECTRO_STATS}"
 
 # calculate and report total time for capture
 TIMER_END=$(date '+%s')

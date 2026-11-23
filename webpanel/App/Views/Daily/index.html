@@ -126,7 +126,7 @@
               <span class="daily-count">{{ t.frames }} {{ lang['passes_lower']|default('passes') }}</span>
             </div>
             <div class="daily-meta">
-              <span>3.9 µm IR · {{ lang['channels']|default('Channels') }} 4</span>
+              <span>{% if t.composite == '3.9 µm Shortwave IR' %}3.9 µm IR · {{ lang['channels']|default('Channels') }} 4{% else %}{{ t.composite }} · {{ lang['channels']|default('Channels') }} 1 / 4{% endif %}</span>
               {% if t.first %}<span>{{ t.first|date('H:i') }}{% if t.last != t.first %}–{{ t.last|date('H:i') }}{% endif %}</span>{% endif %}
               {% if t.area %}<span><i class="fas fa-map"></i> {{ t.area.lon }} · {{ t.area.lat }}</span>{% endif %}
             </div>

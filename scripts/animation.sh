@@ -2,9 +2,9 @@
 #
 # Purpose: A time-lapse of one (local) day's passes over one area (Greece by default), shown with
 #          that day's maps on the Daily map page. Every pass is projected onto the same map of the
-#          area, so the frames line up. All frames use the 3.9 µm infrared image (channel 4), which
-#          looks the same by day and by night, so the loop doesn't flicker between visible and
-#          infrared.
+#          area, so the frames line up. Like the daily maps, daytime passes are MSA and night-time
+#          passes MCIR: both draw the clouds over SatDump's colour picture of the Earth, so the
+#          loop doesn't flicker between visible and infrared looks (3.9 µm IR before v1.40.0).
 #
 # Input:   the passes' SatDump products kept for the daily map
 #          ($METEOR_AUDIO_OUTPUT/products/<pass>, kept 2 days; needs daily_map: true), and the
@@ -62,13 +62,14 @@ fi
 
 # the area: west east south north, 0.01° a pixel (about 1 km, the satellite's own resolution)
 read -r west east south north <<< "${ANIMATION_AREA:-19 30 34 42}"
-# the composite and the channel it needs (can be overridden from the environment, for tests)
-composite=${ANIMATION_COMPOSITE:-Shortwave IR (Uncalibrated)}
+# the composite: like the daily maps, MSA for a daytime pass and MCIR at night (clouds over
+# SatDump's colour picture of the Earth, so day and night frames look alike). ANIMATION_COMPOSITE
+# forces one composite for every frame (tests). Every frame needs channel 4 (ANIMATION_CHANNEL).
 need_channel=${ANIMATION_CHANNEL:-4}
 scale=0.01
 width=$(awk -v a="$west" -v b="$east" -v s="$scale" 'BEGIN { w = int((b - a) / s); print w - w % 2 }')
 height=$(awk -v a="$south" -v b="$north" -v s="$scale" 'BEGIN { h = int((b - a) / s); print h - h % 2 }')
-area_key="$west $east $south $north ${MAP_PROJECTION:-equal_earth}"
+area_key="$west $east $south $north ${MAP_PROJECTION:-equal_earth} ${ANIMATION_COMPOSITE:-msa-mcir}"
 
 # frames made for another area are no use
 if [ "$(cat "$frames/.area" 2>/dev/null)" != "$area_key" ] || $redo; then
@@ -82,7 +83,12 @@ capitals=()
 # project_one BASE: the pass onto the area, labelled with its time and satellite. A pass that
 # covers less than a fifth of the area gets a .skip marker instead of a frame.
 project_one() {
-  local base=$1 dir="$products/$1" work cover label sat when
+  local base=$1 dir="$products/$1" work cover label sat when composite daylight
+  composite=${ANIMATION_COMPOSITE:-MCIR}
+  if [ -z "${ANIMATION_COMPOSITE:-}" ]; then
+    daylight=$($SQLITE3 "$DB_FILE" "SELECT daylight_pass FROM decoded_passes WHERE file_path = '$base' ORDER BY id DESC LIMIT 1;" 2>/dev/null)
+    [ "$daylight" = "1" ] && [ -f "$dir/MSU-MR-1.png" ] && composite=MSA
+  fi
   work=$(mktemp -d "$LRPT_HOME/tmp/anim-$base.XXXXXX")
   $SATDUMP project -layer --type product --file "$dir/product.cbor" --composite "$composite" \
     -target --type equirec --offset_x "$west" --offset_y "$north" \
@@ -106,7 +112,7 @@ project_one() {
   label="$when  ·  $sat"
   $CONVERT -background '#0b1220' "$work/f.png" -flatten \
     -gravity SouthWest -fill white -undercolor '#0b1220cc' -pointsize 26 -annotate +12+12 " $label " \
-    -gravity NorthEast -fill '#9fb3c8' -undercolor '#0b1220cc' -pointsize 18 -annotate +12+12 " ${STATION_TITLE:-Raspberry-LRPT} · 3.9 µm IR " \
+    -gravity NorthEast -fill '#9fb3c8' -undercolor '#0b1220cc' -pointsize 18 -annotate +12+12 " ${STATION_TITLE:-Raspberry-LRPT} · $composite " \
     -quality 90 "$frames/$base.jpg" >> "$LRPT_LOG" 2>&1
   rm -rf "$work"
 }
@@ -166,8 +172,9 @@ $CONVERT "$frames/${list[-1]}.jpg" -resize '640x640>' -quality 85 "$out/$day.jpg
 # what the page shows: the area, the passes in the loop and when it was made
 {
   size=$($CONVERT "$frames/${list[-1]}.jpg" -format '%w %h' info: 2>/dev/null || echo "$width $height")
-  printf '{"date":"%s","bounds":[%s,%s,%s,%s],"size":[%s,%s],"made":%s,"projection":"%s","composite":"3.9 µm Shortwave IR","passes":[' \
-    "$day" "$west" "$north" "$east" "$south" ${size% *} ${size#* } "$(date +%s)" "${MAP_PROJECTION:-equal_earth}"
+  printf '{"date":"%s","bounds":[%s,%s,%s,%s],"size":[%s,%s],"made":%s,"projection":"%s","composite":"%s","passes":[' \
+    "$day" "$west" "$north" "$east" "$south" ${size% *} ${size#* } "$(date +%s)" "${MAP_PROJECTION:-equal_earth}" \
+    "${ANIMATION_COMPOSITE:-MSA / MCIR}"
   first=1
   for base in "${list[@]}"; do [ $first = 1 ] || printf ','; printf '"%s"' "$base"; first=0; done
   printf ']}\n'

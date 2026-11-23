@@ -13,6 +13,39 @@
 
 {% include "Captures/legend.html" %}
 
+{# signal quality of the last 30 days' passes (v1.40.0): one bar per pass, in its satellite's
+   colour, with the average; shows whether gain or antenna changes help #}
+{% set qh = capture.quality_history|default([]) %}
+{% if cur_page == 1 and qh|length >= 2 %}
+  {% set n = qh|length %}{% set qfirst = qh|first %}{% set qlast = qh|last %}
+  {% set W = 600 %}{% set H = 90 %}
+  {% set step = W / n %}
+  {% set total = 0 %}{% for q in qh %}{% set total = total + q.quality %}{% endfor %}
+  {% set avg = (total / n)|round %}
+  <section class="q-chart">
+    <div class="q-chart-head">
+      <strong>{{ lang['quality_chart']|default('Signal quality') }}</strong>
+      <span>{{ lang['quality_chart_sub']|default('{n} passes since {date}')|replace({'{n}': n, '{date}': qfirst.pass_start|date(constant('Config\\Config::PASSES_DATE_FORMAT'))}) }}
+        · {{ lang['quality_avg']|default('average') }} <span class="q-val q-{{ avg >= 70 ? 'good' : (avg >= 40 ? 'fair' : 'poor') }}">{{ avg }} %</span></span>
+    </div>
+    <svg viewBox="0 0 {{ W }} {{ H + 14 }}" preserveAspectRatio="none" role="img"
+         aria-label="{{ lang['quality_chart']|default('Signal quality') }}">
+      <line class="q-axis" x1="0" y1="{{ H }}" x2="{{ W }}" y2="{{ H }}"/>
+      {% for q in qh %}
+        {% set h = (q.quality / 100 * (H - 4))|round(1) %}
+        <rect class="q-bar {{ sat_colours[q.sat_name]|default('other') }}" x="{{ (loop.index0 * step + step * 0.15)|round(1) }}"
+              y="{{ H - h }}" width="{{ (step * 0.7)|round(2) }}" height="{{ h }}" rx="1">
+          <title>{{ q.pass_start|date('d/m H:i') }} {{ q.sat_name|default('')|replace({'METEOR-': ''}) }} · {{ q.quality }} %{% if q.max_elev %} · {{ q.max_elev }}°{% endif %}</title>
+        </rect>
+      {% endfor %}
+      <line class="q-avg" x1="0" x2="{{ W }}" y1="{{ (H - avg / 100 * (H - 4))|round(1) }}" y2="{{ (H - avg / 100 * (H - 4))|round(1) }}"/>
+      <text class="q-lbl" x="0" y="{{ H + 12 }}">{{ qfirst.pass_start|date('d/m') }}</text>
+      <text class="q-lbl" x="{{ W }}" y="{{ H + 12 }}" text-anchor="end">{{ qlast.pass_start|date('d/m') }}</text>
+    </svg>
+    <div class="q-chart-note">{{ lang['quality_hint']|default('Quality: how much of the time the satellite was above the minimum elevation the decoder was locked') }}</div>
+  </section>
+{% endif %}
+
 {% if capture.list|length == 0 %}
   <div class="cap-empty">{{ lang['no_captures']|default('No captures yet') }}</div>
 {% else %}
@@ -93,6 +126,7 @@
           </div>
           <div class="cap-meta">
             {% if c.sat_type == 3 %}<span class="sstv-count"><i class="fas fa-tv"></i> {{ c.img_count }} SSTV</span> · {% endif %}{% if c.sat_type == 4 %}<span class="sstv-count"><i class="fas fa-satellite-dish"></i> {{ c.img_count }} APRS</span> · {% endif %}
+            {% if c.quality is not null %}<span class="q-val q-{{ c.quality >= 70 ? 'good' : (c.quality >= 40 ? 'fair' : 'poor') }}" title="{{ lang['quality']|default('Quality') }}">{{ c.quality }} %</span> · {% endif %}
             {% if c.direction == 'Northbound' %}<i class="fas fa-arrow-up"></i>{% elseif c.direction == 'Southbound' %}<i class="fas fa-arrow-down"></i>{% endif %}
             {{ c.direction == 'Northbound' ? lang['northbound']|default('Northbound') : (c.direction == 'Southbound' ? lang['southbound']|default('Southbound') : c.direction) }}{% if c.gain != '' %} · {{ lang['gain'] }} {{ c.gain == '0' ? lang['auto']|default('auto') : c.gain }}{% endif %}
           </div>

@@ -31,6 +31,10 @@
       <span><i class="fas fa-{{ info.daylight_pass == 1 ? 'sun' : 'moon' }} dn"></i> {{ info.daylight_pass == 1 ? lang['day']|default('day') : lang['night']|default('night') }}</span>
     {% endif %}
     <span>{{ lang['gain'] }} {{ capture.gain == '0' ? lang['auto']|default('auto') : (capture.gain == '' ? '?' : capture.gain) }}</span>
+    {% if info.quality is defined and info.quality is not null %}
+      <span title="{{ lang['quality_hint']|default('Quality: how much of the time the satellite was above the minimum elevation the decoder was locked') }}">{{ lang['quality']|default('Quality') }}
+        <span class="q-val q-{{ info.quality >= 70 ? 'good' : (info.quality >= 40 ? 'fair' : 'poor') }}">{{ info.quality }} %</span>{% if info.snr_peak is not null %} · {{ lang['peak_snr']|default('peak SNR') }} {{ info.snr_peak }} dB{% endif %}{% if info.locked_s %} · {{ lang['locked_for']|default('locked') }} {{ (info.locked_s // 60) }}:{{ '%02d'|format(info.locked_s % 60) }}{% endif %}</span>
+    {% endif %}
     {% if capture.recording %}
       {% set ext = capture.recording.name|split('.')|last %}
       <a class="rec-link" href="/recordings/{{ capture.recording.name|url_encode }}" download

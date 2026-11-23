@@ -13,6 +13,7 @@ use Config\Config;
 class PassesController extends \Lib\Controller {
   const LIVE_BINS = 256;      # spectrum points sent to the browser
   const LIVE_SPAN = 320000;   # Hz of spectrum around the tuned frequency (LRPT is ~120 kHz wide)
+  const HEALTH_PASSES = 3;    # this many failed Meteor passes in a row show the station warning
 
   public function indexAction($args) {
     $pass = $this->loadModel('Pass');
@@ -20,7 +21,13 @@ class PassesController extends \Lib\Controller {
     # the ISS on its own RTL-SDR records alongside the Meteors (schedule.sh writes iss-sdr.json):
     # an ISS pass during a Meteor pass is then no conflict
     $sdr = @json_decode((string) @file_get_contents(Config::IMAGE_PATH . '/iss-sdr.json'), true);
-    $args = array_merge($args, array('pass' => $pass, 'iss_own_sdr' => ($sdr['mode'] ?? '') === 'dedicated'));
+    # station health: the last HEALTH_PASSES finished Meteor passes all gave nothing -> a warning
+    # with their reasons (receiver, antenna, ...) at the top of the page
+    $recent = $pass->recentResults(self::HEALTH_PASSES);
+    $failed = array_filter($recent, function ($r) { return empty($r['id']); });
+    $health = (count($recent) == self::HEALTH_PASSES && count($failed) == count($recent)) ? array_values($recent) : null;
+    $args = array_merge($args, array('pass' => $pass, 'health' => $health,
+                                     'iss_own_sdr' => ($sdr['mode'] ?? '') === 'dedicated'));
     View::renderTemplate('Passes/index.html', $args);
   }
 

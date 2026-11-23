@@ -194,12 +194,17 @@ process() {
   fi
   [ -f "$image_base-spectrogram.png" ] && spectro=1
 
-  # database: replace this recording's row, mark the scheduled pass as captured
+  # database: replace this recording's row (keeping the live pass's signal numbers, which only
+  # the recording could measure), mark the scheduled pass as captured
+  local q_vals q sp sa ls
+  q_vals=$($SQLITE3 "$DB_FILE" "SELECT quality, snr_peak, snr_avg, locked_s FROM decoded_passes WHERE file_path = '$base' ORDER BY id DESC LIMIT 1;" 2>/dev/null)
+  IFS='|' read -r q sp sa ls <<< "$q_vals"
   $SQLITE3 "$DB_FILE" "DELETE FROM decoded_passes WHERE file_path = '$base';
     INSERT INTO decoded_passes (pass_start, file_path, daylight_pass, sat_type, img_count, has_spectrogram,
-                                has_polar_az_el, has_polar_direction, gain)
-    VALUES ($epoch_start, '$base', $daylight, 0, $n, $spectro, $az_el, $direction, $GAIN);
-    UPDATE predict_passes SET is_active = 0 WHERE pass_start = $epoch_start;" >> "$LRPT_LOG" 2>&1 \
+                                has_polar_az_el, has_polar_direction, gain, quality, snr_peak, snr_avg, locked_s)
+    VALUES ($epoch_start, '$base', $daylight, 0, $n, $spectro, $az_el, $direction, $GAIN,
+            ${q:-NULL}, ${sp:-NULL}, ${sa:-NULL}, ${ls:-NULL});
+    UPDATE predict_passes SET is_active = 0, fail_reason = NULL, fail_detail = NULL WHERE pass_start = $epoch_start;" >> "$LRPT_LOG" 2>&1 \
     || { fail "$base: the database update failed"; return 1; }
   local id; id=$($SQLITE3 "$DB_FILE" "SELECT id FROM decoded_passes WHERE file_path = '$base' LIMIT 1;")
   echo "  ${G}ok${N}  published: /captures/listImages?pass_id=$id"

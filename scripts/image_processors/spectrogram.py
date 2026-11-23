@@ -205,6 +205,7 @@ def render(data_file, out_file, sat_name, tle_file, lat, lon, min_elev):
   bx.set_xlim(local[0], local[-1])
   bx.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M', tz=tz))
   el = elevation(tle_file, sat_name, lat, lon, t)
+  write_stats(data_file, t, snr, dlock, el, min_elev)
   if el is not None:
     ex = bx.twinx()
     ex.plot(local, el, color='#9fd3ff', linewidth=1, linestyle=(0, (2, 2)), alpha=0.8)
@@ -227,6 +228,36 @@ def render(data_file, out_file, sat_name, tle_file, lat, lon, min_elev):
   else:
     fig.savefig(out_file, facecolor=BG)
   plt.close(fig)
+
+
+def write_stats(data_file, t, snr, dlock, el, min_elev):
+  """The pass's numbers for the web panel, next to the data file (<data>.json): seconds recorded,
+  seconds the decoder was locked, peak SNR, mean SNR while locked, and the quality: the share of
+  the time the satellite was above the minimum elevation that the decoder was locked (0-100).
+  A QFH typically keeps lock for most of a good pass above 15°; 0 means nothing was decoded."""
+  import json
+  try:
+    n = len(t)
+    if n < 2:
+      return
+    dt = float(np.median(np.diff(t))) or 1.0
+    locked = dlock > 0
+    snr = np.nan_to_num(np.asarray(snr, dtype=float))
+    stats = {
+      'seconds': int(round(n * dt)),
+      'locked_s': int(round(locked.sum() * dt)),
+      'snr_peak': round(float(snr.max()), 1),
+      'snr_avg': round(float(snr[locked].mean()), 1) if locked.any() else 0.0,
+    }
+    if el is not None:
+      up = np.asarray(el) >= float(min_elev)
+      stats['quality'] = int(round(100.0 * (locked & up).sum() / up.sum())) if up.any() else None
+    if stats.get('quality') is None:
+      stats['quality'] = int(round(100.0 * locked.mean()))
+    with open(data_file[:-4] + '.json' if data_file.endswith('.npz') else data_file + '.json', 'w') as f:
+      json.dump(stats, f)
+  except Exception as e:                                # the picture matters more
+    print('Pass statistics not written: %s' % e)
 
 
 def main():
