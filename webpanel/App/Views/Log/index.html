@@ -45,6 +45,11 @@
   .sl-pill.warn { background: rgba(217,130,43,.15); color: var(--sl-warn); }
   .sl-pill.bad  { background: rgba(214,69,69,.15); color: var(--sl-bad); }
   .sl-small .sl-value { font-size: 1.15rem; }
+  /* two or more RTL-SDRs: one line each (name, role, state) */
+  .sl-sdr-row { display: flex; align-items: center; gap: .4rem; font-size: .85rem; line-height: 1.5; }
+  .sl-sdr-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .sl-sdr-role { color: var(--sl-muted); white-space: nowrap; }
+  .sl-sdr-row .sl-pill { margin-left: auto; }
   .sl-grid.sl-five { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
 
   /* log console: always dark, like a terminal */
@@ -248,7 +253,30 @@
       $('sl-mem-pct').textContent = mp + '%' + (s.swap_total ? ' · ' + tr('swap', 'swap') + ' ' + bytes(s.swap_used) : '');
       push(hist.mem, mp); spark('sp-mem', hist.mem, 100, color(mp));
     }
-    if (s.sdr) {
+    if (s.sdrs && s.sdrs.length > 1) {
+      // two or more RTL-SDRs: one line each, with what it records and its state
+      var roles = { meteor: tr('sdr_role_meteor', 'Meteor'), iss: tr('sdr_role_iss', 'ISS'),
+                    'meteor+iss': tr('sdr_role_meteor', 'Meteor') + ' + ' + tr('sdr_role_iss', 'ISS'),
+                    spare: tr('sdr_role_spare', 'Not used') };
+      var box = $('sl-sdr'), missing = 0, rec = 0;
+      box.textContent = '';
+      s.sdrs.forEach(function (d) {
+        var row = document.createElement('div'), name = document.createElement('span'),
+            role = document.createElement('span'), pill = document.createElement('span');
+        row.className = 'sl-sdr-row';
+        name.className = 'sl-sdr-name'; name.textContent = d.name;
+        name.title = d.serial ? tr('serial', 'Serial') + ' ' + d.serial : '';
+        role.className = 'sl-sdr-role'; role.textContent = roles[d.role] || d.role;
+        pill.className = 'sl-pill ' + (!d.present ? 'bad' : d.busy ? 'warn' : 'good');
+        pill.textContent = !d.present ? tr('missing', 'Missing') : d.busy ? tr('recording', 'Recording') : tr('connected', 'Connected');
+        if (!d.present) missing++; if (d.busy) rec++;
+        row.appendChild(name); row.appendChild(role); row.appendChild(pill); box.appendChild(row);
+      });
+      $('sl-sdr-pill').innerHTML = missing ? '<span class="sl-pill bad">' + tr('missing', 'Missing') + '</span>'
+        : rec ? '<span class="sl-pill warn">' + tr('recording', 'Recording') + '</span>'
+        : '<span class="sl-pill good">' + tr('connected', 'Connected') + '</span>';
+      $('sl-sdr-sub').textContent = tr('sdr_count', '{n} RTL-SDRs').replace('{n}', s.sdrs.length);
+    } else if (s.sdr) {
       $('sl-sdr').textContent = s.sdr;
       $('sl-sdr-pill').innerHTML = s.capturing ? '<span class="sl-pill warn">' + tr('recording', 'Recording') + '</span>' : '<span class="sl-pill good">' + tr('connected', 'Connected') + '</span>';
       $('sl-sdr-sub').textContent = s.capturing ? tr('sdr_capturing', 'A pass is being captured now') : tr('sdr_idle', 'Idle, waiting for the next pass');

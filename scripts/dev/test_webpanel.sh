@@ -270,6 +270,12 @@ if ust != 'none':
                'releases': 'https://github.com/holifo/raspberry-lrpt/releases', 'checked': now - 3600,
                'error': 'fatal: unable to access the repository: Could not resolve host: github.com' if ust == 'error' else ''},
               open(os.path.join(srv, 'images', 'update.json'), 'w'))
+# TEST_SDRS=1: two RTL-SDRs (schedule.sh's sdr.json), the Meteors on the Blog V4, the ISS on the
+# other; the dev machine has neither on USB, so the card shows them as missing
+if os.environ.get('TEST_SDRS') == '1':
+    json.dump([{'index': 0, 'maker': 'Realtek', 'model': 'RTL2838UHIDIR', 'serial': '10000001', 'role': 'iss'},
+               {'index': 1, 'maker': 'RTLSDRBlog', 'model': 'Blog V4', 'serial': '00000004', 'role': 'meteor'}],
+              open(os.path.join(srv, 'images', 'sdr.json'), 'w'))
 # a station photo for the About page (scripts/station_photo.sh) with TEST_STATION_PHOTO=1, or
 # TEST_STATION_PHOTO=file to use a real picture
 sp = os.environ.get('TEST_STATION_PHOTO', '')

@@ -450,5 +450,10 @@ return array(
   "quality_avg" => "平均",
   "peak_snr" => "峰值信噪比",
   "locked_for" => "锁定",
+  "sdr_role_meteor" => "Meteor",
+  "sdr_role_iss" => "ISS",
+  "sdr_role_spare" => "未使用",
+  "sdr_count" => "{n} 个 RTL-SDR",
+  "serial" => "序列号",
 );
 ?>

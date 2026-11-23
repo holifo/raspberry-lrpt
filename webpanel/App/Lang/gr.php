@@ -460,5 +460,10 @@ return array(
   "quality_avg" => "μέσος όρος",
   "peak_snr" => "μέγιστο SNR",
   "locked_for" => "κλείδωμα",
+  "sdr_role_meteor" => "Meteor",
+  "sdr_role_iss" => "ISS",
+  "sdr_role_spare" => "Δεν χρησιμοποιείται",
+  "sdr_count" => "{n} RTL-SDR",
+  "serial" => "Σειριακός αριθμός",
 );
 ?>

@@ -450,5 +450,10 @@ return array(
   "quality_avg" => "المتوسط",
   "peak_snr" => "أعلى SNR",
   "locked_for" => "مقفل",
+  "sdr_role_meteor" => "Meteor",
+  "sdr_role_iss" => "ISS",
+  "sdr_role_spare" => "غير مستخدم",
+  "sdr_count" => "{n} من RTL-SDR",
+  "serial" => "الرقم التسلسلي",
 );
 ?>

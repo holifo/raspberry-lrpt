@@ -450,5 +450,10 @@ return array(
   "quality_avg" => "moyenne",
   "peak_snr" => "SNR max",
   "locked_for" => "verrouillé",
+  "sdr_role_meteor" => "Meteor",
+  "sdr_role_iss" => "ISS",
+  "sdr_role_spare" => "Non utilisé",
+  "sdr_count" => "{n} RTL-SDR",
+  "serial" => "N° de série",
 );
 ?>

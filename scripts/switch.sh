@@ -116,6 +116,8 @@ if [ "$want" == "false" ]; then
   $SQLITE3 "$DB_FILE" "DELETE FROM predict_passes WHERE $sat AND pass_start > $(date +%s);"
   if [ "$what" == "iss" ]; then
     rm -f "$LRPT_HOME/tmp/iss.tle"
+    # the Live log's dongle list: the ISS's dongle is free again
+    ISS_SSTV=false sdr_roles > "$IMAGE_OUTPUT/sdr.json.tmp" 2>/dev/null && mv "$IMAGE_OUTPUT/sdr.json.tmp" "$IMAGE_OUTPUT/sdr.json"
     # the web map's orbit copy without the ISS
     [ -s "$LRPT_HOME/tmp/orbit.tle" ] && cp "$LRPT_HOME/tmp/orbit.tle" "$WEB_HOME/App/Static/meteor.tle"
   fi

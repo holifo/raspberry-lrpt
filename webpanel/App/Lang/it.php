@@ -450,5 +450,10 @@ return array(
   "quality_avg" => "media",
   "peak_snr" => "SNR di picco",
   "locked_for" => "agganciato",
+  "sdr_role_meteor" => "Meteor",
+  "sdr_role_iss" => "ISS",
+  "sdr_role_spare" => "Non usato",
+  "sdr_count" => "{n} RTL-SDR",
+  "serial" => "Seriale",
 );
 ?>

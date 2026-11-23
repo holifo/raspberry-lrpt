@@ -66,6 +66,15 @@ iss_sdr() {
     echo "- none"
 }
 
+# sdr_roles: JSON list of the RTL-SDRs with each one's role (meteor, iss, meteor+iss, spare), as
+# schedule.sh saves it for the Live log ($IMAGE_OUTPUT/sdr.json)
+sdr_roles() {
+  local meteor=0
+  [ "$USE_DEVICE_STRING" == "true" ] && meteor="${METEOR_M2_3_SDR_DEVICE_ID:-0}"
+  python3 "$LRPT_HOME/scripts/tools/rtlsdr_list.py" roles "${ISS_SDR_DEVICE:-}" "$meteor" \
+    "${RECEIVER_TYPE:-rtlsdr}" "${ISS_SSTV:-false}"
+}
+
 # the pass's start time: set once, by the script that starts the pass (receive_meteor.sh,
 # reprocess_meteor.sh); helpers that source this file later keep it
 export START_DATE=${START_DATE:-$(date '+%d-%m-%Y %H:%M')}

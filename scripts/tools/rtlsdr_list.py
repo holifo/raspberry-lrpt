@@ -6,6 +6,10 @@
                                        dedicated (its own dongle: records alongside the Meteors),
                                        shared (the Meteors' dongle: Meteor passes come first) or
                                        none (no RTL-SDR: prints "- none")
+  rtlsdr_list.py roles WANT METEOR RX ISS_ON
+                                       JSON for the web panel's Live log: every dongle with its
+                                       index, maker, model, serial and role (meteor, iss or
+                                       spare); ISS_ON is true when ISS recording is switched on
 
 WANT is iss_sdr_device: empty = choose automatically, else an index, a serial number, or part of
 the serial or of the maker/model text (e.g. "Blog V4"). METEOR is the index the Meteors record on
@@ -89,6 +93,25 @@ def main():
             meteor = 0
         idx, mode = pick(sys.argv[2], meteor, sys.argv[4], devs)
         print('{} {}'.format('-' if idx is None else idx, mode))
+        return 0
+    if sys.argv[1] == 'roles' and len(sys.argv) == 6:
+        import json
+        meteor = resolve(sys.argv[3] or '0', devs)
+        if meteor is None:
+            meteor = 0
+        rx = sys.argv[4]
+        iss = None
+        if sys.argv[5] == 'true':
+            iss, _ = pick(sys.argv[2], meteor, rx, devs)
+        out = []
+        for i, (m, p, s) in enumerate(devs):
+            role = 'spare'
+            if rx == 'rtlsdr' and i == meteor:
+                role = 'meteor+iss' if i == iss else 'meteor'
+            elif i == iss:
+                role = 'iss'
+            out.append({'index': i, 'maker': m, 'model': p, 'serial': s, 'role': role})
+        print(json.dumps(out))
         return 0
     print(__doc__.strip().split('\n\n')[1], file=sys.stderr)
     return 2

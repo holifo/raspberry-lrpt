@@ -82,7 +82,7 @@ the composites those channels allow.
 | **One capture** | click a card | Pass details, every image (zoomable viewer), graphs, spectrogram, recording download |
 | **Daily map** | `/daily` | One map per day of all day passes, one of all night passes, and the day's time-lapse |
 | **Satellites** | `/satellite` | Live map of both satellites, the selected one's details, the coming passes |
-| **Live log** | `/log` | CPU, temperature, memory, SDR, disks, next pass, and the station log live |
+| **Live log** | `/log` | CPU, temperature, memory, SDR (with two or more RTL-SDRs, each one with what it records), disks, next pass, and the station log live |
 | **About** | `/about` | The installed version and the daily update check (up to date, or "update available" with the command to run; the footer shows "vX available" too; `update_check: false` turns it off), credits, a photo of your station if you add one (`./scripts/station_photo.sh`); in tabs: Station (this), Meteor-M (satellites working now, every launch and plan, the LRPT signal, the instruments), ISS as an extra (orbit, amateur radio frequencies, the year's ARISS SSTV events) and Sources. `/about#meteor`, `#iss` and `#sources` open a tab directly |
 | **Admin** | `/admin/passes` (type it) | Delete passes and captures, switch Meteor / the ISS on or off, and **Settings** (`/admin/settings`): every station setting on one page ([how](admin_settings.md)); needs the admin password. Not security-reviewed: use it over HTTPS |
 

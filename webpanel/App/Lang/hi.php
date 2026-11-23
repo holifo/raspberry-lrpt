@@ -450,5 +450,10 @@ return array(
   "quality_avg" => "औसत",
   "peak_snr" => "अधिकतम SNR",
   "locked_for" => "लॉक",
+  "sdr_role_meteor" => "Meteor",
+  "sdr_role_iss" => "ISS",
+  "sdr_role_spare" => "उपयोग में नहीं",
+  "sdr_count" => "{n} RTL-SDR",
+  "serial" => "सीरियल नंबर",
 );
 ?>

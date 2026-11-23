@@ -195,6 +195,9 @@ if [ "$METEOR_M2_4_SCHEDULE" == "true" ]; then
   log "Scheduling Meteor-M2 4 captures..." "INFO"
   $LRPT_HOME/scripts/schedule_captures.sh "METEOR-M2 4" "receive_meteor.sh" $TLE_OUTPUT $start_time_ms $end_time_ms >> $LRPT_LOG 2>&1
 fi
+# the RTL-SDRs and what each records, for the web panel's Live log (sdr_roles, common.sh)
+sdr_roles > "${IMAGE_OUTPUT}/sdr.json.tmp" 2>/dev/null && mv "${IMAGE_OUTPUT}/sdr.json.tmp" "${IMAGE_OUTPUT}/sdr.json"
+
 iss_own_sdr=false
 if [ "$ISS_SSTV" == "true" ]; then
   read -r iss_idx iss_mode <<< "$(iss_sdr)"

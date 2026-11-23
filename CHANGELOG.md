@@ -1,5 +1,12 @@
 # Changelog
 
+## Raspberry-LRPT v1.40.2 (2026-11-23)
+
+- **Live log: every RTL-SDR.** With two or more dongles the SDR card lists each one with what it
+  records (Meteor, ISS, or not used) and whether it is connected, recording or missing; before,
+  it showed only the first one found. The scheduler saves the list (`sdr.json`, from
+  `scripts/tools/rtlsdr_list.py roles`), and switching the ISS off updates it.
+
 ## Raspberry-LRPT v1.40.1 (2026-11-23)
 
 - **Fix for Debian Trixie: every pass was a night pass.** `sun.py`, which works out the sun's

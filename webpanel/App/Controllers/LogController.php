@@ -166,9 +166,33 @@ class LogController extends \Lib\Controller {
       }
     }
     $s['capturing'] = false;
+    $busy = array('satdump' => false, 'rtl_fm' => false);
     foreach (glob('/proc/[0-9]*/comm') ?: array() as $cf) {
       $comm = trim(@file_get_contents($cf));
-      if ($comm == 'satdump' || $comm == 'rtl_fm') { $s['capturing'] = true; break; }
+      if (isset($busy[$comm])) { $busy[$comm] = true; $s['capturing'] = true; }
+    }
+
+    # two or more RTL-SDRs: each with its role (schedule.sh writes sdr.json), whether it is still
+    # on USB (its serial in /sys) and whether its recorder is running (SatDump for the Meteors,
+    # rtl_fm for the ISS)
+    $list = @json_decode((string) @file_get_contents(Config::IMAGE_PATH . '/sdr.json'), true);
+    if (is_array($list) && count($list) > 1) {
+      $serials = array();
+      foreach (glob('/sys/bus/usb/devices/*/serial') ?: array() as $sf) {
+        $serials[] = trim((string) @file_get_contents($sf));
+      }
+      $s['sdrs'] = array();
+      foreach ($list as $d) {
+        $role = (string) ($d['role'] ?? 'spare');
+        $s['sdrs'][] = array(
+          'name' => trim(($d['model'] ?? '') ?: ($d['maker'] ?? 'RTL-SDR')),
+          'serial' => (string) ($d['serial'] ?? ''),
+          'role' => $role,
+          'present' => ($d['serial'] ?? '') === '' || in_array((string) $d['serial'], $serials, true),
+          'busy' => (strpos($role, 'meteor') !== false && $busy['satdump'])
+                    || (strpos($role, 'iss') !== false && $busy['rtl_fm']),
+        );
+      }
     }
 
     # schedule: next pass, passes left today, last decoded capture
