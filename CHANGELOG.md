@@ -1,5 +1,11 @@
 # Changelog
 
+## Raspberry-LRPT v1.40.5 (2026-11-23)
+
+- **Passes page: Meteor first when two passes record at once.** With the ISS on its own RTL-SDR,
+  an ISS pass and a Meteor pass can record together; the "Recording now" card showed whichever
+  started first. It now shows the Meteor pass, the same one as the Live decode panel below it.
+
 ## Raspberry-LRPT v1.40.4 (2026-11-23)
 
 - **Live log: the dongle list now appears after an install.** The scheduler stopped early when

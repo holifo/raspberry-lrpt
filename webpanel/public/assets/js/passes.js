@@ -160,7 +160,9 @@
         r.status.className = 'st-live' + (isLive ? ' rec' : (isPast && !r.captured ? ' fas fa-times missed' : ''));
         r.status.title = isLive ? T.recording : (isPast && !r.captured ? (r.el.dataset.fail || T.missed) : '');
       }
-      if (isLive && !live) { live = r; }
+      // two passes at once (the ISS on its own RTL-SDR): the card shows the Meteor one, like the
+      // Live decode panel below it
+      if (isLive && (!live || (live.sat === 'ISS' && r.sat !== 'ISS'))) { live = r; }
       if (!r.skipped && now < r.start && !next) { next = r; }
     });
 
