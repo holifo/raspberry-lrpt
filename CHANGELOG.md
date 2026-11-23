@@ -1,5 +1,11 @@
 # Changelog
 
+## Raspberry-LRPT v1.40.4 (2026-11-23)
+
+- **Live log: the dongle list now appears after an install.** The scheduler stopped early when
+  every pass was already scheduled (as on a re-install), before it wrote the list of RTL-SDRs
+  (`sdr.json`) and the ISS's dongle (`iss-sdr.json`). Both are now written first, on every run.
+
 ## Raspberry-LRPT v1.40.3 (2026-11-23)
 
 - **Admin > Passes: no false conflicts with two RTL-SDRs.** When the ISS has its own dongle it

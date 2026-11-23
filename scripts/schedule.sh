@@ -145,6 +145,15 @@ if [ -f "${TLE_OUTPUT}" ] && [ -d "${WEB_HOME}/App/Static" ]; then
     log "Could not copy TLE file for the web panel map" "WARN"
 fi
 
+# the RTL-SDRs and what each records, for the web panel's Live log (sdr_roles, common.sh), and
+# the ISS's dongle for the Passes pages. Written before the "all passes already scheduled" exit
+# below, so a re-install or a dongle swap updates them too.
+sdr_roles > "${IMAGE_OUTPUT}/sdr.json.tmp" 2>/dev/null && mv "${IMAGE_OUTPUT}/sdr.json.tmp" "${IMAGE_OUTPUT}/sdr.json"
+if [ "$ISS_SSTV" == "true" ]; then
+  read -r iss_idx iss_mode <<< "$(iss_sdr)"
+  printf '{"index": "%s", "mode": "%s", "made": %s}\n' "$iss_idx" "$iss_mode" "$(date +%s)" > "${IMAGE_OUTPUT}/iss-sdr.json" 2>/dev/null
+fi
+
 # section to remove all existing scheduled jobs/captures and clear
 # all future database captures, making room for a brand new schedule
 atq_date=""
@@ -195,13 +204,8 @@ if [ "$METEOR_M2_4_SCHEDULE" == "true" ]; then
   log "Scheduling Meteor-M2 4 captures..." "INFO"
   $LRPT_HOME/scripts/schedule_captures.sh "METEOR-M2 4" "receive_meteor.sh" $TLE_OUTPUT $start_time_ms $end_time_ms >> $LRPT_LOG 2>&1
 fi
-# the RTL-SDRs and what each records, for the web panel's Live log (sdr_roles, common.sh)
-sdr_roles > "${IMAGE_OUTPUT}/sdr.json.tmp" 2>/dev/null && mv "${IMAGE_OUTPUT}/sdr.json.tmp" "${IMAGE_OUTPUT}/sdr.json"
-
 iss_own_sdr=false
 if [ "$ISS_SSTV" == "true" ]; then
-  read -r iss_idx iss_mode <<< "$(iss_sdr)"
-  printf '{"index": "%s", "mode": "%s", "made": %s}\n' "$iss_idx" "$iss_mode" "$(date +%s)" > "${IMAGE_OUTPUT}/iss-sdr.json" 2>/dev/null
   if [ "$iss_mode" == "none" ]; then
     log "The ISS records with an RTL-SDR (rtl_fm) and none is connected - not scheduling ISS passes" "WARN"
   elif [ -s "$ISS_TLE" ]; then
