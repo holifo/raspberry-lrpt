@@ -112,3 +112,26 @@ html[data-theme="dark"] .st-planned.mi-st { color: #7fb8ec; border-color: #7fb8e
 .cap-grid.ab-photo .cap-card { width: 100%; max-width: 680px; }
 .ab-photo img { width: 100%; height: auto; max-height: 60vh; object-fit: cover; display: block; }
 .ab-photo-cap { padding: 8px 12px; font-size: .9rem; color: var(--pl-dim); }
+
+/* Changes tab: the release notes (Lib\Changelog), one fold per release, the installed one marked */
+.cl-intro { color: var(--pl-dim); margin: 6px 0 12px; }
+.cl-list { display: flex; flex-direction: column; gap: 8px; }
+.cl-rel { border: 1px solid var(--pl-line); border-radius: 12px; background: var(--pl-card); }
+.cl-rel > summary { display: flex; align-items: baseline; gap: 10px; padding: 10px 14px; cursor: pointer;
+  list-style: none; }
+.cl-rel > summary::-webkit-details-marker { display: none; }
+.cl-rel > summary::before { content: '\25B8'; color: var(--pl-dim); transition: transform .15s; }
+.cl-rel[open] > summary::before { transform: rotate(90deg); }
+.cl-ver { font-weight: 600; font-variant-numeric: tabular-nums; }
+.cl-date { color: var(--pl-dim); font-size: .9rem; font-variant-numeric: tabular-nums; }
+.cl-tag { margin-left: auto; font-size: .78rem; padding: 1px 8px; border-radius: 999px; background: #2f9e5b; color: #fff; }
+.cl-rel.is-installed { border-color: #2f9e5b; }
+.cl-body { padding: 0 14px 12px 30px; line-height: 1.5; font-size: .93rem; overflow-wrap: anywhere; }
+.cl-body ul { margin: 0 0 6px; padding-left: 18px; }
+.cl-body li { margin: 4px 0; }
+.cl-body h4 { font-size: .95rem; margin: 10px 0 4px; }
+.cl-body p { margin: 6px 0; }
+.cl-body code { font-size: .85em; padding: 0 4px; border-radius: 4px; background: var(--pl-track); color: inherit; }
+.cl-body pre { margin: 6px 0; padding: 8px 10px; border-radius: 8px; background: var(--pl-track); overflow-x: auto; }
+.cl-body pre code { padding: 0; background: none; }
+.cl-more { margin: 12px 0 0; }

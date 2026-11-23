@@ -201,6 +201,7 @@ step "Updating the web panel"
 rsync -a --delete --exclude /Config/ --exclude /vendor/ --exclude /App/Static/meteor.tle \
   "$LRPT_HOME"/webpanel/ "$WEB_HOME"/ || die "Copying the web panel failed"
 cp -f "$LRPT_HOME"/VERSION "$WEB_HOME"/VERSION || die "Copying VERSION failed"   # shown in the footer
+cp -f "$LRPT_HOME"/CHANGELOG.md "$WEB_HOME"/CHANGELOG.md || warn "Copying CHANGELOG.md failed"   # About > Changes
 sudo chown -R "$USER":www-data "$WEB_HOME"/ || die "Setting web panel ownership failed"
 composer install -q --no-interaction -d "$WEB_HOME"/ || die "composer install failed"
 if [ "$ENABLE_NON_TLS" = true ]; then

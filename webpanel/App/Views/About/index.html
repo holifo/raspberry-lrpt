@@ -44,6 +44,7 @@
   <a href="#station" data-pane="station" role="tab"><i class="fas fa-satellite-dish"></i> {{ lang['about_jump_station']|default('Station') }}</a>
   <a href="#meteor" data-pane="meteor" role="tab"><span class="sat-dot m23"></span> Meteor-M</a>
   {% if iss %}<a href="#iss" data-pane="iss" role="tab"><span class="sat-dot iss"></span> ISS</a>{% endif %}
+  {% if changes %}<a href="#changes" data-pane="changes" role="tab"><i class="fas fa-history"></i> {{ lang['about_changes']|default('Changes') }}</a>{% endif %}
   <a href="#sources" data-pane="sources" role="tab"><i class="fas fa-book"></i> {{ lang['mi_sources']|default('Sources') }}</a>
 </nav>
 
@@ -242,6 +243,27 @@
   {% endfor %}
 </ol>
 <p class="mi-note"><i class="fas fa-info-circle"></i> {{ lang['iss_next']|default('The next event is not announced yet. ARISS announces them a few weeks ahead on ariss.org and its social media; set iss_sstv_frequency to match.') }}</p>
+</section>
+{% endif %}
+
+{# ---- release notes: CHANGELOG.md (Lib\Changelog), newest first, the installed one marked ---- #}
+{% if changes %}
+<section class="ab-pane" id="pane-changes" data-tab="changes" role="tabpanel">
+<h2 class="mi-h mi-h1">{{ lang['about_changes']|default('Changes') }}</h2>
+<p class="cl-intro">{{ lang['about_changes_intro']|default('What changed in each release of the station software, newest first.') }}</p>
+<div class="cl-list">
+  {% for r in changes %}
+  <details class="cl-rel{% if r.version == lrpt_version %} is-installed{% endif %}"{% if loop.index <= 3 %} open{% endif %}>
+    <summary>
+      <span class="cl-ver">v{{ r.version }}</span>
+      {% if r.ts %}<span class="cl-date">{{ r.ts|date(constant('Config\\Config::PASSES_DATE_FORMAT')) }}</span>{% endif %}
+      {% if r.version == lrpt_version %}<span class="cl-tag">{{ lang['about_changes_installed']|default('installed') }}</span>{% endif %}
+    </summary>
+    <div class="cl-body">{{ r.html|raw }}</div>
+  </details>
+  {% endfor %}
+</div>
+<p class="cl-more"><a href="{{ lrpt_repo }}/blob/main/CHANGELOG.md" rel="noopener" target="_blank"><i class="fab fa-github"></i> {{ lang['about_changes_all']|default('Full history on GitHub') }}</a></p>
 </section>
 {% endif %}
 

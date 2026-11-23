@@ -1,5 +1,13 @@
 # Changelog
 
+## Raspberry-LRPT v1.41.0 (2026-11-23)
+
+- **About > Changes.** A new tab on the About page lists what changed in each release of the
+  station software, newest first: the three newest are open, the rest fold, and the version this
+  station runs is marked "installed". It shows the last 40 releases and links to the full
+  history on GitHub. The install copies `CHANGELOG.md` next to the web panel for it
+  (`/about#changes` opens the tab directly).
+
 ## Raspberry-LRPT v1.40.6 (2026-11-23)
 
 - **RTL-SDR: the kernel's DVB-T driver is unloaded at install.** The blacklist only took effect at

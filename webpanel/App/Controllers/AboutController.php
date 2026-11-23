@@ -103,6 +103,8 @@ class AboutController extends \Lib\Controller {
     }
     View::renderTemplate('About/index.html', array_merge($args, array(
       'page' => 'about', 'update' => \Lib\Update::status(), 'photo' => self::photo(), 'sats' => $sats, 'sources' => self::SOURCES, 'iss' => $iss,
+      # release notes (Lib\Changelog reads CHANGELOG.md, copied next to the web panel by the install)
+      'changes' => \Lib\Changelog::releases('https://github.com/holifo/raspberry-lrpt'),
       'checked' => strtotime(self::CHECKED . ' 12:00'), 'now_year' => (int) date('Y'),
       'now_pos' => round(((int) date('Y') + ((int) date('z')) / 365 - 2009) / 25 * 100, 2))));
   }

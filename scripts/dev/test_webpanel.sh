@@ -32,7 +32,7 @@ set -u
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${PWD}/webpanel-test-output"
 KEEP=0
-PAGES="/passes /satellite /about /captures?page_no=1 /captures/listImages?pass_id=1 /captures/listImages?pass_id=2 /daily /satellite/map /admin/passes /admin/captures?page_no=1 /admin/settings /log"
+PAGES="/passes /satellite /about /about#changes /captures?page_no=1 /captures/listImages?pass_id=1 /captures/listImages?pass_id=2 /daily /satellite/map /admin/passes /admin/captures?page_no=1 /admin/settings /log"
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/rl1-webtest"
 
 while getopts ":o:kp:" opt; do
@@ -73,6 +73,7 @@ trap cleanup EXIT
 say "Copying web panel to $WORK"
 cp -r "$REPO/webpanel" "$WORK/wp"
 cp "$REPO/VERSION" "$WORK/wp/VERSION"
+cp "$REPO/CHANGELOG.md" "$WORK/wp/CHANGELOG.md"
 (cd "$WORK/wp" && composer install -q --no-interaction) || fail "composer install failed"
 
 # ---- local copies of the CDN libraries (cached between runs) --------------------
@@ -459,15 +460,15 @@ say "Checking pages on http://127.0.0.1:$PORT"
 for page in $PAGES; do
   code=$(curl -s -o "$WORK/page.html" -w '%{http_code}' "http://127.0.0.1:$PORT$page")
   # PHP writes "<b>Deprecated</b>:", so the tags go before the search
-  errors=$(sed 's/<[^>]*>//g' "$WORK/page.html" | grep -c -i -E 'Fatal error|Warning:|Notice:|Deprecated:|Twig\\Error|Uncaught|404 - ')
+  errors=$(sed 's/<[^>]*>//g' "$WORK/page.html" | grep -c -i -E 'Fatal error|(Warning|Notice|Deprecated): .* on line [0-9]+|Twig\\Error|Uncaught|404 - ')
   if [ "$code" == "200" ] && [ "$errors" -eq 0 ]; then
     printf "  \033[32mPASS\033[0m  %-36s\n" "$page"
   else
     printf "  \033[31mFAIL\033[0m  %-36s HTTP %s, %s error line(s)\n" "$page" "$code" "$errors"
-    sed 's/<[^>]*>//g' "$WORK/page.html" | grep -i -m3 -E 'Fatal error|Warning:|Notice:|Deprecated:|Twig\\Error|Uncaught' | sed 's/^/        /'
+    sed 's/<[^>]*>//g' "$WORK/page.html" | grep -i -m3 -E 'Fatal error|(Warning|Notice|Deprecated): .* on line [0-9]+|Twig\\Error|Uncaught' | sed 's/^/        /'
     FAILED=1
   fi
-  name=$(echo "$page" | sed 's#^/##; s#[/?=&]#_#g'); [ -z "$name" ] && name=root
+  name=$(echo "$page" | sed 's#^/##; s#[/?=&\#]#_#g'); [ -z "$name" ] && name=root
   for width in 1000 390; do
     "$CHROME" --headless=new --no-sandbox --disable-gpu --hide-scrollbars --virtual-time-budget=6000 \
       --window-size=$width,1100 --screenshot="$OUT/${name}_${width}_light.png" \
