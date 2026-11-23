@@ -1,5 +1,18 @@
 # Changelog
 
+## Raspberry-LRPT v1.40.1 (2026-11-23)
+
+- **Fix for Debian Trixie: every pass was a night pass.** `sun.py`, which works out the sun's
+  elevation for each pass (and so whether it is a day or night pass), used the `envbash` package,
+  which needs the `pipes` module that Python 3.13 no longer has. It crashed on every call, so
+  passes were all treated as night passes. `sun.py` now reads the station's position itself and
+  `envbash` is no longer installed; the verification tool now checks that `sun.py` works.
+- **Two RTL-SDRs: the Meteors can use a dongle by its serial number.** With `use_device_string:
+  true`, `meteor_m2_3_sdr_device_id` / `meteor_m2_4_sdr_device_id` take the dongle's serial (as
+  `scripts/switch.sh iss` lists it, leading zeros kept), which SatDump 1.2.3 uses to open it; the
+  ISS then takes the other dongle. Before, these settings only took a number. See
+  `docs/iss_sstv.md`.
+
 ## Raspberry-LRPT v1.40.0 (2026-11-23)
 
 - **Pass quality.** Every Meteor pass now gets a quality score: how much of the time the satellite

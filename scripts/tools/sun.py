@@ -1,33 +1,51 @@
-import envbash
-import ephem
-import time
-import sys
+#!/usr/bin/env python3
+#
+# The sun's elevation (whole degrees) at the station at a given time.
+#
+#   sun.py EPOCH      e.g. sun.py 1795999999  ->  -37
+#
+# The station's position comes from LAT / LON in the environment, else from the LAT= and LON=
+# lines of ~/.raspberry-lrpt.conf. (It used the envbash package for that until v1.40.1; envbash
+# imports the "pipes" module, which Python 3.13 - Debian Trixie - no longer has.)
+
 import os
-import subprocess  # Import the subprocess module
+import re
+import sys
+from datetime import datetime, timezone
 
-from envbash import load_envbash
+import ephem
 
-# Use parameter expansion to expand ~ to the home folder
-config_file = os.path.expanduser('~/.raspberry-lrpt.conf')
 
-# Load bash environment vars
-load_envbash(config_file)
+def station():
+    lat, lon = os.environ.get('LAT'), os.environ.get('LON')
+    if lat and lon:
+        return lat, lon
+    conf = os.path.expanduser('~/.raspberry-lrpt.conf')
+    values = {}
+    try:
+        with open(conf) as f:
+            for line in f:
+                m = re.match(r'\s*(?:export\s+)?(LAT|LON)=["\']?([-+0-9.]+)', line)
+                if m:
+                    values[m.group(1)] = m.group(2)
+    except OSError as e:
+        sys.exit('sun.py: cannot read %s: %s' % (conf, e))
+    if 'LAT' not in values or 'LON' not in values:
+        sys.exit('sun.py: no LAT / LON in %s' % conf)
+    return values['LAT'], values['LON']
 
-# Use subprocess to get the local time offset from UTC
-timezone = float(subprocess.check_output('echo $(date "+%:::z") | sed "s/\\([+-]\\)0\\?/\\1/" | sed "s/:30/.5/"', shell=True, text=True))
 
-date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(int(sys.argv[1]) - (timezone * 60 * 60)))
+def main():
+    if len(sys.argv) != 2:
+        sys.exit('Usage: sun.py EPOCH')
+    lat, lon = station()
+    obs = ephem.Observer()
+    obs.lat = str(lat)
+    obs.long = str(lon)
+    obs.date = datetime.fromtimestamp(int(float(sys.argv[1])), tz=timezone.utc).replace(tzinfo=None)
+    sun = ephem.Sun(obs)
+    print(int(float(sun.alt) * 57.2957795))      # radians to degrees, cut to whole degrees as before
 
-lat = str(os.environ['LAT'])
-lon = str(os.environ['LON'])
 
-obs = ephem.Observer()
-obs.lat = lat
-obs.long = lon
-obs.date = date
-
-sun = ephem.Sun(obs)
-sun.compute(obs)
-sun_angle = float(sun.alt) * 57.2957795  # Rad to deg
-
-print(int(sun_angle))
+if __name__ == '__main__':
+    main()

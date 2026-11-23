@@ -45,6 +45,9 @@ def resolve(want, devs):
     want = want.strip()
     if not want:
         return None
+    exact = [i for i, d in enumerate(devs) if d[2] == want]       # a serial first: "00000004"
+    if exact:                                                     # is a serial, not index 4
+        return exact[0]
     if want.isdigit() and int(want) < len(devs):
         return int(want)
     low = want.lower()
@@ -80,9 +83,9 @@ def main():
             print('{}\t{}\t{}\t{}'.format(i, m or '?', p or '?', s or '-'))
         return 0
     if sys.argv[1] == 'pick' and len(sys.argv) == 5:
-        try:
-            meteor = int(sys.argv[3] or 0)
-        except ValueError:
+        # the Meteors' SDR: an index, or with use_device_string its serial number
+        meteor = resolve(sys.argv[3] or '0', devs)
+        if meteor is None:
             meteor = 0
         idx, mode = pick(sys.argv[2], meteor, sys.argv[4], devs)
         print('{} {}'.format('-' if idx is None else idx, mode))

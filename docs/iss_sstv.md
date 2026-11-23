@@ -42,6 +42,21 @@ site when something was received.
    The choice is made when passes are scheduled and again when each ISS pass starts, so an
    unplugged second dongle simply falls back to the shared rules. `scripts/switch.sh iss` lists
    the connected RTL-SDRs (index, maker, model, serial) and says which one the ISS uses.
+
+   **Which dongle the Meteors use.** By default the Meteors take the first RTL-SDR (index 0) and
+   the ISS another one. The order is the order the Pi finds them in, so to tie the Meteors to one
+   dongle (the one on the QFH) use its serial number (since v1.40.1):
+
+   ```bash
+   cd ~/raspberry-lrpt
+   python3 scripts/tools/settings.py set use_device_string true
+   python3 scripts/tools/settings.py set meteor_m2_3_sdr_device_id 00000004   # the serial
+   python3 scripts/tools/settings.py set meteor_m2_4_sdr_device_id 00000004   #   switch.sh shows
+   ./install_and_upgrade.sh
+   ```
+
+   SatDump then opens that dongle by its serial, and the ISS automatically takes the other one.
+   The two dongles need different serials (`rtl_eeprom -d N -s NEWSERIAL` can change one).
 4. **Recording** (SSTV; APRS is below): `receive_iss.sh` records the pass on `iss_sstv_frequency` with `rtl_fm`
    (48 kHz wide, which covers the ISS's Doppler shift: about ±3.5 kHz on 2 m, ±10 kHz on 70 cm)
    as audio at 11025 Hz, with the gain `iss_sstv_gain`.

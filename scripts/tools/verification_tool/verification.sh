@@ -272,21 +272,20 @@ done
 
 loggit "INFO" ""
 loggit "INFO" "*************************************************"
-loggit "INFO" "*** Checking required PIP packages ***"
+loggit "INFO" "*** Checking the station's Python tools ***"
 loggit "INFO" "*************************************************"
 
-pip list > ${PIP_LOG}
-for pip_package in envbash;
-do 
-  v_result=$(cat ${PIP_LOG} | grep ${pip_package});
-  if [[ ${v_result} ]]; then
-    loggit "PASS" "${v_result}"
-    PASSES=$(expr ${PASSES} + 1)
-  else
-    loggit "FAIL" "Python package ${pip_package} is not installed"
-    FAILURES=$(expr ${FAILURES} + 1)
-  fi
-done
+# sun.py decides whether a pass is a day or night pass (v1.40.1: the envbash package it used
+# broke on Python 3.13 / Trixie, which made every pass a night pass)
+pip list > ${PIP_LOG} 2>/dev/null
+sun_out=$(python3 "${HOME}/raspberry-lrpt/scripts/tools/sun.py" "$(date +%s)" 2>&1 | tail -1)
+if [[ "${sun_out}" =~ ^-?[0-9]+$ ]]; then
+  loggit "PASS" "sun.py works (sun elevation now ${sun_out} deg)"
+  PASSES=$(expr ${PASSES} + 1)
+else
+  loggit "FAIL" "sun.py fails: ${sun_out}"
+  FAILURES=$(expr ${FAILURES} + 1)
+fi
 
 loggit "INFO" ""
 loggit "INFO" "*************************************************"

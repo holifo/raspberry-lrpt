@@ -285,7 +285,11 @@ def check_value(key, raw):
     if prop is None:
         raise ValueError('Unknown setting: ' + key)
     kind = prop.get('type')
-    if kind == 'string':
+    if isinstance(kind, list) and 'string' in kind:
+        # an index or a serial number (the Meteors' SDR): kept as typed, so "00000004" stays a serial
+        raw = str(raw).strip()
+        value = int(raw) if raw.isdigit() and not (len(raw) > 1 and raw.startswith('0')) else raw
+    elif kind == 'string':
         value = str(raw)                  # as typed: '#3a2600' would read as a YAML comment
     elif kind == 'boolean':
         if str(raw).lower() not in ('on', 'off', 'yes', 'no', 'true', 'false'):

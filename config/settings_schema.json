@@ -15,7 +15,7 @@
     },
     "select_best_overlapping_passes": { "type": "boolean" },
     "meteor_m2_3_schedule":        { "type": "boolean" },
-    "meteor_m2_3_sdr_device_id":   { "type": "number" },
+    "meteor_m2_3_sdr_device_id":   { "type": ["integer", "string"], "pattern": "^[A-Za-z0-9_.:-]*$" },
     "meteor_m2_3_freq_offset":     { "type": "number" },
     "meteor_m2_3_enable_bias_tee": { "type": "boolean" },
     "meteor_m2_3_gain":            { "type": "number" },
@@ -35,7 +35,7 @@
       "maximum": 90
     },
     "meteor_m2_4_schedule":        { "type": "boolean" },
-    "meteor_m2_4_sdr_device_id":   { "type": "number" },
+    "meteor_m2_4_sdr_device_id":   { "type": ["integer", "string"], "pattern": "^[A-Za-z0-9_.:-]*$" },
     "meteor_m2_4_freq_offset":     { "type": "number" },
     "meteor_m2_4_enable_bias_tee": { "type": "boolean" },
     "meteor_m2_4_gain":            { "type": "number" },
