@@ -153,6 +153,14 @@ band (time down, frequency across), the ISS frequency with its expected Doppler 
 TLE, and below it the level at the ISS frequency with the elevation. The ISS frequency is tuned
 264.6 kHz above the dongle's centre, so the dongle's DC spike stays off the signal.
 
+**Live on the Passes page** (v1.43.0): while such a pass records, an "ISS live" panel shows the
+whole band as a spectrum and scrolling waterfall, the ISS channel (±22 kHz) with the expected
+Doppler shift drawn on its waterfall, the signal level and its history, and then either the APRS
+stations Dire Wolf has decoded so far (APRS) or the FM audio from 0 to 3 kHz as a waterfall, where
+SSTV's 1200 Hz sync and 1500–2300 Hz picture tones show as a steady pattern (SSTV). `iq_fm.py`
+writes `iss-live.json` once a second and `receive_iss.sh` writes `iss-live-info.json` (mode,
+times, the Doppler track); `/passes/isslive` serves both, and `assets/js/iss_live.js` draws them.
+
 **Every pass keeps its spectrogram**, even when nothing was decoded: the pass then stays on the
 Captures page with the spectrogram as its picture and a note that nothing was decoded (with one
 dongle, an ISS pass without pictures or packets is still left out). Discord posts only passes

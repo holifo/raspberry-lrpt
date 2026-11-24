@@ -259,6 +259,32 @@ if os.environ.get('TEST_LIVE_METEOR') == '1':
                         os.path.join(srv, 'images', 'live-preview.jpg')], check=False)
     json.dump({'start': now - 230, 'made': now - 20, 'channel': 2, 'lines': 1640},
               open(os.path.join(srv, 'images', 'live-preview.json'), 'w'))
+# TEST_LIVE_ISS=aprs|sstv: an ISS pass on its own RTL-SDR being recorded now, for the live ISS
+# panel (iss-live-info.json from receive_iss.sh, iss-live.json from iq_fm.py; 't' is set ahead so
+# the panel counts it as fresh however long the screenshots take)
+lis = os.environ.get('TEST_LIVE_ISS', '')
+if lis in ('aprs', 'sstv'):
+    import math, random
+    db.execute('INSERT INTO predict_passes (sat_name, pass_start, pass_end, max_elev, is_active, '
+               'pass_start_azimuth, direction, azimuth_at_max) VALUES (?,?,?,?,?,?,?,?)',
+               ('ISS', now - 200, now + 400, 52, 1, 250, 'Southbound', 180))
+    f = 437.825 if lis == 'aprs' else 437.550
+    json.dump({'mode': lis.upper(), 'start': now - 200, 'end': now + 400, 'frequency': f, 'max_elev': '52',
+               'center_hz': f * 1e6 - 264600, 'rate': 2381400, 'zoom_span': 44100,
+               'doppler': [[t, round(9800 * math.cos(math.pi * (t - now + 200) / 600))] for t in range(now - 200, now + 401, 5)]},
+              open(os.path.join(srv, 'images', 'iss-live-info.json'), 'w'))
+    dop = 9800 * math.cos(math.pi * 200 / 600)
+    wide = [round(-62 + random.gauss(0, 1.2), 1) for _ in range(512)]
+    k = int(256 + (264600 + dop) / 2381400 * 512)
+    for j in range(k - 1, k + 2): wide[j] = -38.0
+    wide[100] = -45.0
+    zoom = [round(-70 + random.gauss(0, 1.5), 1) for _ in range(256)]
+    kz = int(128 + dop / 44100 * 256)
+    for j in range(kz - 3, kz + 4): zoom[j] = -48.0 + random.gauss(0, 1)
+    audio = [round(-40 + random.gauss(0, 2) + (25 if lis == 'sstv' and 1450 < i * 3000 / 139 < 2350 else 0)
+                   + (30 if lis == 'sstv' and abs(i * 3000 / 139 - 1200) < 25 else 0), 1) for i in range(140)]
+    json.dump({'t': now + 3600, 'wide': wide, 'zoom': zoom, 'audio': audio, 'level': 21.4},
+              open(os.path.join(srv, 'images', 'iss-live.json'), 'w'))
 # the update check's result (scripts/update_check.sh): TEST_UPDATE=ok (default) | update | install |
 # error | off | none (no file)
 ust = os.environ.get('TEST_UPDATE', 'ok')

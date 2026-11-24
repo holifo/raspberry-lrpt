@@ -68,6 +68,31 @@ class PassesController extends \Lib\Controller {
     exit;
   }
 
+  # /passes/isslive: the ISS pass being recorded on its own RTL-SDR (receive_iss.sh's wide
+  # recording): iss-live-info.json (mode APRS/SSTV, times, frequency, expected Doppler every 5 s)
+  # and iq_fm.py's iss-live.json (whole band, ISS channel and audio spectra, level; once a
+  # second), plus the APRS stations heard so far. Public, like /passes/live; read by iss_live.js.
+  public function issliveAction($args) {
+    $out = array('active' => false, 'time' => time());
+    $info = @json_decode((string) @file_get_contents(Config::IMAGE_PATH . '/iss-live-info.json'), true);
+    if (is_array($info) && isset($info['end']) && time() <= $info['end'] + 120) {
+      $out = array_merge($out, $info, array('active' => true, 'live' => false));
+      $f = Config::IMAGE_PATH . '/iss-live.json';
+      $data = @json_decode((string) @file_get_contents($f), true);
+      if (is_array($data) && time() - (int) ($data['t'] ?? 0) <= 10) {
+        $out['live'] = true;
+        foreach (array('t', 'wide', 'zoom', 'audio', 'level') as $k) { $out[$k] = $data[$k] ?? null; }
+      }
+      if (($info['mode'] ?? '') === 'APRS') {
+        $out['stations'] = self::aprsStations(Config::IMAGE_PATH . '/aprs-live.csv');
+      }
+    }
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+    echo json_encode($out);
+    exit;
+  }
+
   # /passes/aprs: the stations heard so far through the ISS on the APRS pass being recorded
   # (receive_iss.sh writes IMAGE_PATH/aprs-live.json and direwolf's log aprs-live.csv). Public, like
   # /passes/live; read by the Satellites map. Stations are grouped by call sign, last position wins.

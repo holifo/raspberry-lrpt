@@ -1,5 +1,15 @@
 # Changelog
 
+## Raspberry-LRPT v1.43.0 (2026-11-24)
+
+- **ISS live panel on the Passes page** (with two RTL-SDRs, when the ISS has its own). While an
+  ISS pass records, the page shows the whole 2.38 MHz band as a spectrum and scrolling waterfall,
+  the ISS channel (±22 kHz) with the expected Doppler shift drawn on its waterfall, the signal
+  level and its history, and then for APRS the stations decoded so far, or for SSTV the FM audio
+  (0–3 kHz) as a waterfall where the sync and picture tones show while a picture is being sent.
+  It sits under the Meteor live panel, and both show when they record together. Tested with
+  recorded APRS played through at real speed. The texts are in all nine languages.
+
 ## Raspberry-LRPT v1.42.0 (2026-11-24)
 
 - **ISS: a whole-band spectrogram of every pass** (with two RTL-SDRs, when the ISS has its own).

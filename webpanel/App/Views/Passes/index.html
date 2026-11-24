@@ -97,6 +97,56 @@
       </div>
     </div>
   </section>
+  {# the ISS on its own RTL-SDR: the whole band, the ISS channel and what it carries, live from
+     /passes/isslive (PassesController::issliveAction), drawn by assets/js/iss_live.js #}
+  {% if constant('Config\\Config::ISS_SSTV') %}
+  <section class="live-card iss-live" id="iss-card" hidden aria-live="off">
+    <div class="live-head">
+      <span class="live-dot"></span>
+      <span class="live-title">{{ lang['il_title']|default('ISS live') }}</span>
+      <span class="sat-chip sat-iss">ISS</span>
+      <span class="il-mode" id="il-mode"></span>
+      <span class="live-state" id="il-state">{{ lang['il_wait']|default('Waiting for the receiver…') }}</span>
+      <span class="live-left" id="il-left"></span>
+    </div>
+    <div class="live-grid">
+      <div class="live-box live-spec">
+        <div class="live-cap"><span>{{ lang['il_band']|default('Whole band') }}</span><span class="live-dim" id="il-band"></span></div>
+        <canvas id="il-wide" width="640" height="110"></canvas>
+        <canvas id="il-wide-wf" width="640" height="170"></canvas>
+      </div>
+      <div class="live-box">
+        <div class="live-cap"><span>{{ lang['il_channel']|default('ISS channel') }}</span><span class="live-dim">±22 kHz</span></div>
+        <canvas id="il-zoom" width="300" height="110"></canvas>
+        <canvas id="il-zoom-wf" width="300" height="170"></canvas>
+        <div class="live-note"><span class="il-key il-key-dop"></span> {{ lang['il_doppler']|default('expected Doppler') }}</div>
+      </div>
+      <div class="live-box live-stats">
+        <div class="live-snr">
+          <div class="live-cap"><span>{{ lang['il_level']|default('Signal level') }}</span><span class="live-dim" id="il-peak"></span></div>
+          <div class="live-big" id="il-level">–</div>
+          <div class="live-bar"><span id="il-level-bar"></span></div>
+        </div>
+        <dl class="live-dl">
+          <dt>{{ lang['il_freq']|default('Frequency') }}</dt><dd id="il-freq">–</dd>
+          <dt>{{ lang['il_doppler_now']|default('Doppler now') }}</dt><dd id="il-dop">–</dd>
+          <dt id="il-count-t">{{ lang['il_stations']|default('Stations heard') }}</dt><dd id="il-count">–</dd>
+        </dl>
+        <div class="live-cap"><span>{{ lang['il_history']|default('Level during the pass') }}</span></div>
+        <canvas id="il-hist" width="300" height="70"></canvas>
+      </div>
+      <div class="live-box il-aprs" id="il-aprs" hidden>
+        <div class="live-cap"><span>{{ lang['il_aprs']|default('APRS heard') }}</span><span class="live-dim" id="il-aprs-n"></span></div>
+        <ul class="il-list" id="il-list"><li class="il-none">{{ lang['il_none']|default('No packets yet') }}</li></ul>
+      </div>
+      <div class="live-box il-sstv" id="il-sstv" hidden>
+        <div class="live-cap"><span>{{ lang['il_sstv']|default('SSTV audio') }}</span><span class="live-dim">0–3 kHz</span></div>
+        <canvas id="il-audio" width="640" height="200"></canvas>
+        <div class="live-note">{{ lang['il_sstv_note']|default('1200 Hz: line sync · 1500–2300 Hz: the picture. A picture being sent shows as a steady pattern; it is decoded after the pass.') }}</div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
 {% endblock %}
 
 {% block body %}
@@ -216,6 +266,23 @@
     };
   </script>
   <script src="{{ asset('/assets/js/live.js') }}"></script>
+  {% if constant('Config\\Config::ISS_SSTV') %}
+  <script>
+    window.RL1_ISS_LIVE_TEXT = {
+      wait: {{ (lang['il_wait']|default('Waiting for the receiver…'))|json_encode|raw }},
+      done: {{ (lang['il_done']|default('Recording finished: decoding'))|json_encode|raw }},
+      listening: {{ (lang['il_listening']|default('Listening'))|json_encode|raw }},
+      heard: {{ (lang['il_heard']|default('Signal heard'))|json_encode|raw }},
+      left: {{ (lang['lv_left']|default('left'))|json_encode|raw }},
+      stations: {{ (lang['il_stations']|default('Stations heard'))|json_encode|raw }},
+      packets: {{ (lang['il_packets']|default('packets'))|json_encode|raw }},
+      none: {{ (lang['il_none']|default('No packets yet'))|json_encode|raw }},
+      direct: {{ (lang['il_direct']|default('direct'))|json_encode|raw }},
+      peak: {{ (lang['lv_peak']|default('peak'))|json_encode|raw }}
+    };
+  </script>
+  <script src="{{ asset('/assets/js/iss_live.js') }}"></script>
+  {% endif %}
   <script>
     window.RL1_PASS_TEXT = {
       next: {{ (lang['next_pass_title']|default('Next pass'))|json_encode|raw }},

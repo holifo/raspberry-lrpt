@@ -163,3 +163,23 @@
 .health-warn strong { display: block; }
 .health-why, .health-hint { display: block; font-size: 0.85rem; }
 .health-hint { opacity: 0.85; margin-top: 2px; }
+
+/* ISS live panel (v1.43.0): the ISS on its own RTL-SDR, from /passes/isslive */
+.iss-live { border-left: 4px solid #a78bfa; }
+.il-mode { font-size: .78rem; padding: 1px 8px; border-radius: 999px; background: rgba(167,139,250,.18); color: #cdbdff; }
+#il-wide { height: 110px; }
+#il-wide-wf, #il-zoom-wf { height: 170px; margin-top: 4px; background: #0b1220; }
+#il-audio { background: #0b1220; }
+#il-zoom { height: 110px; }
+#il-hist { height: 56px; }
+#il-audio { height: 200px; }
+.il-aprs, .il-sstv { grid-column: 1 / -1; }
+.il-key { display: inline-block; width: 14px; border-top: 2px dashed #a78bfa; vertical-align: middle; }
+.il-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px 12px; max-height: 260px; overflow-y: auto; font-size: .86rem; }
+.il-list li { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.il-list .il-call { font-weight: 700; color: #cdbdff; font-family: ui-monospace, monospace; white-space: nowrap; flex-shrink: 0; }
+.il-list .il-meta { color: #9fb3c8; font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.il-list .il-new { animation: il-flash 2s ease-out; }
+.il-none { color: #6f8399; }
+@keyframes il-flash { from { background: rgba(167,139,250,.35); } to { background: transparent; } }

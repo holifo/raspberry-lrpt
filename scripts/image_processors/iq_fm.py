@@ -4,7 +4,7 @@
 #          dongle sees, keep a spectrum of it once a second for the pass's spectrogram, and FM
 #          demodulate the ISS frequency on the way, like rtl_fm did.
 #
-#   rtl_sdr -s 2381400 -f <ISS MHz - 264.6 kHz> ... - | iq_fm.py OUT.npz CENTER_HZ TARGET_HZ > audio
+#   rtl_sdr -s 2381400 -f <ISS MHz - 264.6 kHz> ... - | iq_fm.py OUT.npz CENTER_HZ TARGET_HZ [LIVE.json] > audio
 #
 # stdin   unsigned 8-bit I/Q from rtl_sdr at RATE (2 381 400 S/s = 108 x 22 050: the decimation
 #         steps are whole numbers, and the ISS frequency sits OFFSET (264.6 kHz = RATE / 9) above
@@ -14,10 +14,17 @@
 # OUT.npz t (epoch per row), fft (rows x 2048, dB, centred on the tuned frequency), rate,
 #         center_hz, target_hz: spectrogram.py render-iq draws it
 #
+# LIVE.json (optional) is rewritten once a second for the Passes page's live ISS panel
+#         (PassesController::issliveAction): {t, wide: 512 dB values of the whole band, zoom: 256
+#         dB values of the ISS channel (+/-22 kHz around the ISS frequency), audio: dB of the FM
+#         audio 0-3 kHz (SSTV's tones), level: dB of the channel's peak over its median}
+#
 # Chain: mix down by OFFSET -> /9 (264.6 kHz) -> /6 (44.1 kHz, +/-22 kHz: the FM signal and
 # the ISS's +/-10 kHz Doppler on 70 cm) -> FM discriminator -> /2 -> DC removed -> 22 050 Hz.
 # Every filter keeps its state between blocks, so the audio has no clicks at block edges.
 
+import json
+import os
 import sys
 import time
 
@@ -53,10 +60,31 @@ class Decimator:
     return out.astype(buf.dtype, copy=False)
 
 
+def write_live(path, wide, zoom, audio):
+  def db(a):
+    return [round(float(v), 1) for v in 10 * np.log10(a + 1e-12)]
+  z = 10 * np.log10(zoom + 1e-12)
+  out = {'t': round(time.time(), 1), 'wide': db(wide.reshape(-1, 4).max(axis=1)),
+         'zoom': db(zoom.reshape(-1, 2).max(axis=1)), 'audio': db(audio),
+         'level': round(float(z.max() - np.median(z)), 1)}
+  tmp = path + '.tmp'
+  try:
+    with open(tmp, 'w') as f:
+      json.dump(out, f, separators=(',', ':'))
+    os.replace(tmp, path)
+  except OSError:
+    pass
+
+
 def main():
-  if len(sys.argv) != 4:
-    sys.exit('usage: iq_fm.py OUT.npz CENTER_HZ TARGET_HZ  (u8 I/Q on stdin, audio on stdout)')
+  if len(sys.argv) not in (4, 5):
+    sys.exit('usage: iq_fm.py OUT.npz CENTER_HZ TARGET_HZ [LIVE.json]  (u8 I/Q on stdin, audio on stdout)')
   out_file, center, target = sys.argv[1], float(sys.argv[2]), float(sys.argv[3])
+  live = sys.argv[4] if len(sys.argv) == 5 else None
+  ZN, AN = 512, 1024                              # ISS channel FFT (44.1 kHz), audio FFT (22.05 kHz)
+  zwin, awin = np.hanning(ZN).astype(np.float32), np.hanning(AN).astype(np.float32)
+  zacc, aacc = np.zeros(ZN), np.zeros(AN // 2 + 1)
+  abins = int(3000 / (AUDIO / AN)) + 1            # audio bins up to 3 kHz
 
   mix = np.exp(-2j * np.pi * OFFSET / RATE * np.arange(9)).astype(np.complex64)
   mix = np.tile(mix, BLOCK // 9)
@@ -88,18 +116,28 @@ def main():
         acc += np.abs(np.fft.fft(s * window)) ** 2
         nacc += 1
     if nacc >= FFTS_PER_BLOCK * 10:
-      rows.append((10 * np.log10(np.fft.fftshift(acc / nacc) + 1e-12)).astype(np.float16))
+      wide = np.fft.fftshift(acc / nacc)
+      rows.append((10 * np.log10(wide + 1e-12)).astype(np.float16))
       times.append(row_t)
+      if live:
+        write_live(live, wide, np.fft.fftshift(zacc), aacc[:abins])
       acc[:], nacc, row_t = 0, 0, time.time()
+      zacc[:], aacc[:] = 0, 0
 
     # FM demodulation of the ISS frequency
     y = d2(d1(x * mix[:n]))
+    if live:
+      for i in range(0, len(y) - ZN + 1, ZN):
+        zacc += np.abs(np.fft.fft(y[i:i + ZN] * zwin)) ** 2
     if len(y):
       prev = np.concatenate(([last], y[:-1]))
       last = y[-1]
       fm = np.angle(y * np.conj(prev)).astype(np.float32) * scale
       a = d3(fm)
       a, zi_dc = signal.lfilter(b_dc, a_dc, a, zi=zi_dc)
+      if live:
+        for i in range(0, len(a) - AN + 1, AN):
+          aacc += np.abs(np.fft.rfft(a[i:i + AN] * awin)) ** 2
       if stdout is not None:
         try:
           stdout.write(np.clip(a, -32767, 32767).astype('<i2').tobytes())

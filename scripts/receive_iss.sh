@@ -94,6 +94,31 @@ if [ "$SDR_MODE" == "dedicated" ] && command -v rtl_sdr >/dev/null && python3 -c
   WIDE=true
   RATE=22050
 fi
+# the Passes page's live ISS panel (PassesController::issliveAction, assets/js/iss_live.js):
+# iss-live-info.json (mode, times, frequencies, the expected Doppler every 5 s) from here,
+# iss-live.json (the spectra, once a second) from iq_fm.py; both go when the script ends
+ISS_LIVE="${IMAGE_OUTPUT}/iss-live.json"
+ISS_LIVE_INFO="${IMAGE_OUTPUT}/iss-live-info.json"
+iss_live_info() {     # MODE MHZ
+  [ "$WIDE" == "true" ] || return 0
+  python3 - "$1" "$2" "$TLE_FILE" "$SAT_NAME" "$LAT" "$LON" "$(date +%s)" "$CAPTURE_TIME" "$SAT_MAX_ELEVATION" \
+      "$ISS_LIVE_INFO" "$IMAGE_PROC_DIR" <<'PY' 2>> "$LRPT_LOG"
+import json, os, sys
+mode, mhz, tle, sat, lat, lon, start, cap, maxel, out, proc = sys.argv[1:]
+sys.path.insert(0, proc)
+import spectrogram
+start, cap, target = int(start), int(cap), float(mhz) * 1e6
+times = list(range(start, start + cap + 1, 5))
+dop = spectrogram.doppler(tle, sat, lat, lon, times, target)
+info = {'mode': mode, 'start': start, 'end': start + cap, 'frequency': float(mhz), 'max_elev': maxel,
+        'center_hz': target - 264600, 'rate': 2381400, 'zoom_span': 44100,
+        'doppler': [[t, round(float(d))] for t, d in zip(times, dop)] if dop is not None else []}
+json.dump(info, open(out + '.tmp', 'w'))
+os.replace(out + '.tmp', out)
+PY
+}
+trap 'cd "$LRPT_HOME"; rm -rf "$WORK_DIR"; rm -f "$ISS_SDR_MARK" "$ISS_LIVE" "$ISS_LIVE_INFO"' EXIT
+
 # iss_audio MHZ RATE: FM audio of the pass on stdout (signed 16-bit mono)
 iss_audio() {
   local mhz=$1 rate=$2
@@ -103,7 +128,7 @@ iss_audio() {
     center=$((target - 264600))                          # the ISS frequency 264.6 kHz above centre
     timeout $((CAPTURE_TIME + 10)) rtl_sdr -s 2381400 -f "$center" -g "$ISS_SSTV_GAIN" \
       -n $((2381400 * CAPTURE_TIME)) $dev_args $ppm_args $bias_args - 2>> "$LRPT_LOG" |
-      python3 "$IMAGE_PROC_DIR/iq_fm.py" "$SPEC_NPZ" "$center" "$target" 2>> "$LRPT_LOG"
+      python3 "$IMAGE_PROC_DIR/iq_fm.py" "$SPEC_NPZ" "$center" "$target" "$ISS_LIVE" 2>> "$LRPT_LOG"
   else
     timeout "$CAPTURE_TIME" $RTL_FM -f "${mhz}M" -M fm -s 48000 -r "$rate" -g "$ISS_SSTV_GAIN" -E dc \
       $dev_args $ppm_args $bias_args - 2>> "$LRPT_LOG"
@@ -130,7 +155,7 @@ fi
 if [ "$mode" == "aprs" ]; then
   LIVE_JSON="${IMAGE_OUTPUT}/aprs-live.json"
   LIVE_CSV="${IMAGE_OUTPUT}/aprs-live.csv"
-  trap 'pkill -f "tail -n [+]1 -F --pid=$$ $LIVE_CSV" 2>/dev/null; cd "$LRPT_HOME"; rm -rf "$WORK_DIR"; rm -f "$LIVE_JSON" "$LIVE_CSV" "$ISS_SDR_MARK"' EXIT
+  trap 'pkill -f "tail -n [+]1 -F --pid=$$ $LIVE_CSV" 2>/dev/null; cd "$LRPT_HOME"; rm -rf "$WORK_DIR"; rm -f "$LIVE_JSON" "$LIVE_CSV" "$ISS_SDR_MARK" "$ISS_LIVE" "$ISS_LIVE_INFO"' EXIT
   ARATE=22050
   printf 'ADEVICE stdin null\nCHANNEL 0\nMODEM 1200\n' > "$WORK_DIR/direwolf.conf"
   rm -f "$LIVE_CSV"
@@ -141,6 +166,7 @@ if [ "$mode" == "aprs" ]; then
   # --pid: tail (and with it the whole follower) ends when this script does, whatever happens
   ( tail -n +1 -F --pid=$$ "$LIVE_CSV" 2>/dev/null | python3 -u "$IMAGE_PROC_DIR/aprs_pass.py" --follow 2>/dev/null |
       while IFS= read -r heard; do log "APRS heard $heard" "INFO"; done ) &
+  iss_live_info APRS "$ISS_APRS_FREQ"
   iss_audio "$ISS_APRS_FREQ" $ARATE | tee "$RAW" | \
     direwolf -c "$WORK_DIR/direwolf.conf" -r $ARATE -b 16 -n 1 -t 0 -a 0 -q hd -L "$LIVE_CSV" - \
     > "$WORK_DIR/direwolf.out" 2>&1
@@ -190,6 +216,7 @@ fi
 
 log "Recording ISS ${ISS_FREQ} MHz FM for ${CAPTURE_TIME} s (max elevation ${SAT_MAX_ELEVATION}°)" "INFO"
 # 48 kHz: room for the FM signal plus the Doppler shift (±3.5 kHz on 2 m, ±10 kHz on 70 cm); audio 11025 Hz
+iss_live_info SSTV "$ISS_FREQ"
 iss_audio "$ISS_FREQ" $RATE > "$RAW"
 size=$(stat -c %s "$RAW" 2>/dev/null || echo 0)
 log "Recorded $((size / 2 / RATE)) s of audio" "INFO"
