@@ -1,5 +1,18 @@
 # Changelog
 
+## Raspberry-LRPT v1.42.0 (2026-11-24)
+
+- **ISS: a whole-band spectrogram of every pass** (with two RTL-SDRs, when the ISS has its own).
+  The ISS's dongle now records the full 2.38 MHz it can see with `rtl_sdr`; the new
+  `iq_fm.py` FM-demodulates the ISS frequency on the way (APRS and SSTV decode as before, now
+  from 22 050 Hz audio) and keeps a spectrum a second. Each pass gets a spectrogram: the whole
+  band, the ISS frequency with its expected Doppler track, and the level at the ISS frequency
+  with the elevation. Passes where nothing was decoded now stay on the Captures page with their
+  spectrogram and a note. One RTL-SDR shared with the Meteors keeps the narrow `rtl_fm`
+  recording. Tested with simulated APRS through a ±10 kHz Doppler sweep: every packet decoded,
+  the same as from the clean audio.
+- The install adds `python3-scipy`. The Live log counts `rtl_sdr` as the ISS dongle recording.
+
 ## Raspberry-LRPT v1.41.1 (2026-11-24)
 
 - **RTL-SDR serials can be written short.** A dongle setting of `1` now finds the dongle with

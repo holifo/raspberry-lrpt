@@ -82,6 +82,7 @@ class Capture extends \Lib\Model {
     # ISS APRS pass (sat_type 4): the map of the stations heard comes first, and the pass's data
     # file (aprs_pass.py) gives the station and packet lists
     $this->sat_type = (int) $pass['sat_type'];
+    $this->img_count = (int) $pass['img_count'];
     if ($this->sat_type == 4) {
       if (file_exists($prefix . 'aprs-map.png')) { $enhancements[] = '-aprs-map.png'; }
       $data = @json_decode((string) @file_get_contents($prefix . 'aprs.json'), true);
@@ -125,6 +126,7 @@ class Capture extends \Lib\Model {
 
   public $sat_type = 0;
   public $aprs = [];
+  public $img_count = 0;
 
   # get the image path for the specific capture
   public function getImagePath($id) {

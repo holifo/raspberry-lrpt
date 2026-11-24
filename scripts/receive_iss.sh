@@ -84,6 +84,42 @@ else
   [ "$ISS_BIAS_TEE" == "true" ] && bias_args="-T"
 fi
 
+# The ISS on its own RTL-SDR (two dongles) records the whole band the dongle sees (2.38 MS/s)
+# with rtl_sdr: iq_fm.py demodulates the ISS frequency on the way (audio at 22 050 Hz) and keeps
+# a spectrum a second for the pass's spectrogram, drawn every pass, heard or not. A dongle shared
+# with the Meteors keeps the plain rtl_fm recording.
+WIDE=false
+SPEC_NPZ="$WORK_DIR/iss-spectrum.npz"
+if [ "$SDR_MODE" == "dedicated" ] && command -v rtl_sdr >/dev/null && python3 -c 'import scipy' 2>/dev/null; then
+  WIDE=true
+  RATE=22050
+fi
+# iss_audio MHZ RATE: FM audio of the pass on stdout (signed 16-bit mono)
+iss_audio() {
+  local mhz=$1 rate=$2
+  if [ "$WIDE" == "true" ]; then
+    local target center
+    target=$(awk -v f="$mhz" 'BEGIN { printf "%.0f", f * 1e6 }')
+    center=$((target - 264600))                          # the ISS frequency 264.6 kHz above centre
+    timeout $((CAPTURE_TIME + 10)) rtl_sdr -s 2381400 -f "$center" -g "$ISS_SSTV_GAIN" \
+      -n $((2381400 * CAPTURE_TIME)) $dev_args $ppm_args $bias_args - 2>> "$LRPT_LOG" |
+      python3 "$IMAGE_PROC_DIR/iq_fm.py" "$SPEC_NPZ" "$center" "$target" 2>> "$LRPT_LOG"
+  else
+    timeout "$CAPTURE_TIME" $RTL_FM -f "${mhz}M" -M fm -s 48000 -r "$rate" -g "$ISS_SSTV_GAIN" -E dc \
+      $dev_args $ppm_args $bias_args - 2>> "$LRPT_LOG"
+  fi
+}
+# iss_spectrogram MODE: draw the pass's spectrogram (wide recording only); sets has_spectrogram
+has_spectrogram=0
+iss_spectrogram() {
+  [ -s "$SPEC_NPZ" ] || return 1
+  python3 "$IMAGE_PROC_DIR/spectrogram.py" render-iq "$SPEC_NPZ" "${IMAGE_FILE_BASE}-spectrogram.png" \
+    "$SAT_NAME" "$TLE_FILE" "$LAT" "$LON" "$ISS_SSTV_MIN_ELEV" "$1" >> "$LRPT_LOG" 2>&1 || return 1
+  "$IMAGE_PROC_DIR/thumbnail.sh" 300 "${IMAGE_FILE_BASE}-spectrogram.png" "${IMAGE_THUMB_BASE}-spectrogram.png" >> "$LRPT_LOG" 2>&1
+  has_spectrogram=1
+  log "Spectrogram of the whole band saved" "INFO"
+}
+
 # SSTV during an event, APRS the rest of the time (iss_aprs)
 mode=sstv
 if [ "${ISS_APRS}" == "true" ]; then
@@ -105,8 +141,7 @@ if [ "$mode" == "aprs" ]; then
   # --pid: tail (and with it the whole follower) ends when this script does, whatever happens
   ( tail -n +1 -F --pid=$$ "$LIVE_CSV" 2>/dev/null | python3 -u "$IMAGE_PROC_DIR/aprs_pass.py" --follow 2>/dev/null |
       while IFS= read -r heard; do log "APRS heard $heard" "INFO"; done ) &
-  timeout "$CAPTURE_TIME" $RTL_FM -f "${ISS_APRS_FREQ}M" -M fm -s 48000 -r $ARATE -g "$ISS_SSTV_GAIN" -E dc \
-    $dev_args $ppm_args $bias_args - 2>> "$LRPT_LOG" | tee "$RAW" | \
+  iss_audio "$ISS_APRS_FREQ" $ARATE | tee "$RAW" | \
     direwolf -c "$WORK_DIR/direwolf.conf" -r $ARATE -b 16 -n 1 -t 0 -a 0 -q hd -L "$LIVE_CSV" - \
     > "$WORK_DIR/direwolf.out" 2>&1
   sleep 1                                   # let the last packet reach the log
@@ -117,14 +152,21 @@ if [ "$mode" == "aprs" ]; then
   stations=$(python3 "$IMAGE_PROC_DIR/aprs_pass.py" "$LIVE_CSV" "$WORK_DIR/direwolf.out" "$TLE_FILE" "$SAT_NAME" \
              "$EPOCH_START" $((EPOCH_START + CAPTURE_TIME)) "$LAT" "$LON" "$IMAGE_FILE_BASE" "$ISS_APRS_FREQ" 2>> "$LRPT_LOG" | tail -1)
   packets=$(grep -c '^\[' "$WORK_DIR/direwolf.out" 2>/dev/null)
+  iss_spectrogram "APRS"
   if [ "${stations:-0}" -eq 0 ] 2>/dev/null || [ -z "$stations" ]; then
+    stations=0
     log "No APRS packets heard in this ISS pass" "INFO"
-    $SQLITE3 "$DB_FILE" "DELETE FROM predict_passes WHERE pass_start = $EPOCH_START AND sat_name = 'ISS';" >> "$LRPT_LOG" 2>&1
-    exit 0
+    if [ "$has_spectrogram" -eq 0 ]; then
+      $SQLITE3 "$DB_FILE" "DELETE FROM predict_passes WHERE pass_start = $EPOCH_START AND sat_name = 'ISS';" >> "$LRPT_LOG" 2>&1
+      exit 0
+    fi
+    # the pass stays on the site with its spectrogram
+    "$IMAGE_PROC_DIR/thumbnail.sh" 300 "${IMAGE_FILE_BASE}-spectrogram.png" "${IMAGE_THUMB_BASE}-website-thumbnail.jpg" >> "$LRPT_LOG" 2>&1
+  else
+    log "APRS: ${stations} station(s), ${packets:-?} packet(s) heard through the ISS" "INFO"
+    "$IMAGE_PROC_DIR/thumbnail.sh" 300 "${IMAGE_FILE_BASE}-aprs-map.png" "${IMAGE_THUMB_BASE}-aprs-map.png" >> "$LRPT_LOG" 2>&1
+    "$IMAGE_PROC_DIR/thumbnail.sh" 300 "${IMAGE_FILE_BASE}-aprs-map.png" "${IMAGE_THUMB_BASE}-website-thumbnail.jpg" >> "$LRPT_LOG" 2>&1
   fi
-  log "APRS: ${stations} station(s), ${packets:-?} packet(s) heard through the ISS" "INFO"
-  "$IMAGE_PROC_DIR/thumbnail.sh" 300 "${IMAGE_FILE_BASE}-aprs-map.png" "${IMAGE_THUMB_BASE}-aprs-map.png" >> "$LRPT_LOG" 2>&1
-  "$IMAGE_PROC_DIR/thumbnail.sh" 300 "${IMAGE_FILE_BASE}-aprs-map.png" "${IMAGE_THUMB_BASE}-website-thumbnail.jpg" >> "$LRPT_LOG" 2>&1
 
   if [ "${KEEP_RECORDINGS:-0}" -gt 0 ]; then
     $SOX -t raw -r $ARATE -e signed -b 16 -c 1 "$RAW" "${AUDIO_FILE_BASE}.wav" >> "$LRPT_LOG" 2>&1 &&
@@ -136,20 +178,19 @@ if [ "$mode" == "aprs" ]; then
   [ "$(python3 "$SCRIPTS_DIR/tools/sun.py" $((EPOCH_START + CAPTURE_TIME / 2)))" -gt "${METEOR_M2_3_SUN_MIN_ELEV:-0}" ] && daylight=1
   # sat_type 4 = ISS APRS; img_count = stations heard
   $SQLITE3 "$DB_FILE" "INSERT OR REPLACE INTO decoded_passes (pass_start, file_path, daylight_pass, sat_type, img_count, has_spectrogram, has_polar_az_el, has_polar_direction, gain) \
-                       VALUES ($EPOCH_START, \"$FILENAME_BASE\", $daylight, 4, $stations, 0, 0, 0, $ISS_SSTV_GAIN);" >> "$LRPT_LOG" 2>&1
+                       VALUES ($EPOCH_START, \"$FILENAME_BASE\", $daylight, 4, $stations, $has_spectrogram, 0, 0, $ISS_SSTV_GAIN);" >> "$LRPT_LOG" 2>&1
   pass_id=$($SQLITE3 "$DB_FILE" "SELECT id FROM decoded_passes WHERE pass_start = $EPOCH_START;")
   $SQLITE3 "$DB_FILE" "UPDATE predict_passes SET is_active = 0 WHERE pass_start = $EPOCH_START;" >> "$LRPT_LOG" 2>&1
   log "ISS APRS pass added to the site (${stations} station(s))" "INFO"
-  discord_pass "$FILENAME_BASE" "$daylight" "ISS-APRS" "$EPOCH_START" "$SAT_MAX_ELEVATION" \
-               "$PASS_DIRECTION" "$CAPTURE_TIME" "$pass_id" || true
+  [ "$stations" -gt 0 ] && { discord_pass "$FILENAME_BASE" "$daylight" "ISS-APRS" "$EPOCH_START" "$SAT_MAX_ELEVATION" \
+               "$PASS_DIRECTION" "$CAPTURE_TIME" "$pass_id" || true; }
   log "Total processing time: $(date -ud "@$(( $(date +%s) - TIMER_START ))" +'%H:%M.%S')" "INFO"
   exit 0
 fi
 
 log "Recording ISS ${ISS_FREQ} MHz FM for ${CAPTURE_TIME} s (max elevation ${SAT_MAX_ELEVATION}°)" "INFO"
 # 48 kHz: room for the FM signal plus the Doppler shift (±3.5 kHz on 2 m, ±10 kHz on 70 cm); audio 11025 Hz
-timeout "$CAPTURE_TIME" $RTL_FM -f "${ISS_FREQ}M" -M fm -s 48000 -r $RATE -g "$ISS_SSTV_GAIN" -E dc \
-  $dev_args $ppm_args $bias_args - > "$RAW" 2>> "$LRPT_LOG"
+iss_audio "$ISS_FREQ" $RATE > "$RAW"
 size=$(stat -c %s "$RAW" 2>/dev/null || echo 0)
 log "Recorded $((size / 2 / RATE)) s of audio" "INFO"
 
@@ -166,13 +207,18 @@ while read -r line; do
   log "SSTV picture ${n}: ${info}" "INFO"
 done <<< "$decoded"
 
+iss_spectrogram "SSTV"
 if [ "$n" -eq 0 ]; then
   log "No SSTV pictures in this ISS pass (no ARISS event, or too weak)" "INFO"
-  $SQLITE3 "$DB_FILE" "DELETE FROM predict_passes WHERE pass_start = $EPOCH_START AND sat_name = 'ISS';" >> "$LRPT_LOG" 2>&1
-  exit 0
+  if [ "$has_spectrogram" -eq 0 ]; then
+    $SQLITE3 "$DB_FILE" "DELETE FROM predict_passes WHERE pass_start = $EPOCH_START AND sat_name = 'ISS';" >> "$LRPT_LOG" 2>&1
+    exit 0
+  fi
+  # the pass stays on the site with its spectrogram
+  "$IMAGE_PROC_DIR/thumbnail.sh" 300 "${IMAGE_FILE_BASE}-spectrogram.png" "${IMAGE_THUMB_BASE}-website-thumbnail.jpg" >> "$LRPT_LOG" 2>&1
+else
+  cp "${IMAGE_THUMB_BASE}-SSTV_1.jpg" "${IMAGE_THUMB_BASE}-website-thumbnail.jpg"
 fi
-
-cp "${IMAGE_THUMB_BASE}-SSTV_1.jpg" "${IMAGE_THUMB_BASE}-website-thumbnail.jpg"
 
 # the recording, for decoding again later (the same keep_recordings count as the Meteor frames)
 if [ "${KEEP_RECORDINGS:-0}" -gt 0 ]; then
@@ -194,12 +240,12 @@ daylight=0
 
 # sat_type 3 = ISS SSTV (0 = Meteor)
 $SQLITE3 "$DB_FILE" "INSERT OR REPLACE INTO decoded_passes (pass_start, file_path, daylight_pass, sat_type, img_count, has_spectrogram, has_polar_az_el, has_polar_direction, gain) \
-                     VALUES ($EPOCH_START, \"$FILENAME_BASE\", $daylight, 3, $n, 0, 0, $polar_direction, $ISS_SSTV_GAIN);" >> "$LRPT_LOG" 2>&1
+                     VALUES ($EPOCH_START, \"$FILENAME_BASE\", $daylight, 3, $n, $has_spectrogram, 0, $polar_direction, $ISS_SSTV_GAIN);" >> "$LRPT_LOG" 2>&1
 pass_id=$($SQLITE3 "$DB_FILE" "SELECT id FROM decoded_passes WHERE pass_start = $EPOCH_START;")
 $SQLITE3 "$DB_FILE" "UPDATE predict_passes SET is_active = 0 WHERE pass_start = $EPOCH_START;" >> "$LRPT_LOG" 2>&1
-log "ISS pass added to the site with ${n} SSTV picture(s)" "INFO"
+log "ISS pass added to the site with ${n} SSTV picture(s)$([ "$has_spectrogram" -eq 1 ] && echo " and its spectrogram")" "INFO"
 
-discord_pass "$FILENAME_BASE" "$daylight" "$SAT_NAME" "$EPOCH_START" "$SAT_MAX_ELEVATION" \
-             "$PASS_DIRECTION" "$CAPTURE_TIME" "$pass_id" || true
+[ "$n" -gt 0 ] && { discord_pass "$FILENAME_BASE" "$daylight" "$SAT_NAME" "$EPOCH_START" "$SAT_MAX_ELEVATION" \
+             "$PASS_DIRECTION" "$CAPTURE_TIME" "$pass_id" || true; }
 
 log "Total processing time: $(date -ud "@$(( $(date +%s) - TIMER_START ))" +'%H:%M.%S')" "INFO"

@@ -332,6 +332,7 @@ return array(
   "sw_fail" => "Es konnte nicht geändert werden. Das Live-Protokoll nennt vielleicht den Grund.",
   "lg_sstv" => "SSTV: Slow-Scan-TV-Bilder, die die ISS bei ARISS-Aktionen sendet ({freq} MHz FM; Robot 36 auf 437,550 MHz, PD120 auf 145,800 MHz)",
   "sstv_note" => "Slow-Scan-TV-Bilder der Internationalen Raumstation auf {freq} MHz FM während einer ARISS-Aktion, von dieser Station dekodiert.",
+  "iss_nothing" => "In diesem Überflug wurde nichts dekodiert. Das Spektrogramm zeigt das ganze Band, das der ISS-Empfänger gehört hat.",
   "recording_hint_wav" => "FM-Audio des Überflugs, zum erneuten Dekodieren mit jedem SSTV-Programm",
   "about_title" => "Über",
   "iss_h" => "Extra: die Internationale Raumstation",

@@ -39,6 +39,7 @@ python3-idna
 python3-jsonschema
 python3-matplotlib
 python3-numpy
+python3-scipy
 python3-pil
 fonts-dejavu-core
 python3-pip

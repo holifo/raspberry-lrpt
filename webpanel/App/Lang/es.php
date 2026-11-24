@@ -332,6 +332,7 @@ return array(
   "sw_fail" => "No se pudo cambiar. El registro en directo puede indicar el motivo.",
   "lg_sstv" => "SSTV: imágenes de televisión de barrido lento que la ISS emite durante los eventos ARISS ({freq} MHz FM; Robot 36 en 437,550 MHz, PD120 en 145,800 MHz)",
   "sstv_note" => "Imágenes de televisión de barrido lento enviadas por la Estación Espacial Internacional en {freq} MHz FM durante un evento ARISS, decodificadas por esta estación.",
+  "iss_nothing" => "No se decodificó nada en este paso. El espectrograma muestra toda la banda que oyó el receptor de la ISS.",
   "recording_hint_wav" => "Audio FM del pase, para decodificarlo de nuevo con cualquier programa SSTV",
   "about_title" => "Acerca de",
   "iss_h" => "Extra: la Estación Espacial Internacional",

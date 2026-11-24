@@ -332,6 +332,7 @@ return array(
   "sw_fail" => "无法更改。实时日志中可能有原因。",
   "lg_sstv" => "SSTV：国际空间站在 ARISS 活动期间发送的慢扫描电视图像（{freq} MHz FM；437.550 MHz 为 Robot 36，145.800 MHz 为 PD120）",
   "sstv_note" => "国际空间站在 ARISS 活动期间于 {freq} MHz FM 发送的慢扫描电视图像，由本站解码。",
+  "iss_nothing" => "本次过境没有解码到任何内容。频谱图显示了 ISS 接收机听到的整个频段。",
   "recording_hint_wav" => "本次过境的 FM 音频，可用任何 SSTV 软件重新解码",
   "about_title" => "关于",
   "iss_h" => "附加：国际空间站",

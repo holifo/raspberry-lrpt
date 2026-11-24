@@ -52,6 +52,9 @@
 <p class="sstv-note"><i class="fas fa-tv"></i> {{ lang['sstv_note']|default('Slow-scan TV pictures sent by the International Space Station during an ARISS event, decoded by this station.') }}
   <a href="https://www.ariss.org/" target="_blank" rel="noopener">ARISS</a></p>
 {% endif %}
+{% if capture.sat_type >= 3 and capture.img_count == 0 %}
+<p class="sstv-note"><i class="fas fa-wave-square"></i> {{ lang['iss_nothing']|default('Nothing was decoded in this pass. The spectrogram shows the whole band the ISS\'s receiver heard.') }}</p>
+{% endif %}
 {% include "Captures/legend.html" with {have: capture.enhancements|join('|')|lower} %}
 
 <div class="cap-grid" data-viewer>

@@ -214,6 +214,7 @@ return array(
   "sw_fail" => "It could not be changed. The Live log may say why.",
   "lg_sstv" => "SSTV: slow-scan TV pictures the ISS sends during ARISS events ({freq} MHz FM; Robot 36 on 437.550 MHz, PD120 on 145.800 MHz)",
   "sstv_note" => "Slow-scan TV pictures sent by the International Space Station on {freq} MHz FM during an ARISS event, decoded by this station.",
+  "iss_nothing" => "Nothing was decoded in this pass. The spectrogram shows the whole band the ISS's receiver heard.",
   "recording_hint_wav" => "FM audio of the pass, for decoding again with any SSTV program",
   "about_title" => "About",
   "iss_h" => "Extra: the International Space Station",

@@ -138,6 +138,30 @@ then `./install_and_upgrade.sh`.
 Set `iss_aprs: false` to record only SSTV (then every pass is an SSTV pass when `iss_sstv_dates`
 is empty, as before v1.31.0).
 
+## Whole-band spectrogram (two RTL-SDRs)
+
+When the ISS has its own RTL-SDR (two dongles), every ISS pass records the whole band the dongle
+sees, 2.38 MHz around the ISS frequency, instead of the narrow `rtl_fm` channel. `rtl_sdr` streams
+the raw samples to `scripts/image_processors/iq_fm.py`, which:
+
+- FM-demodulates the ISS frequency on the way (the same audio as before, at 22 050 Hz) for Dire
+  Wolf (APRS) or the SSTV decoder, so decoding works as it did;
+- keeps a spectrum of the whole band once a second.
+
+After the pass, `spectrogram.py render-iq` draws `-spectrogram.png`: the waterfall of the whole
+band (time down, frequency across), the ISS frequency with its expected Doppler track from the
+TLE, and below it the level at the ISS frequency with the elevation. The ISS frequency is tuned
+264.6 kHz above the dongle's centre, so the dongle's DC spike stays off the signal.
+
+**Every pass keeps its spectrogram**, even when nothing was decoded: the pass then stays on the
+Captures page with the spectrogram as its picture and a note that nothing was decoded (with one
+dongle, an ISS pass without pictures or packets is still left out). Discord posts only passes
+that decoded something.
+
+With one RTL-SDR (shared with the Meteors) nothing changes: the ISS records with `rtl_fm` and has
+no spectrogram. The wide recording needs `python3-scipy` (the install adds it); without it the
+station falls back to `rtl_fm`. On a Pi 4 the processing takes well under half of one core.
+
 ## Settings
 
 | Setting | Default | What it does |

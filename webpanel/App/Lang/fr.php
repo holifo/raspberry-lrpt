@@ -332,6 +332,7 @@ return array(
   "sw_fail" => "Le changement a échoué. Le journal en direct en donne peut-être la raison.",
   "lg_sstv" => "SSTV : images de télévision à balayage lent envoyées par l'ISS lors des événements ARISS ({freq} MHz FM ; Robot 36 sur 437,550 MHz, PD120 sur 145,800 MHz)",
   "sstv_note" => "Images de télévision à balayage lent envoyées par la Station spatiale internationale sur {freq} MHz FM lors d'un événement ARISS, décodées par cette station.",
+  "iss_nothing" => "Rien n'a été décodé pendant ce passage. Le spectrogramme montre toute la bande captée par le récepteur de l'ISS.",
   "recording_hint_wav" => "Audio FM du passage, à décoder à nouveau avec n'importe quel logiciel SSTV",
   "about_title" => "À propos",
   "iss_h" => "Extra : la Station spatiale internationale",

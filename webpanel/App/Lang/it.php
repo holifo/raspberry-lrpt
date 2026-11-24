@@ -332,6 +332,7 @@ return array(
   "sw_fail" => "Non è stato possibile modificarlo. Il log in diretta potrebbe indicarne il motivo.",
   "lg_sstv" => "SSTV: immagini TV a scansione lenta che la ISS trasmette durante gli eventi ARISS ({freq} MHz FM; Robot 36 su 437,550 MHz, PD120 su 145,800 MHz)",
   "sstv_note" => "Immagini TV a scansione lenta inviate dalla Stazione spaziale internazionale su {freq} MHz FM durante un evento ARISS, decodificate da questa stazione.",
+  "iss_nothing" => "In questo passaggio non è stato decodificato nulla. Lo spettrogramma mostra tutta la banda ricevuta dal ricevitore dell'ISS.",
   "recording_hint_wav" => "Audio FM del passaggio, da decodificare di nuovo con qualsiasi programma SSTV",
   "about_title" => "Informazioni",
   "iss_h" => "Extra: la Stazione spaziale internazionale",

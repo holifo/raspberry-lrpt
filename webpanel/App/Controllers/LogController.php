@@ -166,15 +166,16 @@ class LogController extends \Lib\Controller {
       }
     }
     $s['capturing'] = false;
-    $busy = array('satdump' => false, 'rtl_fm' => false);
+    $busy = array('satdump' => false, 'rtl_fm' => false, 'rtl_sdr' => false);
     foreach (glob('/proc/[0-9]*/comm') ?: array() as $cf) {
       $comm = trim(@file_get_contents($cf));
       if (isset($busy[$comm])) { $busy[$comm] = true; $s['capturing'] = true; }
     }
+    $busy['rtl_fm'] = $busy['rtl_fm'] || $busy['rtl_sdr'];   # the ISS's wide recording (v1.42.0)
 
     # two or more RTL-SDRs: each with its role (schedule.sh writes sdr.json), whether it is still
     # on USB (its serial in /sys) and whether its recorder is running (SatDump for the Meteors,
-    # rtl_fm for the ISS)
+    # rtl_fm or rtl_sdr for the ISS)
     $list = @json_decode((string) @file_get_contents(Config::IMAGE_PATH . '/sdr.json'), true);
     if (is_array($list) && count($list) > 1) {
       $serials = array();

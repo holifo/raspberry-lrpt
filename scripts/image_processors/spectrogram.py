@@ -14,6 +14,11 @@
 # Usage:
 #   spectrogram.py record <port> <samplerate_hz> <timeout_s> <data.npz> [frequency_mhz]
 #   spectrogram.py render <data.npz> <out.png> <sat_name> <tle_file> <lat> <lon> <min_elev>
+#   spectrogram.py render-iq <data.npz> <out.png> <sat_name> <tle_file> <lat> <lon> <min_elev> [mode]
+#
+# "render-iq" draws an ISS pass recorded on its own RTL-SDR by iq_fm.py: the whole band the
+# dongle saw (2.38 MHz), the ISS frequency with its expected Doppler track from the TLE, and below
+# it the level near the ISS frequency with the elevation.
 #
 # "record" waits up to 90 s for SatDump's web server, stops when SatDump reports timeout_left 0,
 # stops answering, or after timeout + 120 s, and saves what it got.
@@ -26,7 +31,7 @@ import urllib.request
 
 import numpy as np
 
-SAT_COLOURS = {'METEOR-M2 3': '#f2b33d', 'METEOR-M2 4': '#4fd1c5'}
+SAT_COLOURS = {'METEOR-M2 3': '#f2b33d', 'METEOR-M2 4': '#4fd1c5', 'ISS': '#a78bfa'}
 BG, PANEL, GRID, TEXT, DIM, FAINT = '#0a1220', '#07101c', '#1c2d44', '#dbe4ee', '#8fa3b8', '#5d7390'
 LOCK = '#5fd38a'
 SPAN_HZ = 160e3          # show +/-160 kHz around the tuned frequency (LRPT is ~120 kHz wide)
@@ -230,6 +235,127 @@ def render(data_file, out_file, sat_name, tle_file, lat, lon, min_elev):
   plt.close(fig)
 
 
+def doppler(tle_file, sat_name, lat, lon, times, freq_hz):
+  """Expected Doppler shift (Hz) of freq_hz for each time, from the TLE (None when unknown)."""
+  try:
+    import ephem
+    lines = [l.strip() for l in open(tle_file) if l.strip()]
+    i = lines.index(sat_name)
+    sat = ephem.readtle(lines[i], lines[i + 1], lines[i + 2])
+    gs = ephem.Observer()
+    gs.lat, gs.lon, gs.elevation = str(lat), str(lon), 0
+    out = []
+    for t in times:
+      gs.date = ephem.Date(datetime.datetime.fromtimestamp(t, datetime.timezone.utc).replace(tzinfo=None))
+      sat.compute(gs)
+      out.append(-float(sat.range_velocity) / 299792458.0 * freq_hz)
+    return np.array(out)
+  except Exception:
+    return None
+
+
+def render_iq(data_file, out_file, sat_name, tle_file, lat, lon, min_elev, mode=''):
+  import matplotlib
+  matplotlib.use('Agg')
+  import matplotlib.pyplot as plt
+  import matplotlib.dates as mdates
+  from matplotlib.colors import LinearSegmentedColormap
+  from matplotlib.patches import FancyBboxPatch
+
+  plt.rcParams.update({'font.family': 'DejaVu Sans', 'font.size': 9, 'text.color': TEXT,
+                       'axes.labelcolor': DIM, 'xtick.color': DIM, 'ytick.color': DIM})
+  d = np.load(data_file)
+  t, fft = d['t'], d['fft'].astype(np.float32)
+  rate, center, target = float(d['rate']), float(d['center_hz']), float(d['target_hz'])
+  nbin = fft.shape[1]
+  f_mhz = (center + (np.arange(nbin) - nbin / 2) * rate / nbin) / 1e6
+  # the dongle's DC spike in the middle bin: take its neighbours' level
+  mid = nbin // 2
+  fft[:, mid] = (fft[:, mid - 1] + fft[:, mid + 1]) / 2
+  lo, hi = np.percentile(fft, 5), np.percentile(fft, 99.8)
+  colour = SAT_COLOURS.get(sat_name, '#9fd3ff')
+
+  local = [datetime.datetime.fromtimestamp(x).astimezone() for x in t]
+  start, end = local[0], local[-1]
+  tz = start.tzinfo
+  dop = doppler(tle_file, sat_name, lat, lon, t, target)
+  el = elevation(tle_file, sat_name, lat, lon, t)
+
+  # level near the ISS frequency (its Doppler track +/-12 kHz) above the band's median
+  floor = np.median(fft, axis=1)
+  track = target + (dop if dop is not None else np.zeros(len(t)))
+  level = []
+  for i, f in enumerate(track):
+    k = np.abs(f_mhz * 1e6 - f) <= 12e3
+    level.append(float(fft[i, k].max() - floor[i]) if k.any() else 0.0)
+  level = np.array(level)
+
+  png = out_file.lower().endswith('.png')
+  fig = plt.figure(figsize=(6.4, 9.0), dpi=120)
+  if png:
+    fig.patch.set_alpha(0)
+    fig.patches.append(FancyBboxPatch((0.004, 0.003), 0.992, 0.994, transform=fig.transFigure,
+                                      boxstyle='round,pad=0,rounding_size=0.02',
+                                      facecolor=BG, edgecolor='#22344d', linewidth=1.2, zorder=-10))
+  else:
+    fig.patch.set_facecolor(BG)
+  fig.text(0.06, 0.972, sat_name, fontsize=15, fontweight='bold', color=colour, va='top')
+  fig.text(0.94, 0.972, 'Spectrogram' + (' · ' + mode if mode else ''), fontsize=10, color=DIM,
+           va='top', ha='right')
+  fig.text(0.06, 0.937, '{}  ·  {}–{}  ·  {:.3f} MHz'.format(start.strftime('%a %d/%m/%Y'),
+           start.strftime('%H:%M'), end.strftime('%H:%M %Z'), target / 1e6), fontsize=10, color=TEXT, va='top')
+  fig.text(0.06, 0.910, 'whole band {:.2f}–{:.2f} MHz ({:.2f} MS/s)  ·  peak {:.0f} dB over the floor'.format(
+           f_mhz[0], f_mhz[-1], rate / 1e6, float(level.max()) if len(level) else 0), fontsize=9.5,
+           color=DIM, va='top')
+
+  ax = fig.add_axes([0.13, 0.36, 0.80, 0.52])
+  ax.set_facecolor(PANEL)
+  cmap = LinearSegmentedColormap.from_list('rl1', ['#07101c', '#14284a', '#1f5a8a', '#2fa0a0',
+                                                   '#f2d06b', '#fff6d8'])
+  tnum = mdates.date2num(local)
+  ax.imshow(fft, aspect='auto', cmap=cmap, vmin=lo, vmax=hi, interpolation='nearest',
+            extent=[f_mhz[0], f_mhz[-1], tnum[-1], tnum[0]])
+  ax.yaxis_date(tz)
+  ax.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M', tz=tz))
+  ax.set_xlabel('Frequency (MHz)')
+  for sp in ax.spines.values():
+    sp.set_color('#2a3a50')
+  ax.axvline(target / 1e6, color=FAINT, linewidth=0.6, linestyle=(0, (3, 4)))
+  if dop is not None:
+    ax.plot(track / 1e6 + 0.03, tnum, color=colour, linewidth=0.9, alpha=0.7, linestyle=(0, (2, 3)))
+
+  bx = fig.add_axes([0.13, 0.065, 0.80, 0.175])
+  bx.set_facecolor(PANEL)
+  for sp in bx.spines.values():
+    sp.set_color('#2a3a50')
+  bx.grid(color=GRID, linewidth=0.7)
+  bx.plot(local, level, color=colour, linewidth=1.4)
+  bx.set_ylabel('Level (dB)')
+  bx.set_ylim(0, max(10, float(level.max()) * 1.15 if len(level) else 10))
+  bx.set_xlim(local[0], local[-1])
+  bx.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M', tz=tz))
+  if el is not None:
+    ex = bx.twinx()
+    ex.plot(local, el, color='#9fd3ff', linewidth=1, linestyle=(0, (2, 2)), alpha=0.8)
+    ex.axhline(min_elev, color=FAINT, linewidth=0.6, linestyle=(0, (3, 4)))
+    ex.set_ylim(0, 90)
+    ex.set_yticks([0, 30, 60, 90])
+    ex.set_ylabel('Elevation (°)', color=DIM)
+    for sp in ex.spines.values():
+      sp.set_visible(False)
+  fig.text(0.13, 0.268, '—', color=colour, fontsize=10, va='center', fontweight='bold')
+  fig.text(0.16, 0.268, 'level at the ISS frequency (Doppler-corrected)   ', color=DIM, fontsize=8.5, va='center')
+  if dop is not None:
+    fig.text(0.13, 0.292, '- -', color=colour, fontsize=9, va='center')
+    fig.text(0.175, 0.292, 'expected Doppler track (drawn just right of the signal)', color=DIM,
+             fontsize=8.5, va='center')
+  if el is not None:
+    fig.text(0.70, 0.268, '- -', color='#9fd3ff', fontsize=9, va='center')
+    fig.text(0.745, 0.268, 'elevation', color=DIM, fontsize=8.5, va='center')
+  fig.savefig(out_file, facecolor='none' if png else BG)
+  plt.close(fig)
+
+
 def write_stats(data_file, t, snr, dlock, el, min_elev):
   """The pass's numbers for the web panel, next to the data file (<data>.json): seconds recorded,
   seconds the decoder was locked, peak SNR, mean SNR while locked, and the quality: the share of
@@ -266,6 +392,8 @@ def main():
     record(int(a[2]), float(a[3]), float(a[4]), a[5], float(a[6]) if len(a) == 7 else 137.1)
   elif len(a) == 9 and a[1] == 'render':
     render(a[2], a[3], a[4], a[5], a[6], a[7], float(a[8]))
+  elif len(a) in (9, 10) and a[1] == 'render-iq':
+    render_iq(a[2], a[3], a[4], a[5], a[6], a[7], float(a[8]), a[9] if len(a) == 10 else '')
   else:
     print(__doc__ if __doc__ else 'see the header of this file for usage')
     print('usage: spectrogram.py record <port> <samplerate_hz> <timeout_s> <data.npz> [frequency_mhz]')
