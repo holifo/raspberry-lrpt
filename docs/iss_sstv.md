@@ -57,6 +57,8 @@ site when something was received.
 
    SatDump then opens that dongle by its serial, and the ISS automatically takes the other one.
    The two dongles need different serials (`rtl_eeprom -d N -s NEWSERIAL` can change one).
+   A serial can be written short: `1` finds `00000001` (since v1.41.1; the station turns it into
+   the full serial before starting SatDump). A number that is no dongle's serial is read as an index.
 4. **Recording** (SSTV; APRS is below): `receive_iss.sh` records the pass on `iss_sstv_frequency` with `rtl_fm`
    (48 kHz wide, which covers the ISS's Doppler shift: about ±3.5 kHz on 2 m, ±10 kHz on 70 cm)
    as audio at 11025 Hz, with the gain `iss_sstv_gain`.

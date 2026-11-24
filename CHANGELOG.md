@@ -1,5 +1,13 @@
 # Changelog
 
+## Raspberry-LRPT v1.41.1 (2026-11-24)
+
+- **RTL-SDR serials can be written short.** A dongle setting of `1` now finds the dongle with
+  serial `00000001` (the Meteors' `meteor_m2_x_sdr_device_id` with `use_device_string`, and
+  `iss_sdr_device`). Before SatDump starts, the station turns the setting into the connected
+  dongle's full serial, which SatDump needs exactly, and logs a warning when no dongle matches.
+  A plain number no longer matches part of a model name ("3" found "RTL2838").
+
 ## Raspberry-LRPT v1.41.0 (2026-11-23)
 
 - **About > Changes.** A new tab on the About page lists what changed in each release of the

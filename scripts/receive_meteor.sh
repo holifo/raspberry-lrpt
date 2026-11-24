@@ -126,6 +126,17 @@ esac
 
 if [[ "$USE_DEVICE_STRING" == "true" ]]; then
   sdr_id_option="--source_id"
+  if [ "$receiver" == "rtlsdr" ]; then
+    # SatDump matches --source_id to the serial exactly: turn "1" (or an index, or part of the
+    # model name) into the connected dongle's serial, e.g. 00000001
+    real_serial=$(python3 "$SCRIPTS_DIR/tools/rtlsdr_list.py" serial "$SDR_DEVICE_ID" 2>/dev/null)
+    if [ -n "$real_serial" ] && [ "$real_serial" != "$SDR_DEVICE_ID" ]; then
+      log "RTL-SDR '$SDR_DEVICE_ID' is serial $real_serial" "INFO"
+      SDR_DEVICE_ID=$real_serial
+    elif [ -z "$real_serial" ]; then
+      log "No connected RTL-SDR matches '$SDR_DEVICE_ID' (scripts/switch.sh iss lists them)" "WARN"
+    fi
+  fi
 else
   sdr_id_option=""
   SDR_DEVICE_ID=""

@@ -52,12 +52,17 @@ def resolve(want, devs):
     exact = [i for i, d in enumerate(devs) if d[2] == want]       # a serial first: "00000004"
     if exact:                                                     # is a serial, not index 4
         return exact[0]
+    if want.isdigit():                                            # "1" = serial 00000001 too
+        num = [i for i, d in enumerate(devs) if (d[2] or '').isdigit() and int(d[2]) == int(want)]
+        if num:
+            return num[0]
     if want.isdigit() and int(want) < len(devs):
         return int(want)
     low = want.lower()
     for test in (lambda d: d[2] == want,                          # the exact serial
                  lambda d: low in d[2].lower(),                   # part of the serial
-                 lambda d: low in (d[0] + ' ' + d[1]).lower()):   # part of maker + model
+                 lambda d: not want.isdigit()                     # part of maker + model
+                 and low in (d[0] + ' ' + d[1]).lower()):         # (not "3" in "RTL2838")
         hits = [i for i, d in enumerate(devs) if test(d)]
         if hits:
             return hits[0]
@@ -93,6 +98,13 @@ def main():
             meteor = 0
         idx, mode = pick(sys.argv[2], meteor, sys.argv[4], devs)
         print('{} {}'.format('-' if idx is None else idx, mode))
+        return 0
+    if sys.argv[1] == 'serial' and len(sys.argv) == 3:
+        # the serial number SatDump's --source_id needs for a setting ("1", "00000001", an index,
+        # part of the model name); prints nothing when no connected RTL-SDR matches
+        idx = resolve(sys.argv[2], devs)
+        if idx is not None and devs[idx][2]:
+            print(devs[idx][2])
         return 0
     if sys.argv[1] == 'roles' and len(sys.argv) == 6:
         import json
