@@ -95,6 +95,17 @@ tle_file_ok() {
 # save_daily_product DIR BASE EPOCH: keep a pass's SatDump product (product.cbor and the raw
 # channel images) in $METEOR_AUDIO_OUTPUT/products/BASE for the daily map (daily_map.sh).
 # Only passes whose decode had an orbit and sane line times (a map was drawn) are kept.
+# spectro_thumbs IMAGE_BASE THUMB_BASE: thumbnails of the full-resolution spectrograms that
+# spectrogram.py writes next to the card (-spectrogram-full.jpg: the band, very wide, shown
+# squeezed; -spectrogram-channel.jpg: the ISS channel, tall)
+spectro_thumbs() {
+  [ -f "$1-spectrogram-full.jpg" ] && $CONVERT "$1-spectrogram-full.jpg" -resize '300x220!' -strip -interlace Line \
+    "$2-spectrogram-full.jpg" >> "$LRPT_LOG" 2>&1
+  [ -f "$1-spectrogram-channel.jpg" ] && $CONVERT "$1-spectrogram-channel.jpg" -thumbnail 300x -strip -interlace Line \
+    "$2-spectrogram-channel.jpg" >> "$LRPT_LOG" 2>&1
+  return 0
+}
+
 save_daily_product() {
   local src="$1/MSU-MR (Filled)" dst="$METEOR_AUDIO_OUTPUT/products/$2"
   [ "${DAILY_MAP:-false}" = "true" ] || return 0

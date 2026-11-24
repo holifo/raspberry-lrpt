@@ -146,12 +146,23 @@ the raw samples to `scripts/image_processors/iq_fm.py`, which:
 
 - FM-demodulates the ISS frequency on the way (the same audio as before, at 22 050 Hz) for Dire
   Wolf (APRS) or the SSTV decoder, so decoding works as it did;
-- keeps a spectrum of the whole band once a second.
+- keeps a spectrum of the whole band every 0.5 s (8192 points, 290 Hz each) and one of the ISS
+  channel every 0.2 s (±22 kHz, 1024 points, 43 Hz each).
 
-After the pass, `spectrogram.py render-iq` draws `-spectrogram.png`: the waterfall of the whole
-band (time down, frequency across), the ISS frequency with its expected Doppler track from the
-TLE, and below it the level at the ISS frequency with the elevation. The ISS frequency is tuned
-264.6 kHz above the dongle's centre, so the dongle's DC spike stays off the signal.
+After the pass, `spectrogram.py render-iq` draws three pictures:
+
+- `-spectrogram.png`, the card: the waterfall of the whole band (time down, frequency across),
+  the ISS frequency with its expected Doppler track from the TLE, and below it the level at the
+  ISS frequency with the elevation;
+- `-spectrogram-full.jpg` (v1.44.0): the whole band at full resolution, one pixel per point
+  and per row (about 8,300 pixels wide), to zoom into in the image viewer;
+- `-spectrogram-channel.jpg` (v1.44.0): the ISS channel, ±12 kHz, with the expected Doppler
+  shift from the TLE taken out, so the ISS runs straight down the middle and each APRS burst or
+  SSTV picture shows clearly (43 Hz a point drawn 2 pixels wide, a row every 0.2 s). A dongle
+  frequency error moves the line sideways but keeps it straight.
+
+The ISS frequency is tuned 264.6 kHz above the dongle's centre, so the dongle's DC spike stays
+off the signal.
 
 **Live on the Passes page** (v1.43.0): while such a pass records, an "ISS live" panel shows the
 whole band as a spectrum and scrolling waterfall, the ISS channel (±22 kHz) with the expected

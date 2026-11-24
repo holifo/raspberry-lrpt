@@ -196,6 +196,8 @@ return array(
   "lg_skytrack" => "Bahn am Himmel: der Überflug von der Station aus gesehen, der Zenit in der Mitte",
   "lg_elaz" => "Elevation & Azimut: Höhe und Richtung des Satelliten während des Überflugs",
   "lg_spectro" => "Spektrogramm: das empfangene Signal, seine Stärke (SNR) und wann der Decoder eingerastet war",
+  "spectrogram_full" => "Spektrogramm, volle Auflösung",
+  "spectrogram_channel" => "ISS-Kanal, Doppler entfernt",
   "lg_single" => "Jeder empfangene Kanal einzeln, in Grau (geometrisch korrigiert)",
   "log_empty" => "Das Protokoll ist leer.",
   "no_matching_lines" => "Keine passenden Zeilen.",

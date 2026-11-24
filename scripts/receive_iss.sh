@@ -141,8 +141,9 @@ iss_spectrogram() {
   python3 "$IMAGE_PROC_DIR/spectrogram.py" render-iq "$SPEC_NPZ" "${IMAGE_FILE_BASE}-spectrogram.png" \
     "$SAT_NAME" "$TLE_FILE" "$LAT" "$LON" "$ISS_SSTV_MIN_ELEV" "$1" >> "$LRPT_LOG" 2>&1 || return 1
   "$IMAGE_PROC_DIR/thumbnail.sh" 300 "${IMAGE_FILE_BASE}-spectrogram.png" "${IMAGE_THUMB_BASE}-spectrogram.png" >> "$LRPT_LOG" 2>&1
+  spectro_thumbs "${IMAGE_FILE_BASE}" "${IMAGE_THUMB_BASE}"
   has_spectrogram=1
-  log "Spectrogram of the whole band saved" "INFO"
+  log "Spectrogram of the whole band saved (with full-resolution pictures)" "INFO"
 }
 
 # SSTV during an event, APRS the rest of the time (iss_aprs)

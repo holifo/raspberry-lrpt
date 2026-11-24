@@ -375,20 +375,23 @@ for i in range(6):
                 print('  (pass graph skipped: %s)' % (r.stderr.strip().splitlines() or ['error'])[-1])
         # spectrogram from a made-up pass (signal rising and setting, Doppler drift, decoder lock)
         import numpy as np
-        rng = np.random.default_rng(3); fs = 1.024e6; nb = 1024; T = max(60, g1 - g0)
+        rng = np.random.default_rng(3); fs = 1.024e6; nb = 4096; T = 2 * max(60, g1 - g0)   # a row every 0.5 s
         fr = (np.arange(nb) - nb / 2) * fs / nb
         x = np.arange(T) / T; amp = np.sin(np.pi * x) ** 1.5
         fft = (-50 + rng.normal(0, 1.2, (T, nb)) + (amp * 16)[:, None]
                * np.exp(-((fr[None, :] - (3200 * np.cos(np.pi * x))[:, None]) / 48e3) ** 8)).astype(np.float32)
         snr = np.maximum(0, amp * 11 + rng.normal(0, 0.4, T)); lock = (snr > 3.5).astype(int)
         npz = os.path.join(work, 'spectro.npz')
-        np.savez_compressed(npz, t=g0 + np.arange(T), fft=fft, snr=snr, freq=np.zeros(T), ber=np.zeros(T),
+        np.savez_compressed(npz, t=g0 + np.arange(T) * 0.5, fft=fft, snr=snr, freq=np.zeros(T), ber=np.zeros(T),
                             vlock=lock, dlock=lock, samplerate=fs)
         out = os.path.join(srv, 'images', fp + '-spectrogram.png')
         r = subprocess.run([sys.executable, '-I', os.path.join(repo, 'scripts/image_processors/spectrogram.py'), 'render',
                             npz, out, 'METEOR-M2 3', tle, '37.983810', '23.727539', '15'], capture_output=True, text=True)
         if r.returncode == 0 and have_im:
             subprocess.run(['convert', out, '-resize', '300x', os.path.join(srv, 'images/thumb', fp + '-spectrogram.png')])
+            full = out[:-4] + '-full.jpg'
+            if os.path.exists(full):
+                subprocess.run(['convert', full, '-resize', '300x220!', os.path.join(srv, 'images/thumb', fp + '-spectrogram-full.jpg')])
         elif r.returncode:
             print('  (spectrogram skipped: %s)' % (r.stderr.strip().splitlines() or ['error'])[-1])
 db.commit()

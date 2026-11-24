@@ -95,7 +95,8 @@ class Capture extends \Lib\Model {
     $others = [];
     foreach (glob(addcslashes($prefix, '*?[') . '*.jpg') ?: [] as $file) {
       $e = '-' . substr($file, strlen($prefix));
-      if (in_array($e, $enhancements) || in_array($e, ['-website-thumbnail.jpg', '-polar-azel.jpg', '-histogram.jpg'])) { continue; }
+      if (in_array($e, $enhancements) || in_array($e, ['-website-thumbnail.jpg', '-polar-azel.jpg', '-histogram.jpg',
+                                                         '-spectrogram-full.jpg', '-spectrogram-channel.jpg'])) { continue; }
       $others[] = $e;
     }
     sort($others, SORT_NATURAL);    # SSTV_2 before SSTV_10
@@ -104,6 +105,10 @@ class Capture extends \Lib\Model {
     # capture spectrogram if one exists
     if ($pass['has_spectrogram'] == '1') {
       array_push($enhancements, '-spectrogram.png');
+      # the full-resolution pictures spectrogram.py writes next to it (v1.44.0)
+      foreach (['-spectrogram-channel.jpg', '-spectrogram-full.jpg'] as $e) {
+        if (file_exists($prefix . substr($e, 1))) { $enhancements[] = $e; }
+      }
     }
     # capture polar azimuth elevation graph if one exists
     if ($pass['has_polar_az_el'] == '1') {

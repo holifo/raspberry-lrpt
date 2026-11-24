@@ -196,6 +196,8 @@ return array(
   "lg_skytrack" => "天空轨迹：从地面站看到的过境，天顶在中心",
   "lg_elaz" => "仰角与方位角：过境期间卫星的高度和方向",
   "lg_spectro" => "频谱图：接收信号、信号强度（SNR）以及解码器锁定的时段",
+  "spectrogram_full" => "频谱图（全分辨率）",
+  "spectrogram_channel" => "ISS 信道（已去除多普勒）",
   "lg_single" => "每个接收到的通道单独显示，灰度（已做几何校正）",
   "log_empty" => "日志为空。",
   "no_matching_lines" => "没有匹配的行。",

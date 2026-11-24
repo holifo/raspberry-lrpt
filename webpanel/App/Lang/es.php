@@ -196,6 +196,8 @@ return array(
   "lg_skytrack" => "Trayectoria en el cielo: el paso visto desde la estación, el cénit en el centro",
   "lg_elaz" => "Elevación y acimut: altura y dirección del satélite durante el paso",
   "lg_spectro" => "Espectrograma: la señal recibida, su fuerza (SNR) y cuándo enganchó el decodificador",
+  "spectrogram_full" => "Espectrograma, resolución completa",
+  "spectrogram_channel" => "Canal de la ISS, sin Doppler",
   "lg_single" => "Cada canal recibido por separado, en gris (geometría corregida)",
   "log_empty" => "El registro está vacío.",
   "no_matching_lines" => "No hay líneas que coincidan.",

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 # Purpose: an ISS pass on the ISS's own RTL-SDR (two dongles): record the whole 2.38 MHz the
-#          dongle sees, keep a spectrum of it once a second for the pass's spectrogram, and FM
+#          dongle sees, keep spectra of it and of the ISS channel for the pass's spectrogram, and FM
 #          demodulate the ISS frequency on the way, like rtl_fm did.
 #
 #   rtl_sdr -s 2381400 -f <ISS MHz - 264.6 kHz> ... - | iq_fm.py OUT.npz CENTER_HZ TARGET_HZ [LIVE.json] > audio
@@ -11,8 +11,10 @@
 #         the tuned centre, away from the dongle's DC spike, so the mixer is a 9-sample table)
 # stdout  FM audio, signed 16-bit mono at 22 050 Hz, scaled like rtl_fm's (direwolf and
 #         sstv_decode.py read it as before)
-# OUT.npz t (epoch per row), fft (rows x 2048, dB, centred on the tuned frequency), rate,
-#         center_hz, target_hz: spectrogram.py render-iq draws it
+# OUT.npz t (epoch per row, every 0.5 s), fft (rows x 8192, dB, centred on the tuned frequency:
+#         290 Hz a point), zt / zoom (every 0.2 s, rows x 1024 dB of the ISS channel, +/-22 kHz
+#         around the ISS frequency: 43 Hz a point), rate, zoom_rate, center_hz, target_hz:
+#         spectrogram.py render-iq draws the card and the full-resolution pictures from it
 #
 # LIVE.json (optional) is rewritten once a second for the Passes page's live ISS panel
 #         (PassesController::issliveAction): {t, wide: 512 dB values of the whole band, zoom: 256
@@ -35,8 +37,12 @@ RATE = 2381400
 OFFSET = RATE // 9          # 264 600 Hz
 AUDIO = RATE // 108         # 22 050 Hz
 BLOCK = RATE // 10          # 0.1 s; a multiple of 108
-NFFT = 2048
-FFTS_PER_BLOCK = 8          # spectra averaged per 0.1 s (80 per second's row)
+NFFT = 8192                 # whole band: 290 Hz a point
+FFTS_PER_BLOCK = 8          # spectra averaged per 0.1 s (40 per row)
+BLOCKS_PER_ROW = 5          # a whole-band row every 0.5 s
+ZN, ZHOP = 1024, 512        # ISS channel (44.1 kHz): 43 Hz a point, 50 % overlap
+ZBLOCKS = 2                 # a channel row every 0.2 s
+LIVE_BLOCKS = 10            # the live panel's file once a second
 
 
 class Decimator:
@@ -64,8 +70,8 @@ def write_live(path, wide, zoom, audio):
   def db(a):
     return [round(float(v), 1) for v in 10 * np.log10(a + 1e-12)]
   z = 10 * np.log10(zoom + 1e-12)
-  out = {'t': round(time.time(), 1), 'wide': db(wide.reshape(-1, 4).max(axis=1)),
-         'zoom': db(zoom.reshape(-1, 2).max(axis=1)), 'audio': db(audio),
+  out = {'t': round(time.time(), 1), 'wide': db(wide.reshape(512, -1).max(axis=1)),
+         'zoom': db(zoom.reshape(256, -1).max(axis=1)), 'audio': db(audio),
          'level': round(float(z.max() - np.median(z)), 1)}
   tmp = path + '.tmp'
   try:
@@ -81,9 +87,10 @@ def main():
     sys.exit('usage: iq_fm.py OUT.npz CENTER_HZ TARGET_HZ [LIVE.json]  (u8 I/Q on stdin, audio on stdout)')
   out_file, center, target = sys.argv[1], float(sys.argv[2]), float(sys.argv[3])
   live = sys.argv[4] if len(sys.argv) == 5 else None
-  ZN, AN = 512, 1024                              # ISS channel FFT (44.1 kHz), audio FFT (22.05 kHz)
+  AN = 1024                                       # audio FFT (22.05 kHz) for the live panel
   zwin, awin = np.hanning(ZN).astype(np.float32), np.hanning(AN).astype(np.float32)
-  zacc, aacc = np.zeros(ZN), np.zeros(AN // 2 + 1)
+  zacc, aacc = np.zeros(ZN), np.zeros(AN // 2 + 1)    # live panel (once a second)
+  zrow, nz, zbuf = np.zeros(ZN), 0, np.zeros(0, np.complex64)
   abins = int(3000 / (AUDIO / AN)) + 1            # audio bins up to 3 kHz
 
   mix = np.exp(-2j * np.pi * OFFSET / RATE * np.arange(9)).astype(np.complex64)
@@ -97,17 +104,29 @@ def main():
   last = np.complex64(1)
   scale = (1 << 14) / np.pi                      # rtl_fm's discriminator scale
 
-  rows, times = [], []
-  acc, nacc, row_t = np.zeros(NFFT, np.float64), 0, time.time()
+  rows, times, zrows, ztimes = [], [], [], []
+  acc, nacc = np.zeros(NFFT, np.float64), 0
+  blocks, got, t0 = 0, 0, None        # rows are timed by the samples read (rtl_sdr runs in real
+                                      # time; the pipe can deliver its first blocks in a burst)
+  row_t = zrow_t = 0.0
   stdin, stdout = sys.stdin.buffer, sys.stdout.buffer
   while True:
     raw = stdin.read(BLOCK * 2)
     if len(raw) < 2 * 108:
       break
     n = (len(raw) // 2) // 108 * 108
+    if t0 is None:
+      t0 = time.time()
+    now_t = t0 + got / RATE                 # time of this block's first sample
+    if blocks % BLOCKS_PER_ROW == 0:
+      row_t = now_t
+    if blocks % ZBLOCKS == 0:
+      zrow_t = now_t
+    got += n
     u = np.frombuffer(raw[:2 * n], np.uint8).astype(np.float32)
     x = ((u[0::2] - 127.5) + 1j * (u[1::2] - 127.5)).astype(np.complex64) / 127.5
 
+    blocks += 1
     # spectrum of the whole band
     seg = n // FFTS_PER_BLOCK
     for i in range(FFTS_PER_BLOCK):
@@ -115,20 +134,33 @@ def main():
       if len(s) == NFFT:
         acc += np.abs(np.fft.fft(s * window)) ** 2
         nacc += 1
-    if nacc >= FFTS_PER_BLOCK * 10:
+    wide = None
+    if blocks % BLOCKS_PER_ROW == 0 and nacc:
       wide = np.fft.fftshift(acc / nacc)
       rows.append((10 * np.log10(wide + 1e-12)).astype(np.float16))
       times.append(row_t)
-      if live:
-        write_live(live, wide, np.fft.fftshift(zacc), aacc[:abins])
-      acc[:], nacc, row_t = 0, 0, time.time()
+      acc[:], nacc = 0, 0
+
+    # the ISS channel: FFTs with 50 % overlap, a row every 0.2 s (and the live panel's zoom)
+    y = d2(d1(x * mix[:n]))
+    zbuf = np.concatenate((zbuf, y))
+    i = 0
+    while i + ZN <= len(zbuf):
+      p = np.abs(np.fft.fft(zbuf[i:i + ZN] * zwin)) ** 2
+      zrow += p
+      zacc += p
+      nz += 1
+      i += ZHOP
+    zbuf = zbuf[i:]
+    if blocks % ZBLOCKS == 0 and nz:
+      zrows.append((10 * np.log10(np.fft.fftshift(zrow / nz) + 1e-12)).astype(np.float16))
+      ztimes.append(zrow_t)
+      zrow[:], nz = 0, 0
+    if live and blocks % LIVE_BLOCKS == 0 and wide is not None:
+      write_live(live, wide, np.fft.fftshift(zacc), aacc[:abins])
       zacc[:], aacc[:] = 0, 0
 
     # FM demodulation of the ISS frequency
-    y = d2(d1(x * mix[:n]))
-    if live:
-      for i in range(0, len(y) - ZN + 1, ZN):
-        zacc += np.abs(np.fft.fft(y[i:i + ZN] * zwin)) ** 2
     if len(y):
       prev = np.concatenate(([last], y[:-1]))
       last = y[-1]
@@ -146,8 +178,9 @@ def main():
           stdout = None
 
   if rows:
+    extra = {'zt': np.array(ztimes), 'zoom': np.stack(zrows), 'zoom_rate': RATE // 54} if zrows else {}
     np.savez_compressed(out_file, t=np.array(times), fft=np.stack(rows), rate=RATE,
-                        center_hz=center, target_hz=target)
+                        center_hz=center, target_hz=target, **extra)
 
 
 if __name__ == '__main__':

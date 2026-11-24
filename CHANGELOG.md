@@ -1,5 +1,18 @@
 # Changelog
 
+## Raspberry-LRPT v1.44.0 (2026-11-24)
+
+- **Sharper spectrograms.** Every spectrogram card is now drawn larger (1024 × 1440), and a
+  full-resolution waterfall sits next to it on the capture page, to zoom into in the image viewer.
+  - **Meteor:** SatDump's spectrum has 4096 points instead of 1024 (250 Hz each) and is sampled
+    twice a second instead of once.
+  - **ISS** (two RTL-SDRs): the whole band has 8192 points instead of 2048 (290 Hz each), a row
+    every 0.5 s; its full picture is about 8,300 pixels wide. A new **ISS channel** picture shows
+    ±12 kHz around the ISS frequency at 43 Hz and 0.2 s per row with the Doppler shift taken out,
+    so the ISS runs straight down the middle and each APRS burst or SSTV picture stands out.
+  - Spectrogram rows are now timed by the samples received, so the first seconds are no longer
+    bunched together. The processing costs about the same as before.
+
 ## Raspberry-LRPT v1.43.0 (2026-11-24)
 
 - **ISS live panel on the Passes page** (with two RTL-SDRs, when the ISS has its own). While an

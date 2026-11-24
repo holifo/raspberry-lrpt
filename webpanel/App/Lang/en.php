@@ -78,6 +78,8 @@ return array(
   "lg_skytrack" => "Sky track: the pass seen from the station, overhead in the centre",
   "lg_elaz" => "Elevation & azimuth: the satellite's height and direction during the pass",
   "lg_spectro" => "Spectrogram: the received signal, its strength (SNR) and when the decoder locked",
+  "spectrogram_full" => "Spectrogram, full resolution",
+  "spectrogram_channel" => "ISS channel, Doppler removed",
   "lg_single" => "Each received channel on its own, in grey (geometry corrected)",
   "log_empty" => "The log is empty.",
   "no_matching_lines" => "No matching lines.",

@@ -204,7 +204,7 @@ audio_temporary_storage_directory="$WORK_DIR"
 # The same server feeds the web panel's live signal view (PassesController::liveAction), which
 # finds the pass in $IMAGE_OUTPUT/live.json while SatDump runs.
 SPECTRO_PORT=8091
-spectro_opts="--fft_enable --fft_size 1024 --fft_rate 4 --http_server 127.0.0.1:${SPECTRO_PORT}"
+spectro_opts="--fft_enable --fft_size 4096 --fft_rate 4 --http_server 127.0.0.1:${SPECTRO_PORT}"
 spectro_pid=""
 SPECTRO_DATA="${LRPT_HOME}/tmp/spectrogram-${FILENAME_BASE}.npz"
 printf '{"sat":"%s","start":%s,"end":%s,"samplerate":%s,"frequency":%s,"max_elev":%s,"port":%s}\n' \
@@ -240,6 +240,7 @@ if [[ "${PRODUCE_SPECTROGRAM}" == "true" ]] && [ -f "${SPECTRO_DATA}" ]; then
   if python3 "${IMAGE_PROC_DIR}/spectrogram.py" render "${SPECTRO_DATA}" "${IMAGE_FILE_BASE}-spectrogram.png" \
        "${SAT_NAME}" "${TLE_FILE}" "${LAT}" "${LON}" "${SAT_MIN_ELEV}" >> $LRPT_LOG 2>&1; then
     ${IMAGE_PROC_DIR}/thumbnail.sh 300 "${IMAGE_FILE_BASE}-spectrogram.png" "${IMAGE_THUMB_BASE}-spectrogram.png" >> $LRPT_LOG 2>&1
+    spectro_thumbs "${IMAGE_FILE_BASE}" "${IMAGE_THUMB_BASE}"
     log "Spectrogram saved to ${IMAGE_FILE_BASE}-spectrogram.png" "INFO"
   else
     log "Spectrogram could not be drawn" "WARN"

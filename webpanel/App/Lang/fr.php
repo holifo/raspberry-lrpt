@@ -196,6 +196,8 @@ return array(
   "lg_skytrack" => "Trajectoire dans le ciel : le passage vu de la station, le zénith au centre",
   "lg_elaz" => "Élévation et azimut : la hauteur et la direction du satellite pendant le passage",
   "lg_spectro" => "Spectrogramme : le signal reçu, sa force (SNR) et quand le décodeur était verrouillé",
+  "spectrogram_full" => "Spectrogramme, pleine résolution",
+  "spectrogram_channel" => "Canal de l'ISS, Doppler retiré",
   "lg_single" => "Chaque canal reçu seul, en gris (géométrie corrigée)",
   "log_empty" => "Le journal est vide.",
   "no_matching_lines" => "Aucune ligne correspondante.",

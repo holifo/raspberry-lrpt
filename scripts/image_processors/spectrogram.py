@@ -5,7 +5,7 @@
 # SatDump live does not keep the radio samples, so there is no recording to analyse afterwards.
 # Instead, receive_meteor.sh starts SatDump with its built-in web server and FFT
 # (--http_server 127.0.0.1:PORT --fft_enable), and this script polls http://127.0.0.1:PORT/api
-# once a second during the pass. Each answer holds the current spectrum (fft_values, dB, centred
+# twice a second during the pass. Each answer holds the current spectrum (fft_values, dB, centred
 # on the tuned frequency) and the demodulator / decoder state (SNR, frequency offset, Viterbi
 # lock, deframer lock). When the pass is over it draws:
 #   - the waterfall around the Meteor signal (time down, frequency across)
@@ -34,7 +34,101 @@ import numpy as np
 SAT_COLOURS = {'METEOR-M2 3': '#f2b33d', 'METEOR-M2 4': '#4fd1c5', 'ISS': '#a78bfa'}
 BG, PANEL, GRID, TEXT, DIM, FAINT = '#0a1220', '#07101c', '#1c2d44', '#dbe4ee', '#8fa3b8', '#5d7390'
 LOCK = '#5fd38a'
+POLL_S = 0.5             # SatDump's FFT is updated 4 times a second: a row every 0.5 s
 SPAN_HZ = 160e3          # show +/-160 kHz around the tuned frequency (LRPT is ~120 kHz wide)
+
+CMAP_STOPS = ['#07101c', '#14284a', '#1f5a8a', '#2fa0a0', '#f2d06b', '#fff6d8']
+
+
+def colour_lut():
+  """256 RGB colours of the waterfall palette (the same as the cards')."""
+  stops = np.array([[int(c[i:i + 2], 16) for i in (1, 3, 5)] for c in CMAP_STOPS], dtype=float)
+  x = np.linspace(0, 1, 256) * (len(stops) - 1)
+  i = np.minimum(x.astype(int), len(stops) - 2)
+  f = (x - i)[:, None]
+  return (stops[i] * (1 - f) + stops[i + 1] * f).astype(np.uint8)
+
+
+def pool_cols(a, cols):
+  """Max-pool the columns of a down to about `cols`, so a narrow signal survives on a card."""
+  k = max(1, a.shape[1] // cols)
+  n = a.shape[1] // k * k
+  return a[:, :n].reshape(a.shape[0], -1, k).max(axis=2) if k > 1 else a
+
+
+def full_name(out_file, what):
+  """<base>-spectrogram.png -> <base>-spectrogram-<what>.jpg"""
+  return (out_file[:-4] if out_file.lower().endswith(('.png', '.jpg')) else out_file) + '-' + what + '.jpg'
+
+
+def nice_step(span, want):
+  """A round tick step (1, 2 or 5 x 10^n) giving about `want` ticks over span."""
+  raw = span / max(want, 1)
+  p = 10 ** np.floor(np.log10(raw))
+  for m in (1, 2, 5, 10):
+    if m * p >= raw:
+      return m * p
+  return 10 * p
+
+
+def full_waterfall(data, x_vals, x_label, x_fmt, times, out_file, title, colour, marks=(), xscale=1):
+  """The waterfall at full resolution: one pixel per frequency point (xscale pixels with
+  xscale > 1), one pixel row per spectrum row, newest at the bottom; frequency ticks on top,
+  local times on the left, a title line. Written with Pillow (fast at 8192 points wide).
+  data: rows x points in dB (NaN = no data, drawn as the background). marks: (x value, label)."""
+  from PIL import Image, ImageDraw, ImageFont
+  data = np.asarray(data, dtype=np.float32)
+  ok = np.isfinite(data)
+  lo, hi = (np.percentile(data[ok], 5), np.percentile(data[ok], 99.8)) if ok.any() else (0, 1)
+  idx = np.clip((np.nan_to_num(data, nan=lo) - lo) / max(hi - lo, 1e-6) * 255, 0, 255).astype(np.uint8)
+  rgb = colour_lut()[idx]
+  rgb[~ok] = (7, 16, 28)
+  if xscale > 1:
+    rgb = np.repeat(rgb, xscale, axis=1)
+  h, w = rgb.shape[:2]
+  try:
+    font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 15)
+    bold = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 22)
+  except OSError:
+    font = bold = ImageFont.load_default()
+  left, top, pad = 70, 86, 14
+  img = Image.new('RGB', (w + left + pad, h + top + pad), BG)
+  img.paste(Image.fromarray(rgb), (left, top))
+  dr = ImageDraw.Draw(img)
+  dr.text((left, 10), title, fill=colour, font=bold)
+  dr.text((left, 40), x_label, fill=DIM, font=font)
+  # frequency ticks
+  x0, x1 = float(x_vals[0]), float(x_vals[-1])
+  step = nice_step(x1 - x0, max(4, w // 180))
+  v = np.ceil(x0 / step) * step
+  while v <= x1:
+    px = left + (v - x0) / (x1 - x0) * (w - 1)
+    dr.line([(px, top - 8), (px, top - 1)], fill=DIM, width=1)
+    lab = x_fmt(v)
+    tw = dr.textlength(lab, font=font)
+    dr.text((px - tw / 2, top - 28), lab, fill=TEXT, font=font)
+    v += step
+  for xv, lab in marks:
+    if x0 <= xv <= x1:
+      px = left + (xv - x0) / (x1 - x0) * (w - 1)
+      for y in range(top, top + h, 12):
+        dr.line([(px, y), (px, min(y + 5, top + h))], fill=FAINT, width=1)
+      if lab:
+        dr.text((px + 4, top - 50), lab, fill=colour, font=font)
+  # time ticks: every minute (every 2 or 5 on long images)
+  if len(times) > 1:
+    t0, t1 = float(times[0]), float(times[-1])
+    per = max(1, int(nice_step((t1 - t0) / 60, max(3, h // 120))))
+    m = (int(t0 // 60) + 1) * 60
+    while m <= t1:
+      if (m // 60) % per == 0:
+        py = top + (m - t0) / (t1 - t0) * (h - 1)
+        dr.line([(left - 8, py), (left - 1, py)], fill=DIM, width=1)
+        lab = datetime.datetime.fromtimestamp(m).astimezone().strftime('%H:%M')
+        dr.text((6, py - 9), lab, fill=TEXT, font=font)
+      m += 60
+  img.save(out_file, quality=88, optimize=True)
+  return img.size
 
 
 def poll(url):
@@ -64,9 +158,9 @@ def record(port, samplerate, timeout_s, out_file, freq_mhz=137.1):
       # the same spectrum again: SatDump stopped receiving (the pass is over and it is making
       # the products, its web server still answering with the last values). Not a new row.
       frozen += 1
-      if frozen >= 10:
+      if frozen >= 20:
         break
-      time.sleep(1)
+      time.sleep(POLL_S)
       continue
     if v:
       seen = True
@@ -82,7 +176,7 @@ def record(port, samplerate, timeout_s, out_file, freq_mhz=137.1):
       dlock.append(1 if dec.get('deframer_lock') in (1, True, 'true') else 0)
     if d.get('timeout_left') is not None and float(d['timeout_left']) <= 0:
       break
-    time.sleep(1)
+    time.sleep(POLL_S)
 
   if not rows:
     print('No spectrum received from SatDump on port {}'.format(port))
@@ -163,8 +257,17 @@ def render(data_file, out_file, sat_name, tle_file, lat, lon, min_elev):
   start, end = local[0], local[-1]
   tz = start.tzinfo
 
+  # the full-resolution waterfall next to the card (<base>-spectrogram-full.jpg)
+  try:
+    full_waterfall(wf, f_khz, 'Offset from {:.4f} MHz (kHz)  ·  {:.0f} Hz a point  ·  a row every {:.1f} s'.format(
+                   fmhz, fs / nbin, float(np.median(np.diff(t))) if len(t) > 1 else 1), lambda v: '{:+g}'.format(v),
+                   t, full_name(out_file, 'full'), '{}  ·  {}'.format(sat_name, start.strftime('%d/%m/%Y %H:%M')),
+                   colour, marks=[(0, '')], xscale=max(1, 1200 // len(f_khz)))
+  except Exception as e:
+    print('Full-resolution spectrogram not written: %s' % e)
+
   png = out_file.lower().endswith('.png')
-  fig = plt.figure(figsize=(6.4, 9.0), dpi=120)
+  fig = plt.figure(figsize=(6.4, 9.0), dpi=160)
   if png:
     fig.patch.set_alpha(0)
     fig.patches.append(FancyBboxPatch((0.004, 0.003), 0.992, 0.994, transform=fig.transFigure,
@@ -187,7 +290,7 @@ def render(data_file, out_file, sat_name, tle_file, lat, lon, min_elev):
   cmap = LinearSegmentedColormap.from_list('rl1', ['#07101c', '#14284a', '#1f5a8a', '#2fa0a0',
                                                    '#f2d06b', '#fff6d8'])
   tnum = mdates.date2num(local)
-  ax.imshow(wf, aspect='auto', cmap=cmap, vmin=lo, vmax=hi, interpolation='nearest',
+  ax.imshow(pool_cols(wf, 800), aspect='auto', cmap=cmap, vmin=lo, vmax=hi, interpolation='antialiased',
             extent=[f_khz[0], f_khz[-1], tnum[-1], tnum[0]])
   ax.yaxis_date(tz)
   ax.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M', tz=tz))
@@ -269,9 +372,10 @@ def render_iq(data_file, out_file, sat_name, tle_file, lat, lon, min_elev, mode=
   rate, center, target = float(d['rate']), float(d['center_hz']), float(d['target_hz'])
   nbin = fft.shape[1]
   f_mhz = (center + (np.arange(nbin) - nbin / 2) * rate / nbin) / 1e6
-  # the dongle's DC spike in the middle bin: take its neighbours' level
-  mid = nbin // 2
-  fft[:, mid] = (fft[:, mid - 1] + fft[:, mid + 1]) / 2
+  # the dongle's DC spike in the middle (a few points wide at 8192): take its neighbours' level
+  mid, w = nbin // 2, max(1, nbin // 2048)
+  for k in range(mid - w, mid + w + 1):
+    fft[:, k] = (fft[:, mid - w - 1] + fft[:, mid + w + 1]) / 2
   lo, hi = np.percentile(fft, 5), np.percentile(fft, 99.8)
   colour = SAT_COLOURS.get(sat_name, '#9fd3ff')
 
@@ -290,8 +394,23 @@ def render_iq(data_file, out_file, sat_name, tle_file, lat, lon, min_elev, mode=
     level.append(float(fft[i, k].max() - floor[i]) if k.any() else 0.0)
   level = np.array(level)
 
+  # full resolution: the whole band, and the ISS channel with the Doppler shift taken out
+  label = '{}  ·  {}{}'.format(sat_name, start.strftime('%d/%m/%Y %H:%M'), '  ·  ' + mode if mode else '')
+  try:
+    full_waterfall(fft, f_mhz, 'Frequency (MHz)  ·  {:.0f} Hz a point  ·  a row every {:.1f} s'.format(
+                   rate / nbin, float(np.median(np.diff(t))) if len(t) > 1 else 1), lambda v: '{:.2f}'.format(v),
+                   t, full_name(out_file, 'full'), label + '  ·  whole band', colour,
+                   marks=[(target / 1e6, '{:.3f}'.format(target / 1e6))])
+  except Exception as e:
+    print('Full-resolution spectrogram not written: %s' % e)
+  if 'zoom' in d.files and len(d['zt']) > 1:
+    try:
+      channel_waterfall(d, tle_file, sat_name, lat, lon, target, full_name(out_file, 'channel'), label, colour)
+    except Exception as e:
+      print('Channel spectrogram not written: %s' % e)
+
   png = out_file.lower().endswith('.png')
-  fig = plt.figure(figsize=(6.4, 9.0), dpi=120)
+  fig = plt.figure(figsize=(6.4, 9.0), dpi=160)
   if png:
     fig.patch.set_alpha(0)
     fig.patches.append(FancyBboxPatch((0.004, 0.003), 0.992, 0.994, transform=fig.transFigure,
@@ -313,7 +432,7 @@ def render_iq(data_file, out_file, sat_name, tle_file, lat, lon, min_elev, mode=
   cmap = LinearSegmentedColormap.from_list('rl1', ['#07101c', '#14284a', '#1f5a8a', '#2fa0a0',
                                                    '#f2d06b', '#fff6d8'])
   tnum = mdates.date2num(local)
-  ax.imshow(fft, aspect='auto', cmap=cmap, vmin=lo, vmax=hi, interpolation='nearest',
+  ax.imshow(pool_cols(fft, 1000), aspect='auto', cmap=cmap, vmin=lo, vmax=hi, interpolation='antialiased',
             extent=[f_mhz[0], f_mhz[-1], tnum[-1], tnum[0]])
   ax.yaxis_date(tz)
   ax.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M', tz=tz))
@@ -354,6 +473,35 @@ def render_iq(data_file, out_file, sat_name, tle_file, lat, lon, min_elev, mode=
     fig.text(0.745, 0.268, 'elevation', color=DIM, fontsize=8.5, va='center')
   fig.savefig(out_file, facecolor='none' if png else BG)
   plt.close(fig)
+
+
+CHANNEL_SPAN = 12e3      # the channel picture: +/-12 kHz around the ISS frequency after the Doppler
+
+
+def channel_waterfall(d, tle_file, sat_name, lat, lon, target, out_file, label, colour):
+  """The ISS channel (iq_fm.py's zoom rows, 43 Hz a point, a row every 0.2 s) with the expected
+  Doppler shift from the TLE taken out, so the ISS's signal runs straight down the middle:
+  +/-CHANNEL_SPAN, each point drawn 2 pixels wide."""
+  zt, zoom = d['zt'], d['zoom'].astype(np.float32)
+  zr = float(d['zoom_rate']) if 'zoom_rate' in d.files else 44100.0
+  n = zoom.shape[1]
+  f = (np.arange(n) - n / 2) * zr / n                      # offset from the ISS frequency (Hz)
+  # the middle point is the ISS frequency itself (not the dongle's DC): nothing to patch
+  dop = doppler(tle_file, sat_name, lat, lon, zt, target)
+  if dop is None:
+    dop = np.zeros(len(zt))
+  step = zr / n
+  grid = np.arange(-CHANNEL_SPAN, CHANNEL_SPAN + step / 2, step)
+  # a point is valid only inside the channel filter's pass band (+/-19.8 kHz)
+  out = np.full((len(zt), len(grid)), np.nan, np.float32)
+  for i in range(len(zt)):
+    src = grid + dop[i]
+    ok = np.abs(src) <= 0.9 * zr / 2
+    out[i, ok] = np.interp(src[ok], f, zoom[i])
+  full_waterfall(out, grid / 1e3, 'Offset from the ISS frequency {:.3f} MHz after the expected Doppler (kHz)'
+                 '  ·  {:.0f} Hz a point  ·  a row every {:.1f} s'.format(target / 1e6, step,
+                 float(np.median(np.diff(zt)))), lambda v: '{:+g}'.format(v), zt, out_file,
+                 label + '  ·  ISS channel', colour, marks=[(0, '')], xscale=2)
 
 
 def write_stats(data_file, t, snr, dlock, el, min_elev):

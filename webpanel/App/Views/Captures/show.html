@@ -7,6 +7,8 @@
   'polar-direction': lang['sky_track']|default('Sky track'),
   'polar-azel': lang['elevation_azimuth']|default('Elevation & azimuth'),
   'spectrogram': lang['spectrogram']|default('Spectrogram'),
+  'spectrogram-full': lang['spectrogram_full']|default('Spectrogram, full resolution'),
+  'spectrogram-channel': lang['spectrogram_channel']|default('ISS channel, Doppler removed'),
   'histogram': lang['histogram']|default('Histogram'),
   'aprs-map': lang['aprs_map']|default('APRS stations heard')
 } %}
@@ -60,7 +62,7 @@
 <div class="cap-grid" data-viewer>
   {% for enhancement in capture.enhancements %}
     {% set key = enhancement|trim('-', side='left')|split('.')|slice(0, -1)|join('.') %}
-    {% set graph = key starts with 'polar' or key in ['spectrogram', 'histogram', 'aprs-map'] %}
+    {% set graph = key starts with 'polar' or key in ['spectrogram', 'spectrogram-full', 'spectrogram-channel', 'histogram', 'aprs-map'] %}
     <a class="cap-card sat-{{ colour }}" href="/images/{{ capture.image_path }}{{ enhancement }}">
       <div class="cap-img{% if graph %} contain{% endif %}">
         <img src="{{ constant('Config\\Config::THUMB_PATH') }}/{{ capture.image_path }}{{ enhancement }}" alt="{{ key }}" loading="lazy">
