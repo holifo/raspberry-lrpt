@@ -130,6 +130,9 @@ iss_audio() {
       -n $((2381400 * CAPTURE_TIME)) $dev_args $ppm_args $bias_args - 2>> "$LRPT_LOG" |
       python3 "$IMAGE_PROC_DIR/iq_fm.py" "$SPEC_NPZ" "$center" "$target" "$ISS_LIVE" 2>> "$LRPT_LOG"
   else
+    # rtl_fm prints "Tuned to" a frequency 252 kHz higher: it tunes the dongle to one side (a
+    # quarter of its 1.008 MS/s) to keep the DC spike off the signal, and still listens on $mhz
+    log "rtl_fm listens on ${mhz} MHz (its \"Tuned to\" line shows $(awk -v f="$mhz" 'BEGIN { printf "%.3f", f + 0.252 }') MHz: the dongle is tuned 252 kHz to the side, away from its DC spike)" "INFO" > /dev/null   # stdout is the audio
     timeout "$CAPTURE_TIME" $RTL_FM -f "${mhz}M" -M fm -s 48000 -r "$rate" -g "$ISS_SSTV_GAIN" -E dc \
       $dev_args $ppm_args $bias_args - 2>> "$LRPT_LOG"
   fi

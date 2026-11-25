@@ -1,5 +1,19 @@
 # Changelog
 
+## Raspberry-LRPT v1.46.0 (2026-11-25)
+
+- **An ARISS SSTV event in one command** ([issue #3](https://github.com/holifo/raspberry-lrpt/issues/3)):
+  `scripts/iss_event.sh 2026-12-01 2026-12-07 70cm` (or `2m`) records SSTV pictures on the ISS's
+  passes between those dates, then goes back to APRS by itself. With no argument it shows what
+  the ISS records now and next, and `--off` removes the event. No SSTV mode needs choosing: every
+  recording is decoded as PD and as Robot 36.
+- **Clearer ISS log:** `rtl_fm`'s "Tuned to" line shows a frequency 252 kHz above the ISS's
+  (438.077 MHz for APRS on 437.825). It tunes the dongle to one side to keep its DC spike off the
+  signal, and still listens on the ISS frequency; the log now says so.
+- The ISS guide has a section on SSTV events, and a note that a filtered 137 MHz LNA blocks the
+  ISS on both bands. APRS stays on 437.825 MHz by default, the frequency ARISS lists as active;
+  `iss_aprs_frequency` sets 145.825 when ARISS moves back to 2 m.
+
 ## Raspberry-LRPT v1.45.1 (2026-11-25)
 
 - **A new install no longer stays without passes** ([issue #2](https://github.com/holifo/raspberry-lrpt/issues/2)).

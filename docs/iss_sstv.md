@@ -100,6 +100,26 @@ The choice is kept in `config/settings.local.yml`, so later installs keep it. Th
 also ask "Also record the ISS's SSTV pictures (extra)" (asked once on an upgrade). A recording
 already running finishes.
 
+## An SSTV event in one command
+
+When ARISS announces an SSTV event, give its dates and band; the station records SSTV pictures
+on the ISS's passes between those dates, then goes back to APRS by itself when the event is over:
+
+```bash
+~/raspberry-lrpt/scripts/iss_event.sh 2026-12-01 2026-12-07 70cm   # 437.550 MHz (2m = 145.800)
+~/raspberry-lrpt/scripts/iss_event.sh                              # what the ISS records now and next
+~/raspberry-lrpt/scripts/iss_event.sh --off                        # no event: APRS on every pass
+```
+
+- **No mode to choose:** every SSTV recording is decoded both as PD (PD 90/120/180, the 2 m events
+  before 2026) and as Robot 36 (ARISS's 2026 events on 70 cm).
+- The band can also be an exact frequency in MHz (`145.800`); without one the SSTV frequency stays
+  as set. The ISS is switched on if it was off.
+- The dates and band are saved like the other settings (`iss_sstv_dates`, `iss_sstv_frequency` in
+  `config/settings.local.yml`, also on Admin > Settings), and the passes are scheduled again.
+- Both decoders come with the install: Dire Wolf (the `direwolf` package) for APRS, and the
+  station's own `sstv_decode.py` for the pictures.
+
 ## Between events: APRS (`iss_aprs`)
 
 Most of the year the ISS sends no pictures, but its **APRS digipeater** is on almost all the
@@ -109,7 +129,7 @@ station records those passes instead.
 
 **Which frequency:** since 2026 ARISS runs the APRS radio on **437.825 MHz** (70 cm, in the Service
 Module); for years before that it was **145.825 MHz** (2 m). Set `iss_aprs_frequency` to the one
-[ARISS's station status](https://www.ariss.org/current-status-of-iss-stations.HTML) lists (default
+[ARISS's station status](https://www.ariss.org/current-status-of-iss-stations.html) lists (default
 437.825), for example with `python3 scripts/tools/settings.py set iss_aprs_frequency 145.825` and
 then `./install_and_upgrade.sh`.
 
@@ -118,7 +138,10 @@ then `./install_and_upgrade.sh`.
   it (or always, when `iss_sstv_dates` is empty) for APRS. **So for an ARISS event, set
   `iss_sstv_dates`** to the event's days.
 - **Decoding:** `rtl_fm` on `iss_aprs_frequency` feeds [Dire Wolf](https://github.com/wb2osz/direwolf)
-  (the `direwolf` package), which writes each packet to a log as it is heard.
+  (the `direwolf` package), which writes each packet to a log as it is heard. `rtl_fm`'s own
+  "Tuned to" line in the log shows a frequency 252 kHz higher (438.077 MHz for 437.825): it tunes
+  the dongle to one side to keep its DC spike off the signal, and still listens on the ISS
+  frequency. Since v1.46.0 the log says so on the line before.
 - **Live map:** while a pass is recorded, the **Satellites** map shows each station heard so far as
   a violet dot with its call sign (grey: heard directly, not through the ISS), and a box at the
   bottom left counts them. The map asks the station (`/passes/aprs`) every 5 seconds.
@@ -212,11 +235,12 @@ scheduled, run `./scripts/schedule.sh -x` afterwards.
   ISS: right for 2 m events, and it still receives the Meteors at 137.9 MHz. A QFH cut for
   137 MHz also hears 145.8 MHz, a little weaker. On 437.55 MHz (70 cm) either QFH is much weaker,
   so a 70 cm event may only decode on high passes, unless you add a 70 cm antenna.
+- **Filtered LNA:** a 137 MHz LNA with a filter (such as the Nooelec SAWbird NOAA) on the dongle
+  that records the ISS blocks both ISS bands. Give the ISS a dongle and antenna without it.
 
 - **Which frequency:** ARISS announces each event on [ariss.org](https://www.ariss.org/), the
-  [ARISS SSTV gallery](https://ariss-usa.org/ARISS_SSTV/) and its social media. Set
-  `iss_sstv_frequency` (and `iss_sstv_dates`) to match, run the install, then
-  `./scripts/schedule.sh -x`.
+  [ARISS SSTV gallery](https://ariss-usa.org/ARISS_SSTV/) and its social media. Set it with
+  `scripts/iss_event.sh FROM TO 2m|70cm` ([above](#an-sstv-event-in-one-command)).
 - **With one SDR, every pass costs SDR time,** about ten minutes, but never a Meteor pass. If you'd rather record
   only during announced events, put the event's dates in `iss_sstv_dates`.
 - **Decode a recording again:** `python3 scripts/image_processors/sstv_decode.py

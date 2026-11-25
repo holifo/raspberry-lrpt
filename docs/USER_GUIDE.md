@@ -235,10 +235,11 @@ an RTL-SDR, and a pass where nothing was decoded leaves nothing behind.
   every pass when it is empty) the pass is recorded on the APRS frequency (437.825 MHz) instead and Dire Wolf decodes the
   APRS packets the ISS relays. The stations heard show live on the Satellites map while the pass is
   recorded, and the capture has a map of them, a station list and the packets.
-- **For an SSTV event:** set `iss_sstv_dates: "2026-12-01 2026-12-04"` (first and last day), run
-  the install, then `./scripts/schedule.sh -x`. With `iss_aprs: false` only those days are
-  recorded (or every pass, for SSTV, when the dates are empty).
-- **Turn it off:** `iss_sstv: false`, run the install, then `./scripts/schedule.sh -x`.
+- **For an SSTV event:** `./scripts/iss_event.sh 2026-12-01 2026-12-04 70cm` (first and last
+  day; `2m` for 145.800 MHz). After the last day the ISS goes back to APRS by itself;
+  `./scripts/iss_event.sh` shows what it records now. With `iss_aprs: false` only the event's
+  days are recorded (or every pass, for SSTV, when no event is set).
+- **Turn it off:** `./scripts/switch.sh iss off`, or the switch on Admin > Passes.
 
 More in [ISS SSTV](iss_sstv.md).
 

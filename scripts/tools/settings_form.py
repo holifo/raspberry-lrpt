@@ -82,7 +82,7 @@ FORM = [
     ('iss_sstv_frequency', '', 'SSTV frequency', 'MHz: 437.550 (70 cm, the 2026 events) or 145.800 (2 m).'),
     ('iss_sstv_gain', '', 'ISS gain', 'The RTL-SDR\'s gain for the ISS (dB).'),
     ('iss_aprs', 'r', 'APRS between SSTV events', 'Record the APRS stations heard through the ISS; they show live on the Satellites map.'),
-    ('iss_aprs_frequency', '', 'APRS frequency', 'MHz: 437.825 (70 cm, since 2026) or 145.825 (2 m).'),
+    ('iss_aprs_frequency', '', 'APRS frequency', 'MHz: 437.825 (70 cm, since 2026) or 145.825 (2 m); ARISS\'s station status page says which is on.'),
     ('iss_sdr_device', 'r', 'ISS RTL-SDR', 'Empty = automatic (a second RTL-SDR records alongside the Meteors), or an index, a serial number or part of the model name.'),
     ('iss_bias_tee', '', 'ISS bias tee', 'Bias tee on the ISS\'s own RTL-SDR (a shared one uses the METEOR-M2 3 setting).'),
   ]),
