@@ -25,7 +25,7 @@ ISS's passes are scheduled too, between the Meteor passes ([ISS SSTV and APRS](#
 
 ```mermaid
 flowchart LR
-    A[CelesTrak, else SatNOGS<br/>orbits, daily 00:01] --> B[schedule.sh<br/>passes above 15°]
+    A[CelesTrak, else backups<br/>orbits, daily 00:01] --> B[schedule.sh<br/>passes above 15°]
     B -->|at jobs| C[receive_meteor.sh<br/>SatDump live]
     C --> D[Images<br/>labels, thumbnails,<br/>graphs, spectrogram]
     C --> E[Recording .cadu<br/>last 5 passes]
@@ -38,7 +38,7 @@ flowchart LR
 
 | Piece | What it does |
 |---|---|
-| **Orbits** | `schedule.sh` downloads METEOR-M2 3 and M2 4 orbits (TLEs) from CelesTrak every night; if CelesTrak can't be reached, from the SatNOGS DB; if both fail, it keeps yesterday's. SatDump uses these and doesn't download its own. |
+| **Orbits** | `schedule.sh` downloads METEOR-M2 3 and M2 4 orbits (TLEs) from CelesTrak every night; if CelesTrak can't be reached, from the backups in this order: the TLE API (tle.ivanstanojevic.me), AMSAT's daily file, the SatNOGS DB. Every TLE line must carry the right satellite number and pass its checksum; if every source fails, it keeps yesterday's. SatDump uses these and doesn't download its own. |
 | **Scheduling** | Every pass above 15° for the next 7 days, day and night, as `at` jobs. Overlapping passes: the better one is kept. |
 | **Recording** | SatDump 1.2.3 records and decodes live from the receiver: RTL-SDR, Airspy, HackRF, SDRplay or MiriSDR ([receivers](receivers.md)) (`satdump live meteor_m2-x_lrpt`). |
 | **Images** | Every composite the satellite's channels allow, each with the station label, plus thumbnails, a sky track, an elevation/azimuth graph and a spectrogram. |
@@ -385,7 +385,7 @@ images or map layers are processed at once; set it to 2 if the Pi ever runs shor
 
 | What you see | Why | What to do |
 |---|---|---|
-| A capture has no map overlay, no MCIR, no projections; the log says `No Ephemeris or TLE` | SatDump had no orbit (CelesTrak and the SatNOGS DB were both unreachable) | Check the orbit data (see [Commands](#commands)); `./scripts/schedule.sh -t`, then re-process the pass |
+| A capture has no map overlay, no MCIR, no projections; the log says `No Ephemeris or TLE` | SatDump had no orbit (CelesTrak and all three backups were unreachable) | Check the orbit data (see [Commands](#commands)); `./scripts/schedule.sh -t`, then re-process the pass |
 | The log shows SatDump's `Failed getting TLEs. Retrying...` for minutes and the recording starts late | SatDump's own TLE download (turned off since v1.31.4) couldn't reach CelesTrak | Run `./install_and_upgrade.sh`; it turns it off in `~/.config/satdump/settings.json` |
 | Coastlines over the wrong part of the world | The recording's line times are corrupt (noisy frames) | Nothing to fix; since v1.1.2 such passes keep their images without a map |
 | A night pass is grey noise in AVHRR 221 | Visible channels see nothing at night | Look at the 3.9 µm image |

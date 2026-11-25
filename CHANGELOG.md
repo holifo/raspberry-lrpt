@@ -1,5 +1,13 @@
 # Changelog
 
+## Raspberry-LRPT v1.45.0 (2026-11-25)
+
+- **More backup sources for the orbits (TLEs).** When CelesTrak can't be reached, the station now
+  tries the TLE API (tle.ivanstanojevic.me, listed in NASA's API catalogue), then AMSAT's daily
+  file, then the SatNOGS DB, for the Meteors and the ISS. None needs an account. Every TLE line
+  must now carry the right satellite number and pass its checksum before it is used. If every
+  source fails, the previous orbits are kept, as before. `satnogs_tle.py` is now `backup_tle.py`.
+
 ## Raspberry-LRPT v1.44.0 (2026-11-24)
 
 - **Sharper spectrograms.** Every spectrogram card is now drawn larger (1024 × 1440), and a

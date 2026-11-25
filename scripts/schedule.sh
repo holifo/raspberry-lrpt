@@ -48,9 +48,10 @@ if [ "${update_tle}" == "1" ]; then
   # checks DNS: ping is blocked on many networks and CelesTrak is unreachable from some, which
   # used to cost a minute of "waiting for DNS" lines before every update.
   waited=0
-  until getent hosts celestrak.org >/dev/null || getent hosts db.satnogs.org >/dev/null; do
+  until getent hosts celestrak.org >/dev/null || getent hosts tle.ivanstanojevic.me >/dev/null ||
+        getent hosts www.amsat.org >/dev/null || getent hosts db.satnogs.org >/dev/null; do
     if [ $waited -ge 60 ]; then
-      log "No DNS for celestrak.org or db.satnogs.org after ${waited} s - trying the downloads anyway" "WARN"
+      log "No DNS for any TLE source after ${waited} s - trying the downloads anyway" "WARN"
       break
     fi
     [ $waited -eq 0 ] && log "Waiting for DNS before downloading TLEs (up to 60 s)..." "INFO"
@@ -66,7 +67,8 @@ if [ "${update_tle}" == "1" ]; then
   tle_tmp=$(mktemp)
   got_tle=0
   # CelesTrak: two tries over https (it sometimes answers HTTP 500 for a moment), one over http;
-  # then the SatNOGS DB. -t 1: wget's own retries would multiply the wait when a site is unreachable.
+  # then the backups in the owner's order: TLE API, AMSAT, SatNOGS DB (backup_tle.py).
+  # -t 1: wget's own retries would multiply the wait when a site is unreachable.
   for url in "https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=tle" \
              "https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=tle" \
              "http://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=tle"; do
@@ -76,13 +78,17 @@ if [ "${update_tle}" == "1" ]; then
     log "TLE download from CelesTrak failed: $url" "WARN"
     sleep 5
   done
-  # backup: the SatNOGS DB (Libre Space Foundation), when CelesTrak can't be reached
+  # backups when CelesTrak can't be reached: TLE API, then AMSAT, then the SatNOGS DB
   if [ "$got_tle" = 0 ]; then
-    if python3 "$LRPT_HOME/scripts/tools/satnogs_tle.py" "$tle_tmp" 57166="METEOR-M2 3" 59051="METEOR-M2 4" >> $LRPT_LOG 2>&1 &&
-       tle_file_ok "$tle_tmp"; then
-      got_tle=1
-      log "CelesTrak failed - TLEs from the SatNOGS DB instead" "WARN"
-    fi
+    for src in tleapi amsat satnogs; do
+      if python3 "$LRPT_HOME/scripts/tools/backup_tle.py" $src "$tle_tmp" 57166="METEOR-M2 3" 59051="METEOR-M2 4" >> $LRPT_LOG 2>&1 &&
+         tle_file_ok "$tle_tmp"; then
+        got_tle=1
+        log "CelesTrak failed - TLEs from $(tle_source_name $src) instead" "WARN"
+        break
+      fi
+      log "TLE backup $(tle_source_name $src) failed" "WARN"
+    done
   fi
 
   if [ "$got_tle" = 1 ]; then
@@ -100,12 +106,12 @@ if [ "${update_tle}" == "1" ]; then
   else
     rm -f "$tle_tmp"
     if tle_file_ok "$WEATHER_TXT"; then
-      log "CelesTrak and SatNOGS sent no valid TLEs - keeping the previous ones ($(date -r "$WEATHER_TXT" '+%d-%m-%Y %H:%M'))" "WARN"
+      log "No TLE source sent valid TLEs - keeping the previous ones ($(date -r "$WEATHER_TXT" '+%d-%m-%Y %H:%M'))" "WARN"
       # put them back for SatDump too, in case its own copy was emptied
       tle_file_ok "/home/$TARGET_USER/.config/satdump/satdump_tles.txt" ||
         cp "${WEATHER_TXT}" "/home/$TARGET_USER/.config/satdump/satdump_tles.txt"
     else
-      log "CelesTrak and SatNOGS sent no valid TLEs and there are no previous ones - nothing scheduled" "ERROR"
+      log "No TLE source sent valid TLEs and there are no previous ones - nothing scheduled" "ERROR"
       exit 1
     fi
   fi
@@ -126,12 +132,17 @@ if [ "$ISS_SSTV" == "true" ] && { [ "${update_tle}" == "1" ] || [ ! -s "$ISS_TLE
      sed -n '2p' "$iss_tmp" | grep -q '^1 25544'; then
     { echo "ISS"; sed -n '2,3p' "$iss_tmp"; } | tr -d '\r' > "$ISS_TLE"
     log "ISS orbit updated" "INFO"
-  elif python3 "$LRPT_HOME/scripts/tools/satnogs_tle.py" "$iss_tmp" 25544="ISS" >> $LRPT_LOG 2>&1 &&
-       sed -n '2p' "$iss_tmp" | grep -q '^1 25544'; then
-    tr -d '\r' < "$iss_tmp" > "$ISS_TLE"
-    log "ISS orbit from the SatNOGS DB (CelesTrak failed)" "WARN"
   else
-    log "ISS orbit download failed - keeping the previous one" "WARN"
+    iss_ok=0
+    for src in tleapi amsat satnogs; do
+      if python3 "$LRPT_HOME/scripts/tools/backup_tle.py" $src "$iss_tmp" 25544="ISS" >> $LRPT_LOG 2>&1 &&
+         sed -n '2p' "$iss_tmp" | grep -q '^1 25544'; then
+        tr -d '\r' < "$iss_tmp" > "$ISS_TLE"
+        log "ISS orbit from $(tle_source_name $src) (CelesTrak failed)" "WARN"
+        iss_ok=1; break
+      fi
+    done
+    [ "$iss_ok" = 1 ] || log "ISS orbit download failed everywhere - keeping the previous one" "WARN"
   fi
   rm -f "$iss_tmp"
 fi

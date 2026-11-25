@@ -88,6 +88,11 @@ throttle() {
 }
 
 # tle_file_ok FILE: true when FILE holds TLEs for both Meteors (name line, then lines 1 and 2)
+# tle_source_name SOURCE: the name of a backup_tle.py source for the log
+tle_source_name() {
+  case "$1" in tleapi) echo "the TLE API" ;; amsat) echo "AMSAT" ;; satnogs) echo "the SatNOGS DB" ;; *) echo "$1" ;; esac
+}
+
 tle_file_ok() {
   [ -s "$1" ] && grep -A1 '^METEOR-M2 3' "$1" | grep -q '^1 57166' && grep -A1 '^METEOR-M2 4' "$1" | grep -q '^1 59051'
 }
