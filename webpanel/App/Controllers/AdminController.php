@@ -194,7 +194,7 @@ class AdminController extends \Lib\Controller {
   # user (sudo rule 030_www-data-switch). POST act=start (preset, minutes, device), stop or delete
   # (id) from this site's own page, then back to /admin/scan?r=<result>. The pictures live in
   # /srv/scans, which nginx does not serve; scanfileAction hands them out behind the admin login.
-  const SCAN_RESULTS = ['started', 'stopped', 'deleted', 'running', 'recording', 'pass', 'bad_request', 'no_device', 'fail'];
+  const SCAN_RESULTS = ['started', 'stopped', 'deleted', 'running', 'recording', 'pass', 'range', 'bad_request', 'no_device', 'fail'];
   public function scanAction($args) {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $act = $_POST['act'] ?? '';
@@ -203,8 +203,14 @@ class AdminController extends \Lib\Controller {
       if ($this->sameSite() && in_array($act, ['start', 'stop', 'delete'], true)) {
         $input = '';
         if ($act === 'start') {
-          $input = json_encode(['preset' => (string)($_POST['preset'] ?? ''), 'minutes' => (int)($_POST['minutes'] ?? 0),
-                                'device' => (int)($_POST['device'] ?? -1)]);
+          $req = ['preset' => (string)($_POST['preset'] ?? ''), 'minutes' => (int)($_POST['minutes'] ?? 0),
+                  'device' => (int)($_POST['device'] ?? -1)];
+          if ($req['preset'] === 'custom') {        # a manual range: band_scan.py checks the numbers
+            $req['start'] = str_replace(',', '.', trim((string)($_POST['start'] ?? '')));
+            $req['stop'] = str_replace(',', '.', trim((string)($_POST['stop'] ?? '')));
+            $req['bin'] = (string)($_POST['bin'] ?? 'auto');
+          }
+          $input = json_encode($req);
         } elseif ($act === 'delete') {
           $input = json_encode(['id' => (string)($_POST['id'] ?? '')]);
         }

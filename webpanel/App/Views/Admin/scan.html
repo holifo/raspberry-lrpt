@@ -19,6 +19,7 @@
          'recording': lang['scan_r_recording']|default('That dongle is recording a pass now. Try again when it ends.'),
          'pass': lang['scan_r_pass']|default('A pass needs that dongle during the scan ({pass}). Choose a shorter scan or another dongle.')|replace({'{pass}': clash}),
          'no_device': lang['scan_r_no_device']|default('That RTL-SDR is not connected.'),
+         'range': lang['scan_r_range']|default('Check the manual range: {min}–{max} MHz, at most {span} MHz wide, and at most {points} points across.')|replace({'{min}': scan.custom.min ?? 24, '{max}': scan.custom.max ?? 1766, '{span}': scan.custom.max_span ?? 300, '{points}': scan.custom.max_points ?? 12000}),
          'bad_request': lang['scan_r_fail']|default('The scan could not be started. The Live log may say why.'),
          'fail': lang['scan_r_fail']|default('The scan could not be started. The Live log may say why.')} %}
     <div class="alert {{ result in ['started', 'stopped', 'deleted'] ? 'alert-success' : (result in ['running', 'recording', 'pass'] ? 'alert-info' : 'alert-danger') }} alert-dismissible fade show" role="alert">
@@ -68,6 +69,27 @@
               <span class="scan-p-what">{{ lang['scan_w_' ~ p.id]|default(p.what) }}</span>
             </label>
           {% endfor %}
+          {% set c = scan.custom %}
+          <label class="scan-preset scan-custom">
+            <input type="radio" name="preset" value="custom" id="scan-custom-radio">
+            <span class="scan-p-name">{{ lang['scan_p_custom']|default('Manual range') }}</span>
+            <span class="scan-p-what">{{ lang['scan_w_custom']|default('Any range the dongle tunes, {min}–{max} MHz')|replace({'{min}': c.min, '{max}': c.max}) }}</span>
+            <span class="scan-c-row">
+              <input type="number" name="start" class="form-control form-control-sm" step="0.001" min="{{ c.min }}" max="{{ c.max }}" value="137.0"
+                     aria-label="{{ lang['scan_from']|default('From (MHz)') }}" title="{{ lang['scan_from']|default('From (MHz)') }}">
+              <span>–</span>
+              <input type="number" name="stop" class="form-control form-control-sm" step="0.001" min="{{ c.min }}" max="{{ c.max }}" value="138.0"
+                     aria-label="{{ lang['scan_to']|default('To (MHz)') }}" title="{{ lang['scan_to']|default('To (MHz)') }}">
+              <span>MHz</span>
+            </span>
+            <span class="scan-c-row">
+              <span class="scan-c-lab">{{ lang['scan_res']|default('Resolution') }}</span>
+              <select name="bin" class="form-control form-control-sm" aria-label="{{ lang['scan_res']|default('Resolution') }}">
+                <option value="auto">{{ lang['scan_res_auto']|default('Automatic') }}</option>
+                {% for b in c.bins %}<option value="{{ b }}">{{ b >= 1000 ? (b / 1000) ~ ' kHz' : b ~ ' Hz' }}</option>{% endfor %}
+              </select>
+            </span>
+          </label>
         </fieldset>
         <div class="scan-opts">
           <label>{{ lang['scan_minutes']|default('Duration') }}
@@ -139,6 +161,16 @@
   {% endif %}
 
   <script src="{{ asset('/assets/js/viewer.js') }}"></script>
+  <script>
+  (function () {
+    // typing in the manual range picks it
+    var radio = document.getElementById('scan-custom-radio');
+    if (!radio) { return; }
+    radio.closest('.scan-custom').querySelectorAll('input[type=number], select').forEach(function (el) {
+      el.addEventListener('focus', function () { radio.checked = true; });
+    });
+  })();
+  </script>
   <script>
   (function () {
     var box = document.getElementById('scan-run');

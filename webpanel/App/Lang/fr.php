@@ -530,5 +530,12 @@ return array(
   "scan_w_70cm" => "L'ISS sur 70 cm (437,550 SSTV, 437,800 relais, 437,825 APRS) et les CubeSats",
   "scan_w_vhf" => "Tout de 108 à 175 MHz : aviation, satellites météo, 2 m, marine et AIS ; trouver ce qui gêne la réception",
   "scan_w_fm" => "Les émetteurs FM puissants, cause la plus fréquente de clé saturée et de passages manqués",
+  "scan_p_custom" => "Plage manuelle",
+  "scan_w_custom" => "Toute plage que la clé accorde, {min}–{max} MHz",
+  "scan_from" => "De (MHz)",
+  "scan_to" => "À (MHz)",
+  "scan_res" => "Résolution",
+  "scan_res_auto" => "Automatique",
+  "scan_r_range" => "Vérifiez la plage manuelle : {min}–{max} MHz, au plus {span} MHz de large et au plus {points} points.",
 );
 ?>

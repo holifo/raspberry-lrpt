@@ -412,5 +412,12 @@ return array(
   "scan_w_70cm" => "The ISS on 70 cm (437.550 SSTV, 437.800 repeater, 437.825 APRS) and CubeSats",
   "scan_w_vhf" => "Everything from 108 to 175 MHz: airband, weather satellites, 2 m, marine and AIS; find what disturbs reception",
   "scan_w_fm" => "Strong FM stations, the most common cause of an overloaded dongle and missed passes",
+  "scan_p_custom" => "Manual range",
+  "scan_w_custom" => "Any range the dongle tunes, {min}–{max} MHz",
+  "scan_from" => "From (MHz)",
+  "scan_to" => "To (MHz)",
+  "scan_res" => "Resolution",
+  "scan_res_auto" => "Automatic",
+  "scan_r_range" => "Check the manual range: {min}–{max} MHz, at most {span} MHz wide, and at most {points} points across.",
 );
 ?>

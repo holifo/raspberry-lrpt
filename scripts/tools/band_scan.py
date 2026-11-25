@@ -5,7 +5,9 @@ which loads the station's settings into the environment.
 
   band_scan.py status            JSON: the presets, durations, dongles, the scan running and the
                                  scans kept
-  band_scan.py start  < JSON     {"preset": "...", "minutes": N, "device": INDEX}: start a scan
+  band_scan.py start  < JSON     {"preset": "...", "minutes": N, "device": INDEX}: start a scan;
+                                 preset "custom" adds "start" and "stop" (MHz) and "bin" (Hz or
+                                 "auto") for a manual range
   band_scan.py stop              stop the scan running (what it recorded is still drawn)
   band_scan.py delete < JSON     {"id": "..."}: delete a kept scan
   band_scan.py yield ROLE        stop a scan on the dongle a pass needs (ROLE meteor or iss);
@@ -56,6 +58,33 @@ PRESETS = [
      'marks': []},
 ]
 MINUTES = [2, 5, 10, 30, 60]
+# a manual range ("custom"): what an R820T/R828D dongle tunes, the resolutions offered, and a cap on
+# the points across (the waterfall is one pixel per point)
+CUSTOM = {'min': 24.0, 'max': 1766.0, 'min_span': 0.05, 'max_span': 300.0, 'max_points': 12000,
+          'bins': [250, 500, 1000, 2500, 5000, 10000, 25000, 100000]}
+KNOWN = sorted({m for p in PRESETS for m in p['marks']})
+
+
+def custom_preset(start, stop, bin_hz):
+    """The preset for a manual range: the station's known frequencies inside it are marked."""
+    return {'id': 'custom', 'name': 'Manual range', 'start': start, 'stop': stop, 'bin': bin_hz,
+            'wide': stop - start > 2.0, 'what': '',
+            'marks': [(f, l) for f, l in KNOWN if start <= f <= stop]}
+
+
+def auto_bin(span_mhz):
+    """The finest offered resolution that keeps the scan under ~3000 points across."""
+    for b in CUSTOM['bins']:
+        if span_mhz * 1e6 / b <= 3000:
+            return b
+    return CUSTOM['bins'][-1]
+
+
+def preset_of(info):
+    """The preset a scan was made with (a manual range is rebuilt from its own numbers)."""
+    if info.get('preset') == 'custom':
+        return custom_preset(float(info['start_mhz']), float(info['stop_mhz']), int(info['bin']))
+    return preset(info.get('preset'))
 
 
 def env(name, default=''):
@@ -169,7 +198,7 @@ def status():
         d['next_pass'] = (conflicts(d['role'], now, now + 3600) or [''])[0]
     out({'ok': True, 'running': running(), 'presets': [{k: p[k] for k in ('id', 'name', 'start', 'stop', 'bin', 'what')}
                                                          for p in PRESETS],
-         'minutes': MINUTES, 'devices': devs, 'scans': kept()})
+         'minutes': MINUTES, 'custom': {k: CUSTOM[k] for k in CUSTOM}, 'devices': devs, 'scans': kept()})
 
 
 def gain_for(role):
@@ -190,6 +219,20 @@ def start():
         index = int(req.get('device'))
     except (TypeError, ValueError):
         out({'ok': False, 'error': 'bad_request'}, 1)
+    if req.get('preset') == 'custom':
+        try:
+            a, b = round(float(req.get('start')), 4), round(float(req.get('stop')), 4)
+        except (TypeError, ValueError):
+            out({'ok': False, 'error': 'range'}, 1)
+        if a > b:
+            a, b = b, a
+        if a < CUSTOM['min'] or b > CUSTOM['max'] or not CUSTOM['min_span'] <= b - a <= CUSTOM['max_span']:
+            out({'ok': False, 'error': 'range'}, 1)
+        rb = str(req.get('bin', 'auto'))
+        bin_hz = auto_bin(b - a) if rb in ('', 'auto') else (int(rb) if rb.isdigit() else 0)
+        if bin_hz not in CUSTOM['bins'] or (b - a) * 1e6 / bin_hz > CUSTOM['max_points']:
+            out({'ok': False, 'error': 'range'}, 1)
+        p = custom_preset(a, b, bin_hz)
     if not p or minutes not in MINUTES:
         out({'ok': False, 'error': 'bad_request'}, 1)
     if running():
@@ -210,7 +253,7 @@ def start():
     except OSError:
         pass
     sid = datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + '-' + p['id']
-    info = {'id': sid, 'preset': p['id'], 'name': p['name'], 'start_mhz': p['start'], 'stop_mhz': p['stop'],
+    info = {'id': sid, 'preset': p['id'], 'name': p['name'], 'start_mhz': p['start'], 'stop_mhz': p['stop'], 'bin': p['bin'],
             'minutes': minutes, 'device': index, 'serial': dev.get('serial') or '', 'model': dev.get('model') or '',
             'role': dev['role'], 'gain': gain_for(dev['role']), 'started': int(now), 'ends': int(now + minutes * 60)}
     with open(os.path.join(SCAN_DIR, sid + '.req'), 'w') as f:
@@ -245,7 +288,7 @@ def run(sid):
     with open(req) as f:
         info = json.load(f)
     os.remove(req)
-    p = preset(info['preset'])
+    p = preset_of(info)
     secs = info['minutes'] * 60
     interval = max(5, round(secs / 600)) if p['wide'] else max(1, round(secs / 900))
     csv = os.path.join(SCAN_DIR, sid + '.csv')

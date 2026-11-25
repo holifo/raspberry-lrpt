@@ -530,5 +530,12 @@ return array(
   "scan_w_70cm" => "70 厘米上的国际空间站（437.550 SSTV，437.800 中继，437.825 APRS）和立方星",
   "scan_w_vhf" => "108 至 175 MHz 全部：航空、气象卫星、2 米、海事和 AIS；找出干扰接收的来源",
   "scan_w_fm" => "强 FM 电台，接收器过载和错过过境最常见的原因",
+  "scan_p_custom" => "手动范围",
+  "scan_w_custom" => "接收器可调谐的任意范围，{min}–{max} MHz",
+  "scan_from" => "起始 (MHz)",
+  "scan_to" => "结束 (MHz)",
+  "scan_res" => "分辨率",
+  "scan_res_auto" => "自动",
+  "scan_r_range" => "请检查手动范围：{min}–{max} MHz，宽度不超过 {span} MHz，且不超过 {points} 个点。",
 );
 ?>

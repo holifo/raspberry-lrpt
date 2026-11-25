@@ -530,5 +530,12 @@ return array(
   "scan_w_70cm" => "La ISS en 70 cm (437,550 SSTV, 437,800 repetidor, 437,825 APRS) y CubeSats",
   "scan_w_vhf" => "Todo de 108 a 175 MHz: aviación, satélites meteorológicos, 2 m, marina y AIS; encuentra qué estorba la recepción",
   "scan_w_fm" => "Las emisoras de FM fuertes, la causa más común de un dongle saturado y pases perdidos",
+  "scan_p_custom" => "Rango manual",
+  "scan_w_custom" => "Cualquier rango que sintonice el dongle, {min}–{max} MHz",
+  "scan_from" => "Desde (MHz)",
+  "scan_to" => "Hasta (MHz)",
+  "scan_res" => "Resolución",
+  "scan_res_auto" => "Automática",
+  "scan_r_range" => "Revisa el rango manual: {min}–{max} MHz, como mucho {span} MHz de ancho y {points} puntos.",
 );
 ?>

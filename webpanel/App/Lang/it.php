@@ -530,5 +530,12 @@ return array(
   "scan_w_70cm" => "La ISS su 70 cm (437,550 SSTV, 437,800 ripetitore, 437,825 APRS) e i CubeSat",
   "scan_w_vhf" => "Tutto da 108 a 175 MHz: aeronautica, satelliti meteo, 2 m, nautica e AIS; trova cosa disturba la ricezione",
   "scan_w_fm" => "Le stazioni FM forti, la causa più comune di chiavetta saturata e passaggi persi",
+  "scan_p_custom" => "Intervallo manuale",
+  "scan_w_custom" => "Qualsiasi intervallo che la chiavetta sintonizza, {min}–{max} MHz",
+  "scan_from" => "Da (MHz)",
+  "scan_to" => "A (MHz)",
+  "scan_res" => "Risoluzione",
+  "scan_res_auto" => "Automatica",
+  "scan_r_range" => "Controlla l'intervallo manuale: {min}–{max} MHz, largo al massimo {span} MHz e al massimo {points} punti.",
 );
 ?>

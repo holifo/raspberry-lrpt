@@ -14,6 +14,12 @@ SSH. It is behind the admin login, and its pictures are shown **only** there: th
 | **VHF overview** | 108–175 MHz, 25 kHz | Airband, weather satellites, 2 m, marine and AIS at once: find what disturbs reception |
 | **FM broadcast band** | 87.5–108 MHz, 10 kHz | Strong FM stations, the most common cause of an overloaded dongle and missed passes |
 
+**Manual range** (v1.48.0): any range from 24 to 1766 MHz (what an R820T/R828D dongle tunes), up
+to 300 MHz wide, with a resolution of 250 Hz to 100 kHz a point, or **Automatic** (the finest that
+keeps it under about 3,000 points across). A scan may have at most 12,000 points across. The
+station's known frequencies inside the range are marked. Ranges wider than 2 MHz hop the tuner
+like the wide bands.
+
 Durations: 2, 5, 10, 30 or 60 minutes. The two wide bands hop the tuner across the band (about
 2 MHz at a time), so they take a row every 5 seconds or more; the narrow ones every second or so.
 

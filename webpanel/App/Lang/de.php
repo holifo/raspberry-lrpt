@@ -530,5 +530,12 @@ return array(
   "scan_w_70cm" => "Die ISS auf 70 cm (437,550 SSTV, 437,800 Relais, 437,825 APRS) und CubeSats",
   "scan_w_vhf" => "Alles von 108 bis 175 MHz: Flugfunk, Wettersatelliten, 2 m, Seefunk und AIS; finden, was den Empfang stört",
   "scan_w_fm" => "Starke UKW-Sender, die häufigste Ursache für einen übersteuerten Stick und verpasste Überflüge",
+  "scan_p_custom" => "Eigener Bereich",
+  "scan_w_custom" => "Jeder Bereich, den der Stick abstimmt, {min}–{max} MHz",
+  "scan_from" => "Von (MHz)",
+  "scan_to" => "Bis (MHz)",
+  "scan_res" => "Auflösung",
+  "scan_res_auto" => "Automatisch",
+  "scan_r_range" => "Prüfe den eigenen Bereich: {min}–{max} MHz, höchstens {span} MHz breit und höchstens {points} Punkte.",
 );
 ?>

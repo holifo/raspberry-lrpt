@@ -51,7 +51,7 @@ ARISS events, and between events the APRS stations it relays, live on a map. Mad
   - **Admin** (at `/admin/passes`, password protected): delete passes and captures, switch Meteor and
     the ISS on or off, and **Settings**: every station setting on one page, grouped, with the rarely
     used ones folded ([how it works](docs/admin_settings.md)), and **Band scan**: look at one of five
-    bands (Meteor, 2 m, 70 cm, VHF overview, FM broadcast) for up to an hour, as a waterfall and a
+    bands (Meteor, 2 m, 70 cm, VHF overview, FM broadcast) or a range you set, for up to an hour, as a waterfall and a
     spectrum with the strongest signals, shown only behind the login ([how](docs/band_scan.md)).
     Not security-reviewed: preferably over HTTPS only.
   - Live UTC and local clocks, and the station's version in the footer.

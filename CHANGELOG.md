@@ -1,5 +1,11 @@
 # Changelog
 
+## Raspberry-LRPT v1.48.0 (2026-11-25)
+
+- **Band scan: a manual range.** Next to the five bands, Admin > Band scan now takes any range from
+  24 to 1766 MHz, up to 300 MHz wide, with a resolution from 250 Hz to 100 kHz a point or set
+  automatically. The station's known frequencies inside the range are marked.
+
 ## Raspberry-LRPT v1.47.0 (2026-11-25)
 
 - **Band scan** in the admin pages (`/admin/scan`): look at one of five bands with one of the
