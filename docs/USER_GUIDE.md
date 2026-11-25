@@ -304,7 +304,7 @@ Run them on the Pi as your normal user (not with `sudo`).
 | Build the SatDump package (Trixie, once) | `./scripts/tools/build_satdump_deb.sh` ([Trixie](trixie.md)) |
 | See the image label with example values | `./scripts/testing/produce_annotation_image.sh /tmp/label.png` ([label](annotation.md)) |
 | See the scheduled passes (local time) | `atq \| sort -k6,6n -k3,3M -k4,4n -k5,5` |
-| Download orbits and reschedule now | `./scripts/schedule.sh -t` |
+| Download orbits and reschedule now | `./scripts/schedule.sh -t` ([orbits](#orbits-tles)) |
 | List the kept recordings | `./scripts/reprocess_meteor.sh -l` |
 | Re-process recording number 2 | `./scripts/reprocess_meteor.sh 2` |
 | Re-process all of them | `./scripts/reprocess_meteor.sh -y all` |
@@ -317,6 +317,32 @@ Run them on the Pi as your normal user (not with `sudo`).
 | Post earlier captures to Discord | `./scripts/discord_post.sh -l` to list them, then `./scripts/discord_post.sh 123`, `--last 3` or `--today` |
 | Follow the log | `tail -f /var/log/raspberry-lrpt/output.log` (or open `/log`) |
 | Check the orbit data | `grep -c 59051 ~/.config/satdump/satdump_tles.txt` (should be 1 or more) |
+
+### Orbits (TLEs)
+
+The station needs fresh orbit data (TLEs) for METEOR-M2 3 and M2 4 (and the ISS when it is on)
+to know when to record and where the satellites are. `scripts/schedule.sh` gets them and then
+schedules the passes. It runs by itself:
+
+- at the end of every install or upgrade
+- every night at 00:01, with a fresh download
+- after every reboot; since v1.45.1 it also downloads whenever the orbit data is missing, broken
+  or over a day old, so a first install whose download failed fixes itself at the next boot
+
+The sources, in order: CelesTrak, then the TLE API, AMSAT's daily file and the SatNOGS DB. If
+all of them fail, the previous orbits are kept.
+
+| To… | Run (from `~/raspberry-lrpt`) |
+|---|---|
+| Download new orbits and schedule the passes they add | `./scripts/schedule.sh -t` |
+| Download new orbits and redo the whole schedule | `./scripts/schedule.sh -t -x` |
+| See which source was used and why others failed | `grep -E "TLE\|orbit" /var/log/raspberry-lrpt/output.log \| tail -20` |
+| See when the orbits were last downloaded | `ls -l tmp/weather.txt tmp/orbit.tle` |
+| Check the orbit data is complete | `grep -c "^1 5" tmp/orbit.tle` (should say 2) |
+| See the scheduled passes | `atq`, or the Passes page |
+
+If no source can be reached, check the Pi's internet and DNS: `getent hosts celestrak.org` must
+print an address.
 
 **Station photo:** the script turns the photo upright, shrinks it to 1600 px and removes all of
 its metadata (camera details and any GPS position, since the About page is public) before it goes
@@ -392,6 +418,7 @@ images or map layers are processed at once; set it to 2 if the Pi ever runs shor
 | A pass is mostly noise at a good elevation | The satellite sent corrupt data | Watch the next passes of that satellite |
 | No pass appears after its time | Missed or still processing | Open `/log`; red lines show what went wrong |
 | The passes map shows no satellites | No orbit data in the web panel | `./scripts/schedule.sh -t` |
+| No passes scheduled after a new install | The orbit download at the end of the install failed | `./scripts/schedule.sh -t` (see [orbits](#orbits-tles)); since v1.45.1 a reboot also fixes it |
 | The daily map is missing a pass | That pass had no map (see above), or its product is over 2 days old | Re-process it within 2 days |
 | `git pull` asks for a password or says 403 | The repo is private | Use the deploy key or access token set up for the Pi |
 | No Discord post after a pass | No webhook, a wrong one, or Discord refused it | `./scripts/push_discord.sh --test`; the log says `Discord post failed (HTTP …)` with Discord's reason. 401/404: make a new webhook and give it to the install |

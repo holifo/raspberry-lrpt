@@ -43,6 +43,20 @@ while getopts ":tx" opt; do
   esac
 done
 
+# download the orbits anyway (as with -t) when there are none yet, when they are broken, or when
+# they are over a day old: a first install whose download failed, or a Pi that was off at 00:01,
+# would otherwise wait for the nightly run with nothing scheduled (public issue #2)
+if [ "$update_tle" = 0 ]; then
+  if ! tle_file_ok "$WEATHER_TXT" || ! grep -q '^1 57166' "$TLE_OUTPUT" 2>/dev/null ||
+     ! grep -q '^1 59051' "$TLE_OUTPUT" 2>/dev/null; then
+    log "No valid orbit data (TLEs) yet - downloading them now" "INFO"
+    update_tle=1
+  elif [ -n "$(find "$WEATHER_TXT" -mmin +1560 2>/dev/null)" ]; then
+    log "Orbit data (TLEs) over a day old - downloading new ones" "INFO"
+    update_tle=1
+  fi
+fi
+
 if [ "${update_tle}" == "1" ]; then
   # wait (at most a minute, e.g. just after a boot) until a TLE source's name resolves. This only
   # checks DNS: ping is blocked on many networks and CelesTrak is unreachable from some, which
@@ -115,9 +129,6 @@ if [ "${update_tle}" == "1" ]; then
       exit 1
     fi
   fi
-elif [ ! -f $WEATHER_TXT ] || [ ! -f $TLE_OUTPUT ]; then
-  log "TLE update not specified '-t' but no TLE files present - please re-run with '-t'" "INFO"
-  exit 1
 else
   log "Not updating local copies of TLE files from source" "INFO"
 fi

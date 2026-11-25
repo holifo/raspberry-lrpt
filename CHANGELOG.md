@@ -1,5 +1,15 @@
 # Changelog
 
+## Raspberry-LRPT v1.45.1 (2026-11-25)
+
+- **A new install no longer stays without passes** ([issue #2](https://github.com/holifo/raspberry-lrpt/issues/2)).
+  The scheduler now downloads the orbits (TLEs) by itself whenever they are missing, broken or
+  over a day old, not only when asked with `-t`. A first install whose download failed now fixes
+  itself at the next boot, instead of waiting for the nightly run. When nothing is scheduled,
+  the install's summary says how to retry.
+- The User guide has a new **Orbits (TLEs)** section: when they are downloaded, from where, and
+  the commands to force a download, redo the schedule and check the orbit data.
+
 ## Raspberry-LRPT v1.45.0 (2026-11-25)
 
 - **More backup sources for the orbits (TLEs).** When CelesTrak can't be reached, the station now

@@ -242,7 +242,8 @@ secs=$(( $(date +%s) - START ))
 echo ""
 echo "${BOLD}${GREEN}✓ Install/upgrade complete${RESET} in $((secs / 60)) min $((secs % 60)) s"
 echo "   Web panel : http://$(hostname -I | awk '{print $1}'):${WEBPANEL_PORT}   (public name: ${WEB_SERVER_NAME})"
-echo "   Next pass : ${next:-none scheduled}"
+if [ -n "$next" ]; then echo "   Next pass : $next"
+else echo "   Next pass : ${YELLOW}none scheduled${RESET} - run ${BOLD}./scripts/schedule.sh -t${RESET} and see /log (it also retries at boot and at 00:01)"; fi
 if [ -n "$sdr" ]; then echo "   SDR       : ${GREEN}found${RESET} ${DIM}${sdr#*ID }${RESET}"
 else echo "   SDR       : ${YELLOW}no ${sdr_name} found on USB${RESET}"; fi
 php_fpm=$(systemctl list-unit-files --no-legend 'php*-fpm.service' 2>/dev/null | awk '{print $1}' | sort -V | tail -1)
