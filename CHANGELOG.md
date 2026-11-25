@@ -1,5 +1,13 @@
 # Changelog
 
+## Raspberry-LRPT v1.49.0 (2026-11-25)
+
+- **Band scan: live waterfall.** While a scan runs, its box on Admin > Band scan shows the
+  waterfall so far, redrawn about every 15 seconds; tap it to see it full size. The drawing runs at
+  low priority, so it never slows the recording or a pass on the other dongle.
+- Frequency labels that sit close together on the waterfalls (such as 145.800 and 145.825) no
+  longer overlap.
+
 ## Raspberry-LRPT v1.48.0 (2026-11-25)
 
 - **Band scan: a manual range.** Next to the five bands, Admin > Band scan now takes any range from

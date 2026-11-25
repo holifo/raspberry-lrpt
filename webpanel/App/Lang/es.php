@@ -537,5 +537,7 @@ return array(
   "scan_res" => "Resolución",
   "scan_res_auto" => "Automática",
   "scan_r_range" => "Revisa el rango manual: {min}–{max} MHz, como mucho {span} MHz de ancho y {points} puntos.",
+  "scan_live" => "Cascada en directo",
+  "scan_live_wait" => "La cascada en directo aparece tras los primeros barridos y se redibuja cada 15 segundos más o menos.",
 );
 ?>

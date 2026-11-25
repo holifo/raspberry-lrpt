@@ -25,6 +25,12 @@ Durations: 2, 5, 10, 30 or 60 minutes. The two wide bands hop the tuner across t
 
 ## What you get
 
+**While it runs** (v1.49.0): the running scan's box shows a live waterfall of the newest rows,
+redrawn about every 15 seconds (less often on very big scans, so drawing never slows the
+recording). It appears after the first sweeps; tap it to open it full size.
+
+**When it ends:**
+
 - **Waterfall:** time down, frequency across, one pixel per point; open it to zoom and pan. The
   station's known frequencies are marked.
 - **Average and peak:** the band's average and peak level over the scan.

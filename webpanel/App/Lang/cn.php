@@ -537,5 +537,7 @@ return array(
   "scan_res" => "分辨率",
   "scan_res_auto" => "自动",
   "scan_r_range" => "请检查手动范围：{min}–{max} MHz，宽度不超过 {span} MHz，且不超过 {points} 个点。",
+  "scan_live" => "实时瀑布图",
+  "scan_live_wait" => "实时瀑布图会在最初几次扫描后出现，大约每 15 秒刷新一次。",
 );
 ?>

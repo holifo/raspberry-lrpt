@@ -36,6 +36,7 @@ SCAN_DIR = os.environ.get('SCAN_DIR', os.path.join(os.path.dirname(IMAGE_OUTPUT.
 STATE = os.path.join(HOME, 'tmp', 'band-scan.json')
 DB = os.environ.get('DB_FILE', os.path.join(HOME, 'db', 'panel.db'))
 KEEP = 20                                   # scans kept; older ones are deleted
+LIVE_EVERY = 15                             # seconds between live previews (longer when drawing is slow)
 RTL_POWER = os.environ.get('RTL_POWER', 'rtl_power')
 
 # The five presets: what a weather and ISS station most often needs to look at.
@@ -303,16 +304,35 @@ def run(sid):
     cmd.append(csv)
     log('Band scan {} ({}-{} MHz) for {} min on RTL-SDR #{}'.format(p['name'], p['start'], p['stop'], info['minutes'],
                                                                      info['device']))
-    proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+    errf = os.path.join(SCAN_DIR, sid + '.err')
+    with open(errf, 'w') as ef:
+        proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=ef)
     info['runner'] = os.getpid()
     info['rtl_power'] = proc.pid
     write_state(info)
     signal.signal(signal.SIGTERM, lambda *a: proc.terminate())
-    try:
-        _, err = proc.communicate(timeout=secs + 120)
-    except subprocess.TimeoutExpired:
+    # live preview for the admin page: the waterfall so far, redrawn while rtl_power runs, in a
+    # niced child so the drawing never slows the recording (or a pass on the other dongle)
+    deadline = time.time() + secs + 120
+    pause, next_live = LIVE_EVERY, time.time() + min(LIVE_EVERY, max(6, interval * 3))
+    while proc.poll() is None and time.time() < deadline:
+        time.sleep(1)
+        if time.time() >= next_live and os.path.exists(csv):
+            t0 = time.time()
+            subprocess.run(['nice', '-n', '15', sys.executable, os.path.abspath(__file__), 'live', sid],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=300)
+            took = time.time() - t0
+            pause = max(LIVE_EVERY, 3 * took)       # a slow drawing on a big scan waits longer
+            next_live = time.time() + pause
+    if proc.poll() is None:
         proc.terminate()
-        _, err = proc.communicate()
+    proc.wait()
+    try:
+        with open(errf) as ef:
+            err = ef.read()
+        os.remove(errf)
+    except OSError:
+        err = ''
     info['stopped_early'] = os.path.exists(STATE + '.stop')
     info['finished'] = int(time.time())
     try:
@@ -324,7 +344,7 @@ def run(sid):
         tail = (err or '').strip().splitlines()[-3:]
         info['detail'] = ' | '.join(tail)[:300] or str(e)[:300]
         log('Band scan {} failed: {}'.format(sid, info['detail']), 'WARN')
-    for path in (csv, STATE + '.stop'):
+    for path in (csv, STATE + '.stop', os.path.join(SCAN_DIR, sid + '-live.jpg')):
         try:
             os.remove(path)
         except OSError:
@@ -341,6 +361,39 @@ def run(sid):
     except OSError:
         pass
     prune()
+
+
+def live(sid):
+    """Draw the waterfall recorded so far as <id>-live.jpg (at most ~1400 points across and the
+    newest 400 rows), for the running scan's box on the admin page."""
+    st = running()
+    if not st or st.get('id') != sid:
+        return
+    import numpy as np
+    sys.path.insert(0, os.path.join(HOME, 'scripts', 'image_processors'))
+    import spectrogram as sg
+    p = preset_of(st)
+    times, axis, data = read_csv(os.path.join(SCAN_DIR, sid + '.csv'))
+    if len(times) < 2:
+        return
+    times, data = times[-400:], data[-400:]
+    every = float(np.median(np.diff(times)))
+    k = max(1, data.shape[1] // 1400)
+    n = data.shape[1] // k * k
+    data = data[:, :n].reshape(data.shape[0], -1, k).max(axis=2)
+    mhz = axis[:n].reshape(-1, k).mean(axis=1) / 1e6
+    # few rows on a wide band would make a thin strip on a phone: draw each row taller (up to 8 px)
+    xscale = max(1, 1000 // max(1, len(mhz)))
+    rep = max(1, min(8, int(0.45 * len(mhz) * xscale / len(times))))
+    data, times = np.repeat(data, rep, axis=0), np.repeat(times, rep)
+    out = os.path.join(SCAN_DIR, sid + '-live.jpg')
+    tmp = out + '.part.jpg'
+    sg.full_waterfall(data, mhz, 'Live: the newest {} rows, one every {:.0f} s'.format(
+        len(times) // rep, every), lambda v: '{:.3f}'.format(v).rstrip('0').rstrip('.'),
+        times, tmp, '{}  ·  {:.3f}-{:.3f} MHz'.format(p['name'], mhz[0], mhz[-1]), '#4fd1c5',
+        marks=p['marks'], xscale=xscale)
+    os.chmod(tmp, 0o640)
+    os.replace(tmp, out)
 
 
 def stop(role=None):
@@ -508,6 +561,8 @@ def main():
         except ValueError:
             sid = ''
         out({'ok': remove(sid)})
+    elif cmd == 'live' and len(sys.argv) == 3:
+        live(sys.argv[2])
     elif cmd == 'run' and len(sys.argv) == 3:
         run(sys.argv[2])
     elif cmd == 'render' and len(sys.argv) >= 5:

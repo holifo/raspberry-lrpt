@@ -537,5 +537,7 @@ return array(
   "scan_res" => "Risoluzione",
   "scan_res_auto" => "Automatica",
   "scan_r_range" => "Controlla l'intervallo manuale: {min}–{max} MHz, largo al massimo {span} MHz e al massimo {points} punti.",
+  "scan_live" => "Cascata in diretta",
+  "scan_live_wait" => "La cascata in diretta compare dopo le prime passate e si ridisegna circa ogni 15 secondi.",
 );
 ?>

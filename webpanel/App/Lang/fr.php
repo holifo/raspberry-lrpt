@@ -537,5 +537,7 @@ return array(
   "scan_res" => "Résolution",
   "scan_res_auto" => "Automatique",
   "scan_r_range" => "Vérifiez la plage manuelle : {min}–{max} MHz, au plus {span} MHz de large et au plus {points} points.",
+  "scan_live" => "Cascade en direct",
+  "scan_live_wait" => "La cascade en direct apparaît après les premiers balayages et se redessine environ toutes les 15 secondes.",
 );
 ?>

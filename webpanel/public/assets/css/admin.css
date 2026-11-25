@@ -134,6 +134,8 @@
 .scan-meta { font-size: 0.86rem; color: var(--pl-dim); margin: 2px 0 8px; }
 .scan-prog { height: 6px; margin-bottom: 10px; }
 .scan-prog .progress-bar { background: var(--m24); }
+.scan-live { display: block; margin: 0 0 10px; border-radius: 8px; overflow: hidden; background: #0a1220; }
+.scan-live img { display: block; width: 100%; height: auto; }
 .scan-h { font-size: 1.05rem; font-weight: 700; margin: 18px 0 8px; }
 .cap-grid.scan-grid { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; margin: 8px 0; }
 .scan-grid .cap-img { aspect-ratio: auto; }

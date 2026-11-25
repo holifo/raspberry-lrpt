@@ -537,5 +537,7 @@ return array(
   "scan_res" => "Auflösung",
   "scan_res_auto" => "Automatisch",
   "scan_r_range" => "Prüfe den eigenen Bereich: {min}–{max} MHz, höchstens {span} MHz breit und höchstens {points} Punkte.",
+  "scan_live" => "Live-Wasserfall",
+  "scan_live_wait" => "Der Live-Wasserfall erscheint nach den ersten Durchläufen und wird etwa alle 15 Sekunden neu gezeichnet.",
 );
 ?>

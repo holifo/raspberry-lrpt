@@ -108,13 +108,18 @@ def full_waterfall(data, x_vals, x_label, x_fmt, times, out_file, title, colour,
     tw = dr.textlength(lab, font=font)
     dr.text((px - tw / 2, top - 28), lab, fill=TEXT, font=font)
     v += step
-  for xv, lab in marks:
+  ends = [0, 0]                       # two label rows: a label that would overlap goes on the other
+  for xv, lab in sorted(marks):
     if x0 <= xv <= x1:
       px = left + (xv - x0) / (x1 - x0) * (w - 1)
       for y in range(top, top + h, 12):
         dr.line([(px, y), (px, min(y + 5, top + h))], fill=FAINT, width=1)
       if lab:
-        dr.text((px + 4, top - 50), lab, fill=colour, font=font)
+        tw = dr.textlength(lab, font=font)
+        lx = min(px + 4, left + w - tw)
+        row = 0 if lx >= ends[0] + 6 else (1 if lx >= ends[1] + 6 else 0)
+        dr.text((lx, top - 50 - 20 * row), lab, fill=colour, font=font)
+        ends[row] = lx + tw
   # time ticks: every minute (every 2 or 5 on long images)
   if len(times) > 1:
     t0, t1 = float(times[0]), float(times[-1])

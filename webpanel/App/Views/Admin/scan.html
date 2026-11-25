@@ -45,6 +45,10 @@
           {{ run.started|date('H:i') }}–{{ run.ends|date('H:i') }} · <span id="scan-left"></span>
         </div>
         <div class="progress scan-prog"><div class="progress-bar" id="scan-bar" style="width: 0%"></div></div>
+        <a class="scan-live" id="scan-live" href="/admin/scanfile?f={{ run.id }}-live.jpg" target="_blank" rel="noopener" hidden>
+          <img alt="{{ lang['scan_live']|default('Live waterfall') }}" data-src="/admin/scanfile?f={{ run.id }}-live.jpg">
+        </a>
+        <p class="set-help" id="scan-live-wait">{{ lang['scan_live_wait']|default('The live waterfall appears after the first sweeps and is redrawn every 15 seconds or so.') }}</p>
         <form method="post" action="/admin/scan">
           <input type="hidden" name="act" value="stop">
           <button type="submit" class="btn btn-sm btn-outline-danger">{{ lang['scan_stop']|default('Stop the scan') }}</button>
@@ -179,6 +183,17 @@
     var bar = document.getElementById('scan-bar'), left = document.getElementById('scan-left');
     var leftText = {{ (lang['scan_left']|default('{m} min left'))|json_encode|raw }};
     var drawText = {{ (lang['scan_drawing']|default('drawing…'))|json_encode|raw }};
+    // the live waterfall: reload it every 15 s while the scan runs (hidden until there is one)
+    var liveA = document.getElementById('scan-live'), liveImg = liveA && liveA.querySelector('img');
+    var liveWait = document.getElementById('scan-live-wait');
+    function reload() {
+      if (!liveImg || document.hidden) { return; }
+      var next = new Image();
+      next.onload = function () { liveImg.src = next.src; liveA.hidden = false; if (liveWait) { liveWait.hidden = true; } };
+      next.src = liveImg.dataset.src + '&t=' + Date.now();
+    }
+    reload();
+    setInterval(reload, 15000);
     function tick() {
       var now = Date.now() / 1000;
       var pct = Math.min(100, Math.max(0, (now - start) / Math.max(1, end - start) * 100));

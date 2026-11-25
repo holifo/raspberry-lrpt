@@ -419,5 +419,7 @@ return array(
   "scan_res" => "Resolution",
   "scan_res_auto" => "Automatic",
   "scan_r_range" => "Check the manual range: {min}–{max} MHz, at most {span} MHz wide, and at most {points} points across.",
+  "scan_live" => "Live waterfall",
+  "scan_live_wait" => "The live waterfall appears after the first sweeps and is redrawn every 15 seconds or so.",
 );
 ?>

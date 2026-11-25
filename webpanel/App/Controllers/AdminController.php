@@ -237,17 +237,18 @@ class AdminController extends \Lib\Controller {
     View::renderTemplate('Admin/scan.html', $args);
   }
 
-  # a band scan's picture: f = <id>.jpg, <id>-thumb.jpg or <id>-spectrum.png (admin login only)
+  # a band scan's picture: f = <id>.jpg, <id>-thumb.jpg, <id>-spectrum.png or the running scan's
+  # <id>-live.jpg (admin login only)
   public function scanfileAction($args) {
     $f = (string)($args['f'] ?? '');
     $path = dirname(rtrim(Config::IMAGE_PATH, '/')) . '/scans/' . $f;
-    if (!preg_match('/^[0-9]{8}-[0-9]{6}-[a-z0-9]+(\.jpg|-thumb\.jpg|-spectrum\.png)$/', $f) || !is_file($path)) {
+    if (!preg_match('/^[0-9]{8}-[0-9]{6}-[a-z0-9]+(\.jpg|-thumb\.jpg|-live\.jpg|-spectrum\.png)$/', $f) || !is_file($path)) {
       header('HTTP/1.0 404 Not Found');
       echo 'Not found';
       return;
     }
     header('Content-Type: ' . (substr($f, -4) === '.png' ? 'image/png' : 'image/jpeg'));
-    header('Cache-Control: private, max-age=86400');
+    header('Cache-Control: ' . (substr($f, -9) === '-live.jpg' ? 'no-store' : 'private, max-age=86400'));
     header('Content-Length: ' . filesize($path));
     readfile($path);
   }
