@@ -1,6 +1,7 @@
-# The web panel's Meteor and ISS switches (Admin > Passes) and its settings page (Admin > Settings):
-# www-data may run only these six commands, as the station user. The scripts and the settings
+# The web panel's Meteor and ISS switches (Admin > Passes), its settings page (Admin > Settings)
+# and its band scan (Admin > Band scan): www-data may run only these ten commands, as the station user. The scripts and the settings
 # belong to that user, not to www-data.
 Cmnd_Alias RL1_SWITCH = {{ lrpt_home }}/scripts/switch.sh --web meteor on, {{ lrpt_home }}/scripts/switch.sh --web meteor off, {{ lrpt_home }}/scripts/switch.sh --web iss on, {{ lrpt_home }}/scripts/switch.sh --web iss off
 Cmnd_Alias RL1_SETTINGS = {{ lrpt_home }}/scripts/settings_web.sh show, {{ lrpt_home }}/scripts/settings_web.sh apply
-www-data ALL=({{ target_user }}) NOPASSWD: RL1_SWITCH, RL1_SETTINGS
+Cmnd_Alias RL1_SCAN = {{ lrpt_home }}/scripts/band_scan.sh status, {{ lrpt_home }}/scripts/band_scan.sh start, {{ lrpt_home }}/scripts/band_scan.sh stop, {{ lrpt_home }}/scripts/band_scan.sh delete
+www-data ALL=({{ target_user }}) NOPASSWD: RL1_SWITCH, RL1_SETTINGS, RL1_SCAN

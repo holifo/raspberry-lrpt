@@ -88,6 +88,15 @@ throttle() {
 }
 
 # tle_file_ok FILE: true when FILE holds TLEs for both Meteors (name line, then lines 1 and 2)
+# band_scan_yield ROLE: a pass needs its dongle (ROLE meteor or iss): stop a band scan running on
+# it (Admin > Band scan). What the scan recorded is still drawn.
+band_scan_yield() {
+  [ -f "$LRPT_HOME/tmp/band-scan.json" ] || return 0
+  LRPT_HOME="$LRPT_HOME" LRPT_LOG="$LRPT_LOG" python3 "$LRPT_HOME/scripts/tools/band_scan.py" yield "$1" > /dev/null 2>&1
+  sleep 1
+  return 0
+}
+
 # tle_source_name SOURCE: the name of a backup_tle.py source for the log
 tle_source_name() {
   case "$1" in tleapi) echo "the TLE API" ;; amsat) echo "AMSAT" ;; satnogs) echo "the SatNOGS DB" ;; *) echo "$1" ;; esac

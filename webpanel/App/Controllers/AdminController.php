@@ -76,14 +76,20 @@ class AdminController extends \Lib\Controller {
   # (sudo rule 030_www-data-switch; no sudo when PHP already runs as that user, e.g. in tests).
   # The admin login and the Discord webhook are never sent here. Not security-reviewed: see the
   # notice on the page.
-  private function settingsCmd($what) {
+  private function stationCmd($script, $what) {
     $me = function_exists('posix_geteuid') ? (posix_getpwuid(posix_geteuid())['name'] ?? '') : '';
     $sudo = $me === Config::STATION_USER ? '' : 'sudo -n -H -u ' . escapeshellarg(Config::STATION_USER) . ' ';
-    return $sudo . escapeshellarg(Config::LRPT_HOME . '/scripts/settings_web.sh') . ' ' . $what;
+    return $sudo . escapeshellarg(Config::LRPT_HOME . '/scripts/' . $script) . ' ' . $what;
   }
 
   private function settingsRun($what, $input = '') {
-    $proc = proc_open($this->settingsCmd($what), [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+    return $this->stationRun('settings_web.sh', $what, $input);
+  }
+
+  # run one of the station's web commands (settings_web.sh, band_scan.sh) as the station user,
+  # giving it $input on stdin; returns [the JSON it answered, exit code]
+  private function stationRun($script, $what, $input = '') {
+    $proc = proc_open($this->stationCmd($script, $what), [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
     if (!is_resource($proc)) { return [null, 1]; }
     fwrite($pipes[0], $input);
     fclose($pipes[0]);
@@ -92,7 +98,7 @@ class AdminController extends \Lib\Controller {
     fclose($pipes[1]);
     fclose($pipes[2]);
     $code = proc_close($proc);
-    if ($err !== '') { error_log('settings_web.sh ' . $what . ': ' . trim($err)); }
+    if ($err !== '') { error_log($script . ' ' . $what . ': ' . trim($err)); }
     $json = null;
     foreach (array_reverse(explode("\n", trim($out))) as $line) {    # the JSON result line
       if (substr(ltrim($line), 0, 1) === '{') { $json = json_decode($line, true); break; }
@@ -182,6 +188,62 @@ class AdminController extends \Lib\Controller {
                                      'resched' => ($args['sch'] ?? '') === '1',
                                      'admin_action' => 'settings'));
     View::renderTemplate('Admin/settings.html', $args);
+  }
+
+  # Band scan (Admin > Band scan): scripts/band_scan.sh status|start|stop|delete as the station
+  # user (sudo rule 030_www-data-switch). POST act=start (preset, minutes, device), stop or delete
+  # (id) from this site's own page, then back to /admin/scan?r=<result>. The pictures live in
+  # /srv/scans, which nginx does not serve; scanfileAction hands them out behind the admin login.
+  const SCAN_RESULTS = ['started', 'stopped', 'deleted', 'running', 'recording', 'pass', 'bad_request', 'no_device', 'fail'];
+  public function scanAction($args) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      $act = $_POST['act'] ?? '';
+      $r = 'fail';
+      $extra = '';
+      if ($this->sameSite() && in_array($act, ['start', 'stop', 'delete'], true)) {
+        $input = '';
+        if ($act === 'start') {
+          $input = json_encode(['preset' => (string)($_POST['preset'] ?? ''), 'minutes' => (int)($_POST['minutes'] ?? 0),
+                                'device' => (int)($_POST['device'] ?? -1)]);
+        } elseif ($act === 'delete') {
+          $input = json_encode(['id' => (string)($_POST['id'] ?? '')]);
+        }
+        list($res, $code) = $this->stationRun('band_scan.sh', $act, $input);
+        if (is_array($res) && !empty($res['ok'])) {
+          $r = ['start' => 'started', 'stop' => 'stopped', 'delete' => 'deleted'][$act];
+        } elseif (is_array($res) && in_array($res['error'] ?? '', self::SCAN_RESULTS, true)) {
+          $r = $res['error'];
+          if ($r === 'pass' && isset($res['pass'])) { $extra = '&p=' . rawurlencode($res['pass']); }
+        } else {
+          error_log('band_scan.sh ' . $act . ' failed (' . $code . ')');
+        }
+      }
+      header('Location: /admin/scan?r=' . $r . $extra);
+      return;
+    }
+    list($data, $code) = $this->stationRun('band_scan.sh', 'status');
+    $result = (isset($args['r']) && in_array($args['r'], self::SCAN_RESULTS, true)) ? $args['r'] : null;
+    $args = array_merge($args, array('scan' => is_array($data) ? $data : null,
+                                     'result' => $result,
+                                     'clash' => isset($args['p']) ? substr((string)$args['p'], 0, 40) : '',
+                                     'now' => time(),
+                                     'admin_action' => 'scan'));
+    View::renderTemplate('Admin/scan.html', $args);
+  }
+
+  # a band scan's picture: f = <id>.jpg, <id>-thumb.jpg or <id>-spectrum.png (admin login only)
+  public function scanfileAction($args) {
+    $f = (string)($args['f'] ?? '');
+    $path = dirname(rtrim(Config::IMAGE_PATH, '/')) . '/scans/' . $f;
+    if (!preg_match('/^[0-9]{8}-[0-9]{6}-[a-z0-9]+(\.jpg|-thumb\.jpg|-spectrum\.png)$/', $f) || !is_file($path)) {
+      header('HTTP/1.0 404 Not Found');
+      echo 'Not found';
+      return;
+    }
+    header('Content-Type: ' . (substr($f, -4) === '.png' ? 'image/png' : 'image/jpeg'));
+    header('Cache-Control: private, max-age=86400');
+    header('Content-Length: ' . filesize($path));
+    readfile($path);
   }
 
   # TODO: This is not very DRY between this and the above function - do

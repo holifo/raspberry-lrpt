@@ -35,6 +35,8 @@
     - { path: "{{ images_output }}", group: www-data, mode: "0775" }
     - { path: "{{ images_output }}/thumb", group: www-data, mode: "0775" }
     - { path: "{{ videos_output }}", group: www-data, mode: "0775" }
+    # band scans (Admin > Band scan): read by the web panel, not served by nginx
+    - { path: "{{ images_output | dirname }}/scans", group: www-data, mode: "2750" }
     - { path: "{{ audio_output }}", group: "{{ target_user }}", mode: "0775" }
     - { path: "{{ audio_output }}/meteor", group: "{{ target_user }}", mode: "0775" }
   loop_control:

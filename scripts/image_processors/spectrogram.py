@@ -91,7 +91,7 @@ def full_waterfall(data, x_vals, x_label, x_fmt, times, out_file, title, colour,
     bold = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 22)
   except OSError:
     font = bold = ImageFont.load_default()
-  left, top, pad = 70, 86, 14
+  left, top, pad = 70, 110, 14
   img = Image.new('RGB', (w + left + pad, h + top + pad), BG)
   img.paste(Image.fromarray(rgb), (left, top))
   dr = ImageDraw.Draw(img)

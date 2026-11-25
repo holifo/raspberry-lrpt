@@ -67,6 +67,7 @@ if [ "$SDR_MODE" == "shared" ]; then
   fi
 fi
 
+band_scan_yield iss        # a band scan (Admin > Band scan) on the ISS's dongle stops
 WORK_DIR=$(work_dir "iss-${FILENAME_BASE}")
 trap 'cd "$LRPT_HOME"; rm -rf "$WORK_DIR"; rm -f "$ISS_SDR_MARK"' EXIT
 echo "$SDR_INDEX $SDR_MODE" > "$ISS_SDR_MARK"     # receive_meteor.sh stops a shared recording only

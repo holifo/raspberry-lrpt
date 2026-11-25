@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" type="text/css" href="{{ asset('/assets/css/admin.css') }}">
+{% endblock %}
+
+{% block body %}
+  {% include('Admin/nav.html') %}
+
+  {# Admin > Band scan: rtl_power over one of five bands for a while, drawn as a waterfall and a
+     spectrum (scripts/band_scan.sh, AdminController::scanAction). The pictures are kept in
+     /srv/scans and shown only here, behind the admin login (scanfileAction). #}
+  {% if result %}
+    {% set msg = {
+         'started': lang['scan_r_started']|default('The scan has started.'),
+         'stopped': lang['scan_r_stopped']|default('The scan was stopped. What it recorded is being drawn.'),
+         'deleted': lang['scan_r_deleted']|default('The scan was deleted.'),
+         'running': lang['scan_r_running']|default('A scan is already running.'),
+         'recording': lang['scan_r_recording']|default('That dongle is recording a pass now. Try again when it ends.'),
+         'pass': lang['scan_r_pass']|default('A pass needs that dongle during the scan ({pass}). Choose a shorter scan or another dongle.')|replace({'{pass}': clash}),
+         'no_device': lang['scan_r_no_device']|default('That RTL-SDR is not connected.'),
+         'bad_request': lang['scan_r_fail']|default('The scan could not be started. The Live log may say why.'),
+         'fail': lang['scan_r_fail']|default('The scan could not be started. The Live log may say why.')} %}
+    <div class="alert {{ result in ['started', 'stopped', 'deleted'] ? 'alert-success' : (result in ['running', 'recording', 'pass'] ? 'alert-info' : 'alert-danger') }} alert-dismissible fade show" role="alert">
+      {{ msg[result] }}
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    </div>
+  {% endif %}
+
+  <p class="set-intro">{{ lang['scan_intro']|default('Look at a band for a while with one of the station\'s RTL-SDRs: a waterfall (time down, frequency across) and the average and peak spectrum, with the strongest signals listed. The pictures are kept here only, behind the admin login, and the newest 20 are kept.') }}</p>
+
+  {% if scan is null %}
+    <div class="alert alert-danger">
+      {{ lang['scan_unread']|default('The band scan could not be reached. Run ./install_and_upgrade.sh on the Pi once: it adds the permission this page needs.') }}
+    </div>
+  {% else %}
+    {% set run = scan.running %}
+    {% if run %}
+      <section class="set-sec scan-run" id="scan-run" data-start="{{ run.started }}" data-end="{{ run.ends }}">
+        <h2><span class="scan-dot" aria-hidden="true"></span>{{ lang['scan_running']|default('Scanning') }}: {{ run.name }}
+          <small>{{ run.start_mhz }}–{{ run.stop_mhz }} MHz</small></h2>
+        <div class="scan-meta">
+          RTL-SDR #{{ run.device }}{% if run.serial %} ({{ run.serial }}){% endif %} · {{ lang['scan_gain']|default('gain') }} {{ run.gain }} dB ·
+          {{ run.started|date('H:i') }}–{{ run.ends|date('H:i') }} · <span id="scan-left"></span>
+        </div>
+        <div class="progress scan-prog"><div class="progress-bar" id="scan-bar" style="width: 0%"></div></div>
+        <form method="post" action="/admin/scan">
+          <input type="hidden" name="act" value="stop">
+          <button type="submit" class="btn btn-sm btn-outline-danger">{{ lang['scan_stop']|default('Stop the scan') }}</button>
+        </form>
+      </section>
+    {% endif %}
+
+    <section class="set-sec">
+      <h2>{{ lang['scan_new']|default('New scan') }}</h2>
+      {% if scan.devices is empty %}
+        <p class="set-help">{{ lang['scan_no_sdr']|default('No RTL-SDR is connected.') }}</p>
+      {% else %}
+      <form method="post" action="/admin/scan" class="scan-form">
+        <input type="hidden" name="act" value="start">
+        <fieldset class="scan-presets"{% if run %} disabled{% endif %}>
+          <legend class="sr-only">{{ lang['scan_band']|default('Band') }}</legend>
+          {% for p in scan.presets %}
+            <label class="scan-preset">
+              <input type="radio" name="preset" value="{{ p.id }}"{% if loop.first %} checked{% endif %}>
+              <span class="scan-p-name">{{ lang['scan_p_' ~ p.id]|default(p.name) }}</span>
+              <span class="scan-p-range">{{ p.start }}–{{ p.stop }} MHz</span>
+              <span class="scan-p-what">{{ lang['scan_w_' ~ p.id]|default(p.what) }}</span>
+            </label>
+          {% endfor %}
+        </fieldset>
+        <div class="scan-opts">
+          <label>{{ lang['scan_minutes']|default('Duration') }}
+            <select name="minutes" class="form-control form-control-sm"{% if run %} disabled{% endif %}>
+              {% for m in scan.minutes %}<option value="{{ m }}"{% if m == 10 %} selected{% endif %}>{{ m }} min</option>{% endfor %}
+            </select>
+          </label>
+          <label>RTL-SDR
+            <select name="device" class="form-control form-control-sm"{% if run %} disabled{% endif %}>
+              {% for d in scan.devices %}
+                <option value="{{ d.index }}"{% if d.role == 'iss' or (d.role == 'spare' and loop.last) %} selected{% endif %}>
+                  #{{ d.index }} {{ d.model }}{% if d.serial %} {{ d.serial }}{% endif %} · {{ lang['sdr_role_' ~ d.role|replace({'+': '_'})]|default(d.role|replace({'+': ' + '})) }}{% if d.next_pass %} · {{ lang['scan_next']|default('next pass') }} {{ d.next_pass }}{% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+          <button type="submit" class="btn btn-sm btn-primary"{% if run %} disabled{% endif %}>{{ lang['scan_start']|default('Start the scan') }}</button>
+        </div>
+        <p class="set-help">{{ lang['scan_note']|default('The scan is refused when a pass needs the dongle during it, and a pass that starts anyway stops it. What you see depends on that dongle\'s antenna and filters: an LNA with a 137 MHz filter hides the other bands.') }}</p>
+      </form>
+      {% endif %}
+    </section>
+
+    <h2 class="scan-h">{{ lang['scan_kept']|default('Scans') }}</h2>
+    {% for s in scan.scans %}
+      <section class="set-sec scan-item">
+        <h2>{{ lang['scan_p_' ~ s.preset]|default(s.name) }}
+          <small>{{ s.started|date('d/m/Y H:i') }} · {{ s.minutes }} min · RTL-SDR #{{ s.device }}{% if s.serial %} ({{ s.serial }}){% endif %} · {{ lang['scan_gain']|default('gain') }} {{ s.gain }} dB{% if s.stopped_early %} · {{ lang['scan_stopped']|default('stopped early') }}{% endif %}</small></h2>
+        {% if s.error is defined %}
+          <p class="set-error">{{ lang['scan_no_data']|default('Nothing was recorded.') }} {% if s.detail is defined %}<code>{{ s.detail }}</code>{% endif %}</p>
+        {% else %}
+          <div class="cap-grid scan-grid" data-viewer>
+            <a class="cap-card" href="/admin/scanfile?f={{ s.id }}.jpg">
+              <div class="cap-img contain"><img src="/admin/scanfile?f={{ s.id }}-thumb.jpg" alt="" loading="lazy"></div>
+              <div class="cap-body"><span class="cap-label">{{ lang['scan_waterfall']|default('Waterfall') }} · {{ s.start_mhz }}–{{ s.stop_mhz }} MHz</span></div>
+            </a>
+            <a class="cap-card" href="/admin/scanfile?f={{ s.id }}-spectrum.png">
+              <div class="cap-img contain"><img src="/admin/scanfile?f={{ s.id }}-spectrum.png" alt="" loading="lazy"></div>
+              <div class="cap-body"><span class="cap-label">{{ lang['scan_spectrum']|default('Average and peak') }}</span></div>
+            </a>
+          </div>
+          <div class="scan-facts">
+            {{ s.points }} {{ lang['scan_points']|default('points') }} × {{ s.rows }} {{ lang['scan_rows']|default('rows') }} ·
+            {{ s.hz_per_point >= 1000 ? (s.hz_per_point / 1000)|round(1) ~ ' kHz' : s.hz_per_point|round ~ ' Hz' }} ·
+            {{ lang['scan_every']|default('a row every') }} {{ s.seconds_per_row }} s · {{ lang['scan_noise']|default('noise') }} {{ s.noise_db }} dB
+          </div>
+          {% if s.peaks %}
+            <table class="scan-peaks">
+              <thead><tr><th>MHz</th><th>{{ lang['scan_peak']|default('Peak') }}</th><th>{{ lang['scan_avg']|default('Average') }}</th><th>{{ lang['scan_width']|default('Width') }}</th><th></th></tr></thead>
+              <tbody>
+              {% for pk in s.peaks %}
+                <tr><td>{{ '%.4f'|format(pk.mhz) }}</td><td>+{{ pk.db }} dB</td><td>{{ pk.avg_db >= 0 ? '+' : '' }}{{ pk.avg_db }} dB</td>
+                    <td>{{ pk.khz is defined ? pk.khz ~ ' kHz' : '' }}</td><td>{{ pk.name }}</td></tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <p class="set-help">{{ lang['scan_quiet']|default('No signal stood 6 dB above the noise.') }}</p>
+          {% endif %}
+        {% endif %}
+        <form method="post" action="/admin/scan" class="scan-del">
+          <input type="hidden" name="act" value="delete"><input type="hidden" name="id" value="{{ s.id }}">
+          <button type="submit" class="btn btn-sm btn-link text-danger">{{ lang['scan_delete']|default('Delete') }}</button>
+        </form>
+      </section>
+    {% else %}
+      <p class="set-help">{{ lang['scan_none']|default('No scans yet.') }}</p>
+    {% endfor %}
+  {% endif %}
+
+  <script src="{{ asset('/assets/js/viewer.js') }}"></script>
+  <script>
+  (function () {
+    var box = document.getElementById('scan-run');
+    if (!box) { return; }
+    var start = +box.dataset.start, end = +box.dataset.end;
+    var bar = document.getElementById('scan-bar'), left = document.getElementById('scan-left');
+    var leftText = {{ (lang['scan_left']|default('{m} min left'))|json_encode|raw }};
+    var drawText = {{ (lang['scan_drawing']|default('drawing…'))|json_encode|raw }};
+    function tick() {
+      var now = Date.now() / 1000;
+      var pct = Math.min(100, Math.max(0, (now - start) / Math.max(1, end - start) * 100));
+      bar.style.width = pct.toFixed(1) + '%';
+      left.textContent = now < end ? leftText.replace('{m}', Math.ceil((end - now) / 60)) : drawText;
+      if (now > end + 20) { location.replace('/admin/scan'); return; }
+      setTimeout(tick, 1000);
+    }
+    tick();
+  })();
+  </script>
+{% endblock %}

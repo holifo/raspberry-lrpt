@@ -1,5 +1,16 @@
 # Changelog
 
+## Raspberry-LRPT v1.47.0 (2026-11-25)
+
+- **Band scan** in the admin pages (`/admin/scan`): look at one of five bands with one of the
+  station's RTL-SDRs for 2 to 60 minutes. The bands are the Meteor band, the 2 m amateur band,
+  the 70 cm satellite band, a VHF overview (108–175 MHz) and the FM broadcast band. Each scan
+  gives a full-resolution waterfall, the average and peak spectrum, and a list of the strongest
+  signals with their width, named when they are known ones. The pictures are shown only on that
+  page, behind the admin login; the web server does not serve them. A scan is refused when a pass
+  needs that dongle during it, and a pass that starts anyway stops it. Run the install once after
+  updating: it adds the permission and the folder the scans need.
+
 ## Raspberry-LRPT v1.46.0 (2026-11-25)
 
 - **An ARISS SSTV event in one command** ([issue #3](https://github.com/holifo/raspberry-lrpt/issues/3)):

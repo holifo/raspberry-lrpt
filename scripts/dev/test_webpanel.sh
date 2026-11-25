@@ -32,7 +32,7 @@ set -u
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${PWD}/webpanel-test-output"
 KEEP=0
-PAGES="/passes /satellite /about /about#changes /captures?page_no=1 /captures/listImages?pass_id=1 /captures/listImages?pass_id=2 /daily /satellite/map /admin/passes /admin/captures?page_no=1 /admin/settings /log"
+PAGES="/passes /satellite /about /about#changes /captures?page_no=1 /captures/listImages?pass_id=1 /captures/listImages?pass_id=2 /daily /satellite/map /admin/passes /admin/captures?page_no=1 /admin/settings /admin/scan /log"
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/rl1-webtest"
 
 while getopts ":o:kp:" opt; do
@@ -396,6 +396,43 @@ for i in range(6):
             print('  (spectrogram skipped: %s)' % (r.stderr.strip().splitlines() or ['error'])[-1])
 db.commit()
 
+# band scans (Admin > Band scan): two finished scans drawn from made-up rtl_power sweeps
+try:
+    import importlib.util, random, math
+    spec = importlib.util.spec_from_file_location('band_scan', os.path.join(repo, 'scripts/tools/band_scan.py'))
+    bs = importlib.util.module_from_spec(spec); spec.loader.exec_module(bs)
+    scans = os.path.join(srv, 'scans')
+    os.makedirs(scans, exist_ok=True)
+    rnd = random.Random(5)
+    for back, pid, sigs in ((7200, 'meteor', [(137.9e6, 60e3, 18)]), (3 * 86400, '70cm', [(437.8e6, 8e3, 22), (437.825e6, 6e3, 14)])):
+        p = bs.preset(pid)
+        sid = time.strftime('%Y%m%d-%H%M%S', time.localtime(now - back)) + '-' + pid
+        csv = os.path.join(scans, sid + '.csv')
+        with open(csv, 'w') as f:
+            for k in range(120):
+                ts = time.strftime('%Y-%m-%d, %H:%M:%S', time.localtime(now - back + k * 5))
+                lo = p['start'] * 1e6
+                while lo < p['stop'] * 1e6 - 1:
+                    hi = min(lo + 2e6, p['stop'] * 1e6)
+                    vals = []
+                    for j in range(int((hi - lo) / p['bin'])):
+                        fr = lo + (j + 0.5) * p['bin']
+                        db = -40 + rnd.gauss(0, 1.5)
+                        for sf, w, amp in sigs:
+                            if abs(fr - sf) < w:
+                                db = max(db, -40 + amp * (1 - abs(fr - sf) / w) * (0.6 + 0.4 * math.sin(k / 15)) + rnd.gauss(0, 1))
+                        vals.append('%.2f' % db)
+                    f.write('%s, %d, %d, %.2f, 1000, %s\n' % (ts, lo, hi, p['bin'], ', '.join(vals)))
+                    lo = hi
+        info = {'id': sid, 'preset': pid, 'name': p['name'], 'start_mhz': p['start'], 'stop_mhz': p['stop'], 'minutes': 10,
+                'device': 1, 'serial': '00000002', 'model': 'Blog V4', 'role': 'iss', 'gain': '40', 'started': int(now - back),
+                'ends': int(now - back + 600), 'stopped_early': False}
+        info.update(bs.render(csv, os.path.join(scans, sid), p, info))
+        os.remove(csv)
+        json.dump(info, open(os.path.join(scans, sid + '.json'), 'w'))
+except Exception as e:
+    print('  (band scans skipped: %s)' % e)
+
 # daily maps (scripts/daily_map.sh): two days of day and night maps over the sample captures
 daily = os.path.join(srv, 'images/daily')
 os.makedirs(os.path.join(daily, 'thumb'), exist_ok=True)
@@ -478,7 +515,10 @@ PHP
 
 # ---- serve ---------------------------------------------------------------------
 PORT=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1])')
-(cd "$WORK/wp" && php -d date.timezone=Europe/Athens -S "127.0.0.1:$PORT" -t public router.php >"$WORK/php.log" 2>&1) &
+# band_scan.sh status (Admin > Band scan) runs without sudo here: give it the test copy's paths
+(cd "$WORK/wp" && SCAN_DIR="$WORK/srv/scans" DB_FILE="$WORK/panel.db" IMAGE_OUTPUT="$WORK/srv/images" \
+  RL1_FAKE_RTLSDR="Realtek|RTL2838UHIDIR|00000001;RTLSDRBlog|Blog V4|00000002" \
+  php -d date.timezone=Europe/Athens -S "127.0.0.1:$PORT" -t public router.php >"$WORK/php.log" 2>&1) &
 PHP_PID=$!
 for _ in $(seq 1 50); do curl -s -o /dev/null "http://127.0.0.1:$PORT/passes" && break; sleep 0.1; done
 
