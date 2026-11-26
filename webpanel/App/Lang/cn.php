@@ -539,5 +539,11 @@ return array(
   "scan_r_range" => "请检查手动范围：{min}–{max} MHz，宽度不超过 {span} MHz，且不超过 {points} 个点。",
   "scan_live" => "实时瀑布图",
   "scan_live_wait" => "实时瀑布图会在最初几次扫描后出现，大约每 15 秒刷新一次。",
+  "lv_map" => "实时地图",
+  "lv_picture_wait" => "第一张图像在过境开始约一分钟后出现。",
+  "il_picture" => "SSTV 图像",
+  "il_picture_wait" => "尚无图像。活动期间国际空间站大约每两分钟发送一张。",
+  "il_picture_note" => "每约 30 秒从最近四分钟的音频中解码。最终图像在过境结束后生成。",
+  "il_complete" => "完整",
 );
 ?>

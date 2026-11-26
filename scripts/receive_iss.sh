@@ -118,7 +118,10 @@ json.dump(info, open(out + '.tmp', 'w'))
 os.replace(out + '.tmp', out)
 PY
 }
-trap 'cd "$LRPT_HOME"; rm -rf "$WORK_DIR"; rm -f "$ISS_SDR_MARK" "$ISS_LIVE" "$ISS_LIVE_INFO"' EXIT
+# live_sstv.sh's picture of an SSTV pass (iss-live-sstv.jpg/.json), for the same panel
+ISS_LIVE_SSTV="${IMAGE_OUTPUT}/iss-live-sstv.jpg ${IMAGE_OUTPUT}/iss-live-sstv.json"
+live_sstv_pid=""
+trap '[ -n "$live_sstv_pid" ] && kill "$live_sstv_pid" 2>/dev/null; cd "$LRPT_HOME"; rm -rf "$WORK_DIR"; rm -f "$ISS_SDR_MARK" "$ISS_LIVE" "$ISS_LIVE_INFO" $ISS_LIVE_SSTV' EXIT
 
 # iss_audio MHZ RATE: FM audio of the pass on stdout (signed 16-bit mono)
 iss_audio() {
@@ -222,7 +225,15 @@ fi
 log "Recording ISS ${ISS_FREQ} MHz FM for ${CAPTURE_TIME} s (max elevation ${SAT_MAX_ELEVATION}°)" "INFO"
 # 48 kHz: room for the FM signal plus the Doppler shift (±3.5 kHz on 2 m, ±10 kHz on 70 cm); audio 11025 Hz
 iss_live_info SSTV "$ISS_FREQ"
+rm -f $ISS_LIVE_SSTV
+if [ "$WIDE" == "true" ] && [ -f "$ISS_LIVE_INFO" ]; then     # the live panel exists: a live picture for it
+  : > "$RAW"
+  "$LRPT_HOME/scripts/live_sstv.sh" "$RAW" "$RATE" \
+    "$(sed -n 's/.*"start": *\([0-9]*\).*/\1/p' "$ISS_LIVE_INFO")" >> "$LRPT_LOG" 2>&1 &
+  live_sstv_pid=$!
+fi
 iss_audio "$ISS_FREQ" $RATE > "$RAW"
+[ -n "$live_sstv_pid" ] && { kill "$live_sstv_pid" 2>/dev/null; wait "$live_sstv_pid" 2>/dev/null; live_sstv_pid=""; }
 size=$(stat -c %s "$RAW" 2>/dev/null || echo 0)
 log "Recorded $((size / 2 / RATE)) s of audio" "INFO"
 

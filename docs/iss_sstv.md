@@ -195,6 +195,14 @@ SSTV's 1200 Hz sync and 1500–2300 Hz picture tones show as a steady pattern (S
 writes `iss-live.json` once a second and `receive_iss.sh` writes `iss-live-info.json` (mode,
 times, the Doppler track); `/passes/isslive` serves both, and `assets/js/iss_live.js` draws them.
 
+**Live map and live SSTV picture** (v1.50.0): below the spectra, the ISS on a small live map
+(`/satellite/map?live=ISS`, the pass drawn and fitted to the frame, with the APRS stations heard)
+sits beside the APRS list, or on an SSTV pass beside the picture being received:
+`scripts/live_sstv.sh` decodes the last 4 minutes of the audio recorded so far about every 30
+seconds (`sstv_decode.py --no-fallback`, PD and Robot 36, at the lowest priority) and shows the
+newest picture, growing line by line, with its mode and line count. Like the Meteor live picture
+it needs a Pi with 4 or more cores; the finished pictures still come after the pass.
+
 **Every pass keeps its spectrogram**, even when nothing was decoded: the pass then stays on the
 Captures page with the spectrogram as its picture and a note that nothing was decoded (with one
 dongle, an ISS pass without pictures or packets is still left out). Discord posts only passes

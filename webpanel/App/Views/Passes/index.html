@@ -90,10 +90,18 @@
         <div class="live-cap"><span>{{ lang['lv_history']|default('SNR during the pass') }}</span></div>
         <canvas id="live-hist" width="300" height="70"></canvas>
       </div>
-      <div class="live-box live-pic" id="live-pic" hidden>
-        <div class="live-cap"><span>{{ lang['lv_picture']|default('Live picture') }}</span><span class="live-dim" id="live-pic-info"></span></div>
-        <img id="live-pic-img" alt="{{ lang['lv_picture']|default('Live picture') }}">
-        <div class="live-note">{{ lang['lv_picture_note']|default('Decoded from the frames received so far, about every 45 seconds. The finished images come after the pass.') }}</div>
+      {# the satellite on a live map (/satellite/map?live=…) beside the picture decoded so far #}
+      <div class="live-split" id="live-split">
+        <div class="live-box live-map">
+          <div class="live-cap"><span>{{ lang['lv_map']|default('Live map') }}</span><span class="live-dim" id="live-map-info"></span></div>
+          <iframe id="live-map" class="live-map-frame" title="{{ lang['lv_map']|default('Live map') }}"></iframe>
+        </div>
+        <div class="live-box live-pic" id="live-pic" hidden>
+          <div class="live-cap"><span>{{ lang['lv_picture']|default('Live picture') }}</span><span class="live-dim" id="live-pic-info"></span></div>
+          <img id="live-pic-img" alt="{{ lang['lv_picture']|default('Live picture') }}" hidden>
+          <div class="live-pic-wait" id="live-pic-wait">{{ lang['lv_picture_wait']|default('The first picture comes about a minute after the start of the pass.') }}</div>
+          <div class="live-note">{{ lang['lv_picture_note']|default('Decoded from the frames received so far, about every 45 seconds. The finished images come after the pass.') }}</div>
+        </div>
       </div>
     </div>
   </section>
@@ -135,9 +143,23 @@
         <div class="live-cap"><span>{{ lang['il_history']|default('Level during the pass') }}</span></div>
         <canvas id="il-hist" width="300" height="70"></canvas>
       </div>
-      <div class="live-box il-aprs" id="il-aprs" hidden>
-        <div class="live-cap"><span>{{ lang['il_aprs']|default('APRS heard') }}</span><span class="live-dim" id="il-aprs-n"></span></div>
-        <ul class="il-list" id="il-list"><li class="il-none">{{ lang['il_none']|default('No packets yet') }}</li></ul>
+      {# the ISS on a live map (with the APRS stations heard) beside the stations list, or beside
+         the SSTV picture decoded so far (live_sstv.sh) #}
+      <div class="live-split" id="il-split">
+        <div class="live-box live-map">
+          <div class="live-cap"><span>{{ lang['lv_map']|default('Live map') }}</span><span class="live-dim" id="il-map-info"></span></div>
+          <iframe id="il-map" class="live-map-frame" title="{{ lang['lv_map']|default('Live map') }}"></iframe>
+        </div>
+        <div class="live-box il-aprs" id="il-aprs" hidden>
+          <div class="live-cap"><span>{{ lang['il_aprs']|default('APRS heard') }}</span><span class="live-dim" id="il-aprs-n"></span></div>
+          <ul class="il-list" id="il-list"><li class="il-none">{{ lang['il_none']|default('No packets yet') }}</li></ul>
+        </div>
+        <div class="live-box live-pic il-pic" id="il-pic" hidden>
+          <div class="live-cap"><span>{{ lang['il_picture']|default('SSTV picture') }}</span><span class="live-dim" id="il-pic-info"></span></div>
+          <img id="il-pic-img" alt="{{ lang['il_picture']|default('SSTV picture') }}" hidden>
+          <div class="live-pic-wait" id="il-pic-wait">{{ lang['il_picture_wait']|default('No picture yet. The ISS sends one about every two minutes during an event.') }}</div>
+          <div class="live-note">{{ lang['il_picture_note']|default('Decoded from the last four minutes of audio, about every 30 seconds. The finished pictures come after the pass.') }}</div>
+        </div>
       </div>
       <div class="live-box il-sstv" id="il-sstv" hidden>
         <div class="live-cap"><span>{{ lang['il_sstv']|default('SSTV audio') }}</span><span class="live-dim">0–3 kHz</span></div>
@@ -262,6 +284,7 @@
       channel: {{ (lang['lv_channel']|default('channel'))|json_encode|raw }},
       lines: {{ (lang['lv_lines']|default('lines'))|json_encode|raw }},
       no_signal: {{ (lang['lv_no_signal']|default('No lock yet'))|json_encode|raw }},
+      max: {{ (lang['max']|default('max'))|json_encode|raw }},
       peak: {{ (lang['lv_peak']|default('peak'))|json_encode|raw }}
     };
   </script>
@@ -278,6 +301,9 @@
       packets: {{ (lang['il_packets']|default('packets'))|json_encode|raw }},
       none: {{ (lang['il_none']|default('No packets yet'))|json_encode|raw }},
       direct: {{ (lang['il_direct']|default('direct'))|json_encode|raw }},
+      lines: {{ (lang['lv_lines']|default('lines'))|json_encode|raw }},
+      complete: {{ (lang['il_complete']|default('complete'))|json_encode|raw }},
+      max: {{ (lang['max']|default('max'))|json_encode|raw }},
       peak: {{ (lang['lv_peak']|default('peak'))|json_encode|raw }}
     };
   </script>

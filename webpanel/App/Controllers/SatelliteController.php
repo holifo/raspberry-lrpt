@@ -5,8 +5,11 @@
 #   /satellite         - the Satellites tab: the live map framed to fill the window, with
 #                        the coming passes beside it (tap one to draw its track)
 #   /satellite/map     - Meteor live map (App/Static/meteor-map.html), framed by /satellite
+#   /satellite/map?live=<satellite>
+#                      - the same map for one satellite, framed by the Passes page's live decode
+#                        panels during a pass (always available, like those panels)
 #
-# Only available when 'experimental_features: true' is set in
+# Otherwise only available when 'experimental_features: true' is set in
 # config/settings.yml. The HTML lives outside public/ so the flag cannot be
 # bypassed by requesting the file directly.
 #
@@ -32,7 +35,7 @@ class SatelliteController extends \Lib\Controller {
   }
 
   public function mapAction($args) {
-    $this->servePage('meteor-map.html', true);
+    $this->servePage('meteor-map.html', true, !isset($_GET['live']));
   }
 
   # feature flag gate - the defined() guard tolerates a Config.php generated
@@ -45,8 +48,8 @@ class SatelliteController extends \Lib\Controller {
     }
   }
 
-  private function servePage($file, $with_tle) {
-    $this->requireFeature();
+  private function servePage($file, $with_tle, $gated = true) {
+    if ($gated) { $this->requireFeature(); }
 
     $static_dir = __DIR__ . '/../Static';
     $html_file = $static_dir . '/' . $file;

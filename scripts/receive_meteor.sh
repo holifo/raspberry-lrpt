@@ -208,9 +208,13 @@ SPECTRO_PORT=8091
 spectro_opts="--fft_enable --fft_size 4096 --fft_rate 4 --http_server 127.0.0.1:${SPECTRO_PORT}"
 spectro_pid=""
 SPECTRO_DATA="${LRPT_HOME}/tmp/spectrogram-${FILENAME_BASE}.npz"
-printf '{"sat":"%s","start":%s,"end":%s,"samplerate":%s,"frequency":%s,"max_elev":%s,"port":%s}\n' \
+# "preview": live_preview.sh will make a picture (live_preview on, 4+ cores), so the panel keeps a
+# place for it beside the live map
+preview_on=false
+[[ "${LIVE_PREVIEW}" == "true" ]] && [ "$(nproc)" -ge "${PREVIEW_MIN_CORES:-4}" ] && preview_on=true
+printf '{"sat":"%s","start":%s,"end":%s,"samplerate":%s,"frequency":%s,"max_elev":%s,"port":%s,"preview":%s}\n' \
   "$SAT_NAME" "$(date +%s)" "$(( $(date +%s) + CAPTURE_TIME ))" "$(awk -v s="$samplerate" 'BEGIN { printf "%d", s }')" \
-  "${METEOR_FREQUENCY}" "${SAT_MAX_ELEVATION:-0}" "$SPECTRO_PORT" > "$LIVE_FILE" 2>/dev/null
+  "${METEOR_FREQUENCY}" "${SAT_MAX_ELEVATION:-0}" "$SPECTRO_PORT" "$preview_on" > "$LIVE_FILE" 2>/dev/null
 chmod 644 "$LIVE_FILE" 2>/dev/null
 # live preview (live_preview): a small picture of the frames decoded so far, for the live panel
 rm -f $PREVIEW_FILES

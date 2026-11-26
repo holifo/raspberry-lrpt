@@ -1,5 +1,16 @@
 # Changelog
 
+## Raspberry-LRPT v1.50.0 (2026-11-26)
+
+- **Live map in the live decode panels.** While a Meteor pass is recorded, the Passes page's live
+  decode panel shows the satellite on a small live map, with the pass's track from AOS to LOS
+  fitted to the frame, next to the live picture. The ISS live panel has the same map, with the
+  APRS stations heard so far, next to the list of stations, or next to the SSTV picture.
+- **Live SSTV picture.** On an SSTV pass with the ISS on its own RTL-SDR, the panel shows the
+  picture being received, decoded from the last four minutes of audio about every 30 seconds
+  (on a Pi with 4 or more cores, at the lowest priority). The finished pictures still come after
+  the pass.
+
 ## Raspberry-LRPT v1.49.0 (2026-11-25)
 
 - **Band scan: live waterfall.** While a scan runs, its box on Admin > Band scan shows the

@@ -539,5 +539,11 @@ return array(
   "scan_r_range" => "Revisa el rango manual: {min}–{max} MHz, como mucho {span} MHz de ancho y {points} puntos.",
   "scan_live" => "Cascada en directo",
   "scan_live_wait" => "La cascada en directo aparece tras los primeros barridos y se redibuja cada 15 segundos más o menos.",
+  "lv_map" => "Mapa en directo",
+  "lv_picture_wait" => "La primera imagen llega aproximadamente un minuto después del inicio del pase.",
+  "il_picture" => "Imagen SSTV",
+  "il_picture_wait" => "Aún no hay imagen. Durante un evento la ISS envía una cada dos minutos aproximadamente.",
+  "il_picture_note" => "Decodificada de los últimos cuatro minutos de audio, cada 30 segundos aproximadamente. Las imágenes finales llegan después del pase.",
+  "il_complete" => "completa",
 );
 ?>

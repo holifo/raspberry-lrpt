@@ -38,7 +38,7 @@ class PassesController extends \Lib\Controller {
       $out = array_merge($out, array(
         'sat' => $info['sat'] ?? '', 'start' => $info['start'] ?? null, 'end' => $info['end'] ?? null,
         'frequency' => $info['frequency'] ?? null, 'samplerate' => $info['samplerate'] ?? null,
-        'max_elev' => $info['max_elev'] ?? null));
+        'max_elev' => $info['max_elev'] ?? null, 'preview_on' => !empty($info['preview'])));
       # live picture (live_preview.sh): only this pass's, with a version so the browser reloads it
       $pv = @json_decode((string) @file_get_contents(Config::IMAGE_PATH . '/live-preview.json'), true);
       if (is_array($pv) && ($pv['start'] ?? null) == ($info['start'] ?? 0) && is_file(Config::IMAGE_PATH . '/live-preview.jpg')) {
@@ -85,6 +85,14 @@ class PassesController extends \Lib\Controller {
       }
       if (($info['mode'] ?? '') === 'APRS') {
         $out['stations'] = self::aprsStations(Config::IMAGE_PATH . '/aprs-live.csv');
+      }
+      # SSTV: live_sstv.sh's newest picture, this pass's only, versioned so the browser reloads it
+      $pv = @json_decode((string) @file_get_contents(Config::IMAGE_PATH . '/iss-live-sstv.json'), true);
+      if (is_array($pv) && ($pv['start'] ?? null) == ($info['start'] ?? 0) && is_file(Config::IMAGE_PATH . '/iss-live-sstv.jpg')) {
+        $out['picture'] = '/images/iss-live-sstv.jpg?v=' . (int) ($pv['made'] ?? 0);
+        $out['picture_mode'] = (string) ($pv['mode'] ?? '');
+        $out['picture_rows'] = (int) ($pv['rows'] ?? 0);
+        $out['picture_complete'] = !empty($pv['complete']);
       }
     }
     header('Content-Type: application/json; charset=utf-8');

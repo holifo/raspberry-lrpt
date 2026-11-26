@@ -108,6 +108,12 @@ version, linked to the project on GitHub, and says "vX available" when an update
     a minute or two into the pass, once frames are coming in. SatDump stops each of these
     decodes before its slow products step, so one takes a few seconds. The finished images
     still come after the pass.
+  - **Live map** (v1.50.0): beside the live picture, the satellite on a small live map with the
+    pass being recorded drawn from AOS to LOS and fitted to the frame, its coverage circle and a
+    progress panel (% done, elevation, time left). Without a live picture the map takes the whole
+    row. The ISS live panel has the same map (with the APRS stations heard so far) beside the
+    stations list, or beside the SSTV picture being received (see `docs/iss_sstv.md`). The map
+    works whether `experimental_features` is on or not.
 - **Pass list icons:**
 
   | Icon | Meaning |

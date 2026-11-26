@@ -16,6 +16,9 @@
     - ground tracks (past dashed, next orbit solid), refreshed every 10 s
     - day/night shading with twilight bands, refreshed every minute
 
+  With ?live=<satellite name> (the Passes page's live decode panels) it shows that satellite only,
+  without the legend and buttons, with the pass being recorded drawn and fitted to the frame.
+
   Orbit data, in order of preference:
     1. window.RL1_TLE - injected by SatelliteController from the TLE file the
        scheduler writes (same orbits used to schedule captures)
@@ -90,6 +93,10 @@
   #aprs .calls { color: #8fa3b8; font-size: 11px; margin-top: 2px; overflow: hidden;
     text-overflow: ellipsis; white-space: nowrap; }
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #5fd38a; margin-right: 4px; }
+  /* ?live=<satellite>: the small map in the Passes page's live panels, one satellite, its pass
+     fitted to the frame, no controls */
+  body.live-mode #legend, body.live-mode #zoom, body.live-mode #status { display: none; }
+  body.live-mode #aprs { font-size: 11px; }
 </style>
 </head>
 <body>
@@ -132,12 +139,19 @@
   });
   document.getElementById('status').textContent = tr('loading_map', 'Loading map…');
 
+  // ?live=<name>: the live decode panels' map (one satellite, the pass fitted to the frame)
+  var LIVE = (new URLSearchParams(window.location.search).get('live') || '').trim();
   var SATS = [
     { name: 'METEOR-M2 3', short: 'M2 3', id: 57166, color: '#f2b33d' },
     { name: 'METEOR-M2 4', short: 'M2 4', id: 59051, color: '#4fd1c5' },
     // the ISS for its SSTV pictures (iss_sstv); optional: the map works without its orbit
     { name: 'ISS', short: 'ISS', id: 25544, color: '#a78bfa', alt: 420, optional: true }
   ].filter(function (s) { return !s.optional || window.RL1_ISS !== false; });
+  if (LIVE) {
+    var one = SATS.filter(function (s) { return s.name === LIVE; });
+    if (one.length) { SATS = one; } else { LIVE = ''; }
+  }
+  if (LIVE) { document.body.classList.add('live-mode'); }
   var OBS = Object.assign({ lat: 0, lon: 0, min_el: 15 }, window.RL1_OBSERVER || {});
   // a pass runs from horizon to horizon (0°), like predict's AOS/LOS that the station schedules and
   // records; it counts when its highest point reaches the station's minimum elevation (min_el)
@@ -336,7 +350,7 @@
   }
   var lastState = 0;
   function sendState(now) {
-    if (window.parent === window || now - lastState < 1000) { return; }
+    if (LIVE || window.parent === window || now - lastState < 1000) { return; }
     lastState = now;
     var out = [];
     SATS.forEach(function (s) { if (s.satrec) { var st = satState(s, now); if (st) { out.push(st); } } });
@@ -431,6 +445,21 @@
     svg.call(zoom.transform, zoomT);
     lastTrack = lastNight = lastLegend = 0;
     drawHighlight();
+    fitLive(false);
+  }
+
+  // live mode: the pass's track and the station's reception range filling the frame
+  function fitLive(animate) {
+    if (!LIVE || !path || !zoom) { return; }
+    var w = mapEl.clientWidth, h = mapEl.clientHeight;
+    var geoms = [d3.geoCircle().center([OBS.lon, OBS.lat]).radius(RANGE_DEG)()];
+    if (hl) { geoms.push(hl.geo); }
+    var b = path.bounds({ type: 'GeometryCollection', geometries: geoms });
+    var k = Math.max(1, Math.min(MAX_ZOOM, 0.88 / Math.max((b[1][0] - b[0][0]) / w, (b[1][1] - b[0][1]) / h)));
+    var cx = (b[0][0] + b[1][0]) / 2, cy = (b[0][1] + b[1][1]) / 2;
+    var t = d3.zoomIdentity.translate(w / 2 - k * cx, h / 2 - k * cy).scale(k);
+    var svg = d3.select(mapEl).select('svg');
+    if (animate) { svg.transition().duration(500).call(zoom.transform, t); } else { svg.call(zoom.transform, t); }
   }
 
   // screen position of a lon/lat at the current zoom
@@ -613,9 +642,11 @@
       var xy = toScreen(m.at) || [-99, -99];
       d3.select(this).attr('cx', xy[0]).attr('cy', xy[1]);
     });
+    var w = mapEl.clientWidth;
     layers.hlMarks.selectAll('text').each(function (m) {
-      var xy = toScreen(m.at) || [-99, -99];
-      d3.select(this).attr('x', xy[0] + 8).attr('y', xy[1] - 7);
+      var xy = toScreen(m.at) || [-99, -99], left = xy[0] > w - 48;     // near the right edge: to the left
+      d3.select(this).attr('x', left ? xy[0] - 8 : xy[0] + 8).attr('y', xy[1] - 7)
+        .attr('text-anchor', left ? 'end' : 'start');
     });
   }
   // a pass sent before the orbit data and the map are ready waits in pendingPass
@@ -636,6 +667,19 @@
       }
     }
     drawHighlight();
+    fitLive(true);
+  }
+  // live mode before the page says which pass: the one in progress, else the next one
+  function livePass() {
+    var s = SATS[0], now = Date.now();
+    if (!s || !s.satrec) { return; }
+    var p = propagate(s.satrec, new Date(now)), w = null;
+    if (p && p.el >= HORIZON) { w = passWindow(s.satrec, now); }
+    else {
+      var np = nextPass(s.satrec, now);
+      if (np) { w = passWindow(s.satrec, np.aos.getTime() + 60000); }
+    }
+    if (w && w.los > w.aos) { showPass({ sat: s.name, aos: w.aos, los: w.los }); }
   }
   window.addEventListener('message', function (ev) {
     if (ev.origin !== window.location.origin || !ev.data || ev.data.type !== 'rl1-pass') { return; }
@@ -681,7 +725,7 @@
     aprsBox.style.display = 'block';
   }
   function pollAprs() {
-    if (window.RL1_ISS === false || !window.RL1_APRS) { return; }
+    if (window.RL1_ISS === false || !window.RL1_APRS || (LIVE && LIVE !== 'ISS')) { return; }
     fetch('/passes/aprs', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
       aprs = d && d.active ? d : { active: false, stations: [] };
       drawAprs();
@@ -708,7 +752,7 @@
     world = topojson.feature(res[0], res[0].objects.countries);
     build();
     mapReady = true;
-    if (pendingPass) { showPass(pendingPass); pendingPass = null; }
+    if (pendingPass) { showPass(pendingPass); pendingPass = null; } else if (LIVE) { livePass(); }
     pollAprs();
     setStatus('<span class="dot"></span>' + tr('live', 'Live') + ' · ' + tr('orbit_data', 'orbit data') + ': ' + tleSource);
     requestAnimationFrame(frame);

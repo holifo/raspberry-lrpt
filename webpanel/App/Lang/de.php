@@ -539,5 +539,11 @@ return array(
   "scan_r_range" => "Prüfe den eigenen Bereich: {min}–{max} MHz, höchstens {span} MHz breit und höchstens {points} Punkte.",
   "scan_live" => "Live-Wasserfall",
   "scan_live_wait" => "Der Live-Wasserfall erscheint nach den ersten Durchläufen und wird etwa alle 15 Sekunden neu gezeichnet.",
+  "lv_map" => "Live-Karte",
+  "lv_picture_wait" => "Das erste Bild kommt etwa eine Minute nach Beginn des Überflugs.",
+  "il_picture" => "SSTV-Bild",
+  "il_picture_wait" => "Noch kein Bild. Während einer Aktion sendet die ISS etwa alle zwei Minuten eines.",
+  "il_picture_note" => "Aus den letzten vier Minuten Audio dekodiert, etwa alle 30 Sekunden. Die fertigen Bilder kommen nach dem Überflug.",
+  "il_complete" => "vollständig",
 );
 ?>

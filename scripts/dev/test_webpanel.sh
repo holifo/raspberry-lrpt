@@ -250,7 +250,8 @@ if os.environ.get('TEST_LIVE_METEOR') == '1':
                'pass_start_azimuth, direction, azimuth_at_max) VALUES (?,?,?,?,?,?,?,?)',
                ('METEOR-M2 4', now - 240, now + 540, 61, 1, 190, 'Southbound', 100))
     json.dump({'sat': 'METEOR-M2 4', 'start': now - 230, 'end': now + 530, 'samplerate': 1024000,
-               'frequency': 137.9, 'max_elev': 61, 'port': 9}, open(os.path.join(srv, 'images', 'live.json'), 'w'))
+               'frequency': 137.9, 'max_elev': 61, 'port': 9, 'preview': True},
+              open(os.path.join(srv, 'images', 'live.json'), 'w'))
     pic = os.environ.get('TEST_LIVE_PICTURE', '')
     if pic and os.path.isfile(pic):
         shutil.copy(pic, os.path.join(srv, 'images', 'live-preview.jpg'))
@@ -285,6 +286,12 @@ if lis in ('aprs', 'sstv'):
                    + (30 if lis == 'sstv' and abs(i * 3000 / 139 - 1200) < 25 else 0), 1) for i in range(140)]
     json.dump({'t': now + 3600, 'wide': wide, 'zoom': zoom, 'audio': audio, 'level': 21.4},
               open(os.path.join(srv, 'images', 'iss-live.json'), 'w'))
+    # SSTV: live_sstv.sh's picture, two thirds of a Robot 36 picture received so far
+    if lis == 'sstv' and have_im:
+        subprocess.run(['convert', '-size', '320x160', 'plasma:steelblue-orange', '-size', '320x80', 'xc:black',
+                        '-append', '-resize', '480x', os.path.join(srv, 'images', 'iss-live-sstv.jpg')], check=False)
+        json.dump({'start': now - 200, 'made': now - 10, 'mode': 'Robot36', 'rows': 160, 'complete': False},
+                  open(os.path.join(srv, 'images', 'iss-live-sstv.json'), 'w'))
 # the update check's result (scripts/update_check.sh): TEST_UPDATE=ok (default) | update | install |
 # error | off | none (no file)
 ust = os.environ.get('TEST_UPDATE', 'ok')

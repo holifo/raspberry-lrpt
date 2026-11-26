@@ -2,7 +2,9 @@
 // data-end, with a minute either side) it polls /passes/live once a second and draws SatDump's
 // spectrum (with a scrolling waterfall), SNR, Viterbi and frame-sync locks, BER, Reed-Solomon
 // corrections and frequency offset. The constellation is an estimate drawn from the SNR:
-// SatDump 1.2.3 does not share its real one. Outside a pass it makes no requests.
+// SatDump 1.2.3 does not share its real one. Below them, the satellite on a live map
+// (/satellite/map?live=<satellite>, told the pass's times with postMessage 'rl1-pass') beside the
+// picture live_preview.sh decodes from the frames so far. Outside a pass it makes no requests.
 (function () {
   'use strict';
   var card = document.getElementById('live-card');
@@ -134,15 +136,41 @@
   }
   var picSrc = '';
   function showPicture(d) {               // live_preview.sh: the frames decoded so far
+    // the box shows while a picture is on its way (preview_on) or once there is one
+    $('live-pic').hidden = !(d.preview || d.preview_on);
     if (!d.preview) { return; }
-    $('live-pic').hidden = false;
+    $('live-pic-wait').hidden = true;
+    $('live-pic-img').hidden = false;
     $('live-pic-info').textContent = (T.channel || 'channel') + ' ' + d.preview_channel +
       (d.preview_lines ? ' · ' + d.preview_lines + ' ' + (T.lines || 'lines') : '');
     if (d.preview !== picSrc) { picSrc = d.preview; $('live-pic-img').src = d.preview; }
   }
+  // the live map: loaded once per satellite, told the pass being recorded (it draws its track and
+  // fits it to the frame); the message is sent again when the frame (re)loads
+  var mapFrame = $('live-map'), mapSat = '', mapPass = null;
+  function sendPass() {
+    if (mapPass && mapFrame.contentWindow) {
+      mapFrame.contentWindow.postMessage(mapPass, window.location.origin);
+    }
+  }
+  mapFrame.addEventListener('load', sendPass);
+  function showMap(d) {
+    if (!d.sat || !d.start || !d.end) { return; }
+    if (d.max_elev) { $('live-map-info').textContent = (T.max || 'max') + ' ' + Math.round(d.max_elev) + '°'; }
+    var key = d.sat + '|' + d.start;
+    if (mapPass && mapPass.key === key) { return; }
+    mapPass = { type: 'rl1-pass', key: key, sat: d.sat, aos: d.start * 1000, los: d.end * 1000 };
+    if (mapSat !== d.sat) {
+      mapSat = d.sat;
+      mapFrame.src = '/satellite/map?live=' + encodeURIComponent(d.sat);   // sends the pass on load
+    } else {
+      sendPass();
+    }
+  }
   function show(d) {
     last = d;
     card.hidden = false;
+    showMap(d);
     showPicture(d);
     var chip = $('live-sat');
     chip.textContent = (d.sat || '').replace('METEOR-', '');
@@ -180,6 +208,7 @@
       if (d.start && d.start !== lastPass) {
         lastPass = d.start; history = []; floor = top = null;
         picSrc = ''; $('live-pic').hidden = true; $('live-pic-img').removeAttribute('src');
+        $('live-pic-img').hidden = true; $('live-pic-wait').hidden = false;
       }
       if (d.live || d.end) { seen = true; show(d); }
     }).catch(function () {}).then(function () {

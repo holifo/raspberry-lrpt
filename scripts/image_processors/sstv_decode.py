@@ -272,6 +272,8 @@ def main():
     ap.add_argument('out_prefix')
     ap.add_argument('--rate', type=int, default=11025)
     ap.add_argument('--min-rows', type=float, default=0.25, help='smallest share of an image to keep')
+    ap.add_argument('--no-fallback', action='store_true',
+                    help='only PD and Robot 36: skip the sstv package for other modes (live_sstv.sh)')
     args = ap.parse_args()
 
     x, rate = load(args.audio, args.rate)
@@ -302,7 +304,7 @@ def main():
             results.append((fit['t0'], img, 'Robot36', n, n >= lines - 2, round(fit['good'] / max(1, fit['n']), 2)))
     results.sort(key=lambda r: r[0])
     results = [r[1:] for r in results]
-    if not results:                            # other modes, from their start code
+    if not results and not args.no_fallback:   # other modes, from their start code
         try:
             import sstv
             for img in sstv.decode((x * 32767).astype(np.int16), rate):

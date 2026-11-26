@@ -421,5 +421,11 @@ return array(
   "scan_r_range" => "Check the manual range: {min}–{max} MHz, at most {span} MHz wide, and at most {points} points across.",
   "scan_live" => "Live waterfall",
   "scan_live_wait" => "The live waterfall appears after the first sweeps and is redrawn every 15 seconds or so.",
+  "lv_map" => "Live map",
+  "lv_picture_wait" => "The first picture comes about a minute after the start of the pass.",
+  "il_picture" => "SSTV picture",
+  "il_picture_wait" => "No picture yet. The ISS sends one about every two minutes during an event.",
+  "il_picture_note" => "Decoded from the last four minutes of audio, about every 30 seconds. The finished pictures come after the pass.",
+  "il_complete" => "complete",
 );
 ?>

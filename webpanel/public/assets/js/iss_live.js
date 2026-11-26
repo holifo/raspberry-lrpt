@@ -5,6 +5,8 @@
 //   - the ISS channel (±22 kHz) with the expected Doppler shift drawn on its waterfall
 //   - the signal level in the channel and its history
 //   - APRS: the stations Dire Wolf has decoded so far; SSTV: the FM audio 0-3 kHz as a waterfall
+//   - the ISS on a live map (/satellite/map?live=ISS, with the APRS stations heard) beside the
+//     stations list, or beside the newest SSTV picture live_sstv.sh has decoded
 // Outside an ISS pass, or with the ISS sharing the Meteors' dongle, it shows nothing.
 (function () {
   'use strict';
@@ -148,8 +150,31 @@
     }).join('');
   }
 
+  // the live map: loaded once, told the pass's times (it draws the track and fits it to the frame)
+  var mapFrame = $('il-map'), mapPass = null, picSrc = '';
+  function sendPass() {
+    if (mapPass && mapFrame.contentWindow) { mapFrame.contentWindow.postMessage(mapPass, window.location.origin); }
+  }
+  mapFrame.addEventListener('load', sendPass);
+  function showMap(d) {
+    if (!d.start || !d.end) { return; }
+    if (d.max_elev) { $('il-map-info').textContent = (T.max || 'max') + ' ' + Math.round(d.max_elev) + '°'; }
+    if (mapPass && mapPass.aos === d.start * 1000) { return; }
+    mapPass = { type: 'rl1-pass', sat: 'ISS', aos: d.start * 1000, los: d.end * 1000 };
+    if (!mapFrame.getAttribute('src')) { mapFrame.src = '/satellite/map?live=ISS'; } else { sendPass(); }
+  }
+  function showPicture(d) {               // live_sstv.sh: the newest picture in the audio so far
+    if (!d.picture) { return; }
+    $('il-pic-wait').hidden = true;
+    $('il-pic-img').hidden = false;
+    $('il-pic-info').textContent = d.picture_mode + ' · ' + d.picture_rows + ' ' + (T.lines || 'lines') +
+      (d.picture_complete ? ' · ' + (T.complete || 'complete') : '');
+    if (d.picture !== picSrc) { picSrc = d.picture; $('il-pic-img').src = d.picture; }
+  }
+
   function show(d) {
     card.hidden = false;
+    showMap(d);
     var now = Date.now() / 1000;
     $('il-mode').textContent = (d.mode || '') + (d.frequency ? ' · ' + (+d.frequency).toFixed(3) + ' MHz' : '');
     $('il-left').textContent = d.end && d.end > now ? mmss(d.end - now) + ' ' + (T.left || 'left') : '';
@@ -157,6 +182,8 @@
     var aprs = d.mode === 'APRS';
     $('il-aprs').hidden = !aprs;
     $('il-sstv').hidden = aprs;
+    $('il-pic').hidden = aprs;
+    if (!aprs) { showPicture(d); }
     $('il-count-t').textContent = aprs ? (T.stations || 'Stations heard') : 'SSTV';
     if (aprs) { showAprs(d.stations); } else { $('il-count').textContent = '–'; }
     if (!d.live) {
@@ -210,6 +237,7 @@
 
   function reset() {
     history = []; known = {}; scale = {}; lastT = 0;
+    picSrc = ''; $('il-pic-img').hidden = true; $('il-pic-img').removeAttribute('src'); $('il-pic-wait').hidden = false;
     ['il-wide-wf', 'il-zoom-wf', 'il-audio'].forEach(function (id) {
       var c = C[id]; C[id + 'X'].clearRect(0, 0, c.width, c.height);
     });
