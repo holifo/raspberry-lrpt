@@ -32,8 +32,6 @@
   'mi_n_m27': lang['mi_n_m27']|default('Long-term plan of the series.'),
   'mi_n_mp': lang['mi_n_mp']|default('First of the next generation, with new instruments. Planned for about 2032; it is reported not to carry LRPT.')
 } %}
-{% set map_on = constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') is defined
-   and constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') == 'true' %}
 
 <div class="page-head">
   <h1 class="page-title">{{ lang['about_title']|default('About') }}</h1>
@@ -125,7 +123,7 @@
         <dt>LRPT</dt><dd>137.9 MHz</dd>
       </dl>
       <p class="mi-note">{{ notes[s.note] }}</p>
-      {% if map_on %}<a class="mi-link" href="/satellite"><i class="fas fa-globe-europe"></i> {{ lang['mi_show_map']|default('Where is it now?') }} &rsaquo;</a>{% endif %}
+      <a class="mi-link" href="/satellite"><i class="fas fa-globe-europe"></i> {{ lang['mi_show_map']|default('Where is it now?') }} &rsaquo;</a>
     </div>
   {% endfor %}
 </div>
@@ -215,7 +213,7 @@
       <dt>{{ lang['iss_calls']|default('Callsigns') }}</dt><dd>RS0ISS · NA1SS</dd>
     </dl>
     <p class="mi-note">{{ lang['iss_n_deorbit']|default('Its partners plan to fly it until 2030 and then bring it down into the Pacific Ocean with a SpaceX deorbit vehicle.') }}</p>
-    {% if map_on %}<a class="mi-link" href="/satellite"><i class="fas fa-globe-europe"></i> {{ lang['mi_show_map']|default('Where is it now?') }} &rsaquo;</a>{% endif %}
+    <a class="mi-link" href="/satellite"><i class="fas fa-globe-europe"></i> {{ lang['mi_show_map']|default('Where is it now?') }} &rsaquo;</a>
   </div>
   <section>
     <h3 class="mi-h3">{{ lang['iss_radio']|default('Its amateur radio') }}</h3>

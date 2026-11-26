@@ -51,12 +51,9 @@
             <a class="nav-link" href="/daily" title="{{ lang['daily_map']|default('Daily map') }}" aria-label="{{ lang['daily_map']|default('Daily map') }}"><i class="fas fa-globe-europe nav-ic" aria-hidden="true"></i><span class="nav-long">{{ lang['daily_map']|default('Daily map') }}</span></a>
           </li>
           {% endif %}
-          {% if constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') is defined
-              and constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') == 'true' %}
           <li class="nav-item {% if page == 'satellite' %} active {% endif %}">
             <a class="nav-link" href="/satellite" title="{{ lang['nav_satellites']|default('Satellites') }}" aria-label="{{ lang['nav_satellites']|default('Satellites') }}"><i class="fas fa-satellite nav-ic" aria-hidden="true"></i><span class="nav-long">{{ lang['nav_satellites']|default('Satellites') }}</span></a>
           </li>
-          {% endif %}
           <li class="nav-item {% if page == 'log' %} active {% endif %}">
             <a class="nav-link" href="/log" title="{{ lang['live_log']|default('Live log') }}" aria-label="{{ lang['live_log']|default('Live log') }}"><i class="fas fa-terminal nav-ic" aria-hidden="true"></i><span class="nav-long">{{ lang['live_log']|default('Live log') }}</span></a>
           </li>

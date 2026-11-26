@@ -181,9 +181,7 @@
        data-lon="{{ constant('Config\\Config::BASE_STATION_LON') }}"
        data-tz="{{ constant('Config\\Config::TIMEZONE') }}"
        data-sun-min="{{ constant('Config\\Config::SUN_MIN_ELEV') }}"
-       data-sat-min="{{ constant('Config\\Config::SAT_MIN_ELEV') }}"
-       {% if constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') is defined
-           and constant('Config\\Config::ENABLE_EXPERIMENTAL_FEATURES') == 'true' %}data-map="/satellite"{% endif %}>
+       data-sat-min="{{ constant('Config\\Config::SAT_MIN_ELEV') }}" data-map="/satellite">
 
     {# the times below are the station's local time; say so, with the UTC offset #}
     <div class="times-note">

@@ -1,5 +1,12 @@
 # Changelog
 
+## Raspberry-LRPT v1.50.1 (2026-11-26)
+
+- **The Satellites tab is no longer experimental.** The live map, the satellite details and the
+  pass tracks are now always on, and the `experimental_features` setting is gone (from the
+  settings file and from Admin > Settings). A station that still has it in its own settings
+  keeps working; the line is simply ignored.
+
 ## Raspberry-LRPT v1.50.0 (2026-11-26)
 
 - **Live map in the live decode panels.** While a Meteor pass is recorded, the Passes page's live

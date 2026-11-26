@@ -269,8 +269,6 @@ discord_sky_track: true
 # log level for output from scripts
 log_level: DEBUG
 
-experimental_features: true
-
 # animation: a time-lapse of each day's passes (00:00-24:00 local time) over one area, shown
 # with that day's maps on the Daily map page (scripts/animation.sh, run after each pass's daily
 # map; needs daily_map: true)

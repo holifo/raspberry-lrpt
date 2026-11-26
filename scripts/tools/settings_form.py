@@ -122,7 +122,6 @@ FORM = [
   ('web', [
     ('web_passes_date_format', '', 'Date format', 'PHP date format, e.g. d/m/Y.'),
     ('web_datetime_format', '', 'Date and time format', 'PHP date format, e.g. d/m/Y H:i:s.'),
-    ('experimental_features', '', 'Satellites tab', 'The live map of the satellites, their details and the pass tracks.'),
     ('web_server_name', 'i', 'Server name', 'The station\'s host name (DNS name or IP), used for the TLS certificate.'),
     ('enable_non_tls', 'i', 'Plain HTTP', 'Serve the web panel over HTTP.'),
     ('web_port', 'i', 'HTTP port', 'The port the web panel listens on.'),

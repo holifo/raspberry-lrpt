@@ -7,11 +7,10 @@
 #   /satellite/map     - Meteor live map (App/Static/meteor-map.html), framed by /satellite
 #   /satellite/map?live=<satellite>
 #                      - the same map for one satellite, framed by the Passes page's live decode
-#                        panels during a pass (always available, like those panels)
+#                        panels during a pass
 #
-# Otherwise only available when 'experimental_features: true' is set in
-# config/settings.yml. The HTML lives outside public/ so the flag cannot be
-# bypassed by requesting the file directly.
+# The HTML lives outside public/: it is only served through here, with the station and orbits
+# injected. (Until v1.50.1 the tab was behind the 'experimental_features' setting.)
 #
 # The station position and the scheduler's own TLE file (copied to
 # App/Static/meteor.tle by scripts/schedule.sh) are injected into the page,
@@ -24,7 +23,6 @@ use Lib\View;
 
 class SatelliteController extends \Lib\Controller {
   public function indexAction($args) {
-    $this->requireFeature();
     $pass = $this->loadModel('Pass');
     $pass->getList();
     # the pass in progress and the next ones
@@ -35,21 +33,10 @@ class SatelliteController extends \Lib\Controller {
   }
 
   public function mapAction($args) {
-    $this->servePage('meteor-map.html', true, !isset($_GET['live']));
+    $this->servePage('meteor-map.html', true);
   }
 
-  # feature flag gate - the defined() guard tolerates a Config.php generated
-  # by an older Config.php.j2 that predates this constant
-  private function requireFeature() {
-    if (!defined('Config\Config::ENABLE_EXPERIMENTAL_FEATURES') ||
-        Config::ENABLE_EXPERIMENTAL_FEATURES != 'true') {
-      header('Location: /passes');
-      exit;
-    }
-  }
-
-  private function servePage($file, $with_tle, $gated = true) {
-    if ($gated) { $this->requireFeature(); }
+  private function servePage($file, $with_tle) {
 
     $static_dir = __DIR__ . '/../Static';
     $html_file = $static_dir . '/' . $file;
