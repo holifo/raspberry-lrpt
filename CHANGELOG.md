@@ -1,5 +1,13 @@
 # Changelog
 
+## Raspberry-LRPT v1.50.2 (2026-11-26)
+
+- **ISS SSTV decoding fixed.** On a pass with PD pictures the decoder could also save a
+  "Robot 36" picture of pure noise: by chance, some of the PD picture's sync pulses lined up
+  like Robot 36 lines. Such pictures are now recognised (their lines don't resemble each other,
+  unlike any real picture, even a noisy one) and left out. A pass that has pictures in two PD
+  modes, such as PD120 and PD180, now gets both; before, only the more common one was decoded.
+
 ## Raspberry-LRPT v1.50.1 (2026-11-26)
 
 - **The Satellites tab is no longer experimental.** The live map, the satellite details and the

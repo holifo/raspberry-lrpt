@@ -55,13 +55,8 @@ while [ -f "$INFO_FILE" ]; do
       --rate "$RATE" --min-rows 0.03 --no-fallback > "$TMP_DIR/out.txt" 2>> "$LRPT_LOG" &
     child=$!
     wait "$child"; child=""
-    # the newest picture whose line syncs mostly fitted (a few stray pulses can make a short
-    # false run of the other mode family); else the newest one
-    line=$(python3 -c '
-import json, sys
-rows = [json.loads(l) for l in open(sys.argv[1]) if l.startswith("{")]
-good = [r for r in rows if r.get("sync") is None or r["sync"] >= 0.3]
-if rows: print(json.dumps((good or rows)[-1]))' "$TMP_DIR/out.txt")
+    # the newest picture (sstv_decode.py leaves out false runs made of stray sync pulses)
+    line=$(grep '^{' "$TMP_DIR/out.txt" | tail -n 1)
     if [ -n "$line" ]; then
       read -r png mode rows complete < <(python3 -c 'import json,sys; d=json.loads(sys.argv[1]); print(d["file"], d["mode"], d["rows"], "true" if d["complete"] else "false")' "$line")
       if [ -s "$png" ] && nice -n 19 convert "$png" -resize '480x>' -quality 85 "$TMP_DIR/live.jpg" 2>/dev/null; then

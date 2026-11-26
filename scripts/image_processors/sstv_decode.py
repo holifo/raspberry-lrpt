@@ -13,6 +13,9 @@ line (Robot 36: 9 ms) or pair of lines (PD: 20 ms) starts with a 1200 Hz pulse, 
 times (that takes out the slant from the receiver's clock error) and reads the pixels
 between them. This copes with noise, a pass that starts or ends in the middle of an
 image, and a missed start code - the usual state of a recording from a satellite.
+The PD mode is chosen per transmission (a pause of 15 s splits them), and a run whose rows do
+not resemble each other is dropped (looks_real): inside a PD picture the pulses sometimes line up
+as a short "Robot 36" run by chance, which gave a picture of noise.
 Other modes (Robot 72, Martin, Scottie, ...) go to the `sstv` package when it is installed;
 it needs their start code.
 """
@@ -36,6 +39,7 @@ PD_MODES = {
     'PD290': (800, 616, 0.286),
 }
 SYNC_MS, PORCH_MS = 20.0, 2.08
+MIN_ROW_CORR = 0.1                    # looks_real(): rows of a real picture resemble their neighbours
 # Robot 36: 320 x 240; each line = sync 9, porch 3, Y 88, separator 4.5 (1500 Hz: R-Y follows,
 # 2300 Hz: B-Y), porch 1.5, chroma 44 ms (one colour difference per line, alternating)
 R36 = {'w': 320, 'h': 240, 'sync': 9.0, 'porch': 3.0, 'y': 88.0, 'sep': 4.5, 'porch2': 1.5, 'c': 44.0}
@@ -118,6 +122,38 @@ def best_mode(times):
         if n > best_n:
             best, best_n = mode, n
     return (best, best_n) if best_n >= 8 else (None, 0)
+
+
+def split_groups(times, gap=15.0):
+    """The sync pulses split into transmissions: a pause of more than `gap` s between them."""
+    groups, cur = [], [times[0]] if len(times) else []
+    for t in times[1:]:
+        if t - cur[-1] > gap:
+            groups.append(np.array(cur))
+            cur = [t]
+        else:
+            cur.append(t)
+    if cur:
+        groups.append(np.array(cur))
+    return groups
+
+
+def looks_real(img, sync):
+    """False for a 'picture' made of stray sync pulses: the pulses of one mode family sometimes
+    line up by chance inside a transmission of the other family (a PD picture read as Robot 36),
+    and give rows of noise. A real picture, even a noisy one, has rows that resemble the row
+    above (median correlation 0.13 or more in tests down to a barely usable signal); those false
+    runs score under 0.08. Very well synced runs are kept whatever they show (a flat test card)."""
+    if sync is not None and sync >= 0.5:
+        return True
+    a = np.asarray(img.convert('L'), np.float32)
+    a = a[a.std(1) > 1]                         # the rows that were received
+    if len(a) < 8:
+        return False
+    x = a[:-1] - a[:-1].mean(1, keepdims=True)
+    y = a[1:] - a[1:].mean(1, keepdims=True)
+    c = (x * y).sum(1) / np.sqrt((x * x).sum(1) * (y * y).sum(1) + 1e-9)
+    return float(np.median(c)) >= MIN_ROW_CORR
 
 
 def fit_runs(times, period, image_gap=15.0, min_pulses=8, tol=0.004):
@@ -283,11 +319,13 @@ def main():
     f = frequency_track(x, rate)
     results = []                               # (start time, image, mode, rows, complete, sync)
     end_s = len(x) / rate
-    # PD modes: 20 ms sync per pair of lines
-    starts = find_syncs(f, rate)
-    mode, n_ok = best_mode(starts)
-    if mode:
-        for fit in fit_runs(starts, pair_ms(mode) / 1000):
+    # PD modes: 20 ms sync per pair of lines; the mode is chosen per transmission, so a pass
+    # with PD120 and PD180 pictures gets both
+    for group in split_groups(find_syncs(f, rate)):
+        mode, n_ok = best_mode(group)
+        if not mode:
+            continue
+        for fit in fit_runs(group, pair_ms(mode) / 1000):
             fit['ended'] = fit['t0'] + fit['n'] * fit['period'] < end_s - 2 * fit['period']
             img, n, pairs, first = decode_pd(f, rate, mode, fit, vis_near(f, rate, fit['t0']))
             if n / pairs < args.min_rows:
@@ -302,6 +340,7 @@ def main():
             if n / lines < args.min_rows:
                 continue
             results.append((fit['t0'], img, 'Robot36', n, n >= lines - 2, round(fit['good'] / max(1, fit['n']), 2)))
+    results = [r for r in results if looks_real(r[1], r[5])]
     results.sort(key=lambda r: r[0])
     results = [r[1:] for r in results]
     if not results and not args.no_fallback:   # other modes, from their start code
