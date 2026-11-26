@@ -136,6 +136,12 @@ if [[ "$USE_DEVICE_STRING" == "true" ]]; then
     elif [ -z "$real_serial" ]; then
       log "No connected RTL-SDR matches '$SDR_DEVICE_ID' (scripts/switch.sh iss lists them)" "WARN"
     fi
+  elif [ "$receiver" == "sdrplay" ] && ! [[ "$SDR_DEVICE_ID" =~ ^[0-9]+$ ]]; then
+    # SatDump numbers SDRplay receivers 0, 1, ... (not by serial): anything else matches none and
+    # the pass would stop at once with "Could not find a handler for source type : sdrplay"
+    log "SDRplay device '$SDR_DEVICE_ID' is not a receiver number (0 = the first): using the first SDRplay receiver" "WARN"
+    sdr_id_option=""
+    SDR_DEVICE_ID=""
   fi
 else
   sdr_id_option=""
@@ -184,6 +190,9 @@ if pgrep -f "$ISS_RUNNING" >/dev/null 2>&1 && ! grep -q ' dedicated$' "$ISS_SDR_
   for _ in 1 2 3 4 5 6; do pgrep -f "rtl_fm -f (${ISS_FREQ}|${ISS_APRS_FREQ})M" >/dev/null || break; sleep 0.5; done
   sleep 1                                  # let the USB device go
 fi
+
+# SDRplay: make sure SatDump finds the receiver (restarts SDRplay's service when it lost it)
+[ "$receiver" == "sdrplay" ] && sdrplay_check
 
 log "Recording ${SAT_NAME} via $receiver at ${METEOR_FREQUENCY} MHz with satdump live" "INFO"
 # SatDump's working folder: it writes the frames and ~250 MB of images there while decoding.

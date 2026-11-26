@@ -181,6 +181,13 @@
 - import_tasks: sdrplay.yml
   when: sdr_family == 'sdrplay'
 
+- name: SDRplay service restart rule removed (other receivers)
+  become: yes
+  file:
+    path: /etc/sudoers.d/040_rl1-sdrplay-restart
+    state: absent
+  when: sdr_family != 'sdrplay'
+
 - name: Udev rules reloaded
   become: yes
   command: udevadm control --reload-rules

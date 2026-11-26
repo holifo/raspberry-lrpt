@@ -68,6 +68,16 @@ and RSPduo. An RSPdx has more LNA states; give it more LNA gain with
 Users have run the RSP1A with this station: SatDump finds it and records from it. When passes
 still come out empty, go through these in order.
 
+**"Could not find a handler for source type : sdrplay"** in the log, right after "SDRPlay API is
+ready!", means SatDump loaded SDRplay's API but the API listed no receiver, so the pass stopped at
+once. Since v1.50.3 each capture checks this first: when SatDump finds no SDRplay receiver it
+restarts SDRplay's service and looks again, and the log says what it found ("SDRplay receiver
+found: RSP1A …") or what to do next. That restart needs a sudo rule the install adds, so run
+`./install_and_upgrade.sh` once after updating. The same message also came when
+`use_device_string` was true and the device ID was a serial number: SatDump numbers SDRplay
+receivers 0, 1, … instead, so use `0` for the first one (a capture now falls back to the first
+receiver and says so in the log).
+
 1. **Is it seen?** The Live log's SDR card should show it as connected (since v1.31.2). Then:
 
    ```bash

@@ -117,3 +117,18 @@
         mkdir -p /usr/local/share/raspberry-lrpt
         echo "{{ satdump_commit }}" > /usr/local/share/raspberry-lrpt/sdrplay_plugin.commit
         rm -rf /tmp/satdump-src /tmp/libsdrplay_sdr_support.so
+
+# the station user may restart SDRplay's service, and nothing else: receive_meteor.sh does it when
+# SatDump lists no SDRplay receiver before a pass (the service can lose a receiver; SatDump then
+# says "Could not find a handler for source type : sdrplay" and the pass is lost)
+- name: Station user may restart the sdrplay service
+  become: yes
+  copy:
+    content: |
+      # Raspberry-LRPT: receive_meteor.sh restarts SDRplay's service when it lost the receiver
+      {{ target_user }} ALL=(root) NOPASSWD: /usr/bin/systemctl restart sdrplay, /bin/systemctl restart sdrplay
+    dest: /etc/sudoers.d/040_rl1-sdrplay-restart
+    owner: root
+    group: root
+    mode: 0440
+    validate: visudo -cf %s

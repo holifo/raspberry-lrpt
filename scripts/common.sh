@@ -97,6 +97,44 @@ band_scan_yield() {
   return 0
 }
 
+# SDRplay: SatDump only sees a receiver that SDRplay's service lists. The service can lose one (a
+# receiver plugged in after it started, a USB hiccup); satdump live then stops at once with "Could
+# not find a handler for source type : sdrplay" (right after "SDRPlay API is ready!") and the pass
+# is lost. sdrplay_probe prints the receivers SatDump finds, one a line (e.g. "RSP1A 2103...").
+sdrplay_probe() {
+  timeout 60 satdump sdr_probe 2>&1 | sed 's/\x1b\[[0-9;]*m//g' \
+    | grep -oE -- '- (Unknown )?RSP[A-Za-z0-9]* [0-9A-Fa-f]+' | sed 's/^- //'
+}
+
+# sdrplay_check: before a pass, make sure SatDump finds the SDRplay receiver; if not, restart
+# SDRplay's service (sudo rule 040_rl1-sdrplay-restart, made by the install) and look again.
+# Returns 1 when there is still none (the pass is tried anyway).
+sdrplay_check() {
+  local found
+  found=$(sdrplay_probe)
+  if [ -n "$found" ]; then
+    log "SDRplay receiver found: $(echo "$found" | paste -sd ',' - | sed 's/,/, /g')" "INFO"
+    return 0
+  fi
+  log "SatDump finds no SDRplay receiver: restarting SDRplay's service (sdrplay)" "WARN"
+  if sudo -n systemctl restart sdrplay 2>/dev/null; then
+    sleep 5
+    found=$(sdrplay_probe)
+    if [ -n "$found" ]; then
+      log "SDRplay receiver found after the restart: $(echo "$found" | paste -sd ',' - | sed 's/,/, /g')" "INFO"
+      return 0
+    fi
+  else
+    log "Could not restart the sdrplay service: no sudo rule for it yet (run ./install_and_upgrade.sh once)" "WARN"
+  fi
+  if lsusb 2>/dev/null | grep -qi '1df7:'; then
+    log "Still no SDRplay receiver, though it is on USB: unplug it for a few seconds and plug it back in, or reboot (docs/receivers.md, 'When an SDRplay receiver gets no pictures')" "ERROR"
+  else
+    log "Still no SDRplay receiver, and none is on USB (lsusb shows no 1df7 device): check its cable and power" "ERROR"
+  fi
+  return 1
+}
+
 # tle_source_name SOURCE: the name of a backup_tle.py source for the log
 tle_source_name() {
   case "$1" in tleapi) echo "the TLE API" ;; amsat) echo "AMSAT" ;; satnogs) echo "the SatNOGS DB" ;; *) echo "$1" ;; esac

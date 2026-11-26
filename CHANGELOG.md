@@ -1,5 +1,17 @@
 # Changelog
 
+## Raspberry-LRPT v1.50.3 (2026-11-26)
+
+- **SDRplay: a lost receiver no longer loses the pass.** When SDRplay's service has lost the
+  receiver, SatDump says "Could not find a handler for source type : sdrplay" and the pass ends at
+  once. Each capture now checks first that SatDump finds the receiver; if it doesn't, it restarts
+  SDRplay's service and looks again, and the log says what it found or what to do next (replug
+  the receiver, or check its cable). Run `./install_and_upgrade.sh` once after updating: it adds
+  the permission for that restart.
+- With `use_device_string: true`, an SDRplay device ID that isn't a receiver number (SatDump
+  numbers them 0, 1, …, not by serial) gave the same error; the capture now uses the first
+  receiver and says so in the log.
+
 ## Raspberry-LRPT v1.50.2 (2026-11-26)
 
 - **ISS SSTV decoding fixed.** On a pass with PD pictures the decoder could also save a
